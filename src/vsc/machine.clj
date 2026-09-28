@@ -516,3 +516,108 @@
    (when (:prelude? opts true)
      (run-string (slurp (io/resource "vsc/prelude.clj"))))
    :ready))
+
+;; ---------------------------------------------------------------------------
+;; inspection: the rule table and state traces, decoded from the vectors
+;; (for the write-up; not used by the machine)
+
+(defn gc-agrees?
+  "Does W's collector mark, from the state in `regs`, the same live set that
+  marking by unbinding and cleanup finds?"
+  [regs]
+  (second (py/->jvm (py/call-attr (W) "gc_agrees" (reg regs 'S)))))
+
+(defn- probe [table x] (py/->jvm (py/call-attr (W) "probe" table x)))
+
+(defn- opm-name
+  "Name of the operand-memory entry nearest to `x`, if it is a clear match."
+  [x theta]
+  (let [[i s] (probe "opm" x)]
+    (when (> s theta) ((v :name-of) i))))
+
+(defn- class-name [x]
+  (let [[i s] (probe "cls" x)]
+    (when (> s 0.2) (nth (concat vsc/special-forms '[%apply %eval]) i))))
+
+(defn- unbind* [a c] (py/call-attr (W) "unbind" a c))
+
+(defn- decode-key
+  "Read the features back out of a rule key vector: unbind each feature
+  role, clean up, keep what clears the noise floor."
+  [key]
+  (let [f #(opm-name (unbind* (named %) key) 0.2)
+        kind (f 'FK)
+        sub #(when kind (class-name (unbind* (named kind) (unbind* (named %) key))))]
+    (cond-> {:mode (f 'FM)}
+      kind (assoc :kind kind)
+      (sub 'FH) (assoc :head (sub 'FH))
+      (sub 'FI) (assoc :ident (sub 'FI))
+      (f 'FF) (assoc :frame (f 'FF)))))
+
+(defn disassemble
+  "The instruction list starting at code pointer `pc`, read back from the
+  code memory, up to the end of its program."
+  [pc]
+  (loop [pc pc out []]
+    (if-not pc
+      out
+      (let [r (py/call-attr (W) "decode" pc)
+            ops (py/->jvm (py/get-item r 0))
+            label (opm-name pc 0.9)
+            instr (mapv (v :name-of) (take-while #(>= % 0) ops))]
+        (recur (py/get-item r 1) (conj out (if (keyword? label) [label instr] instr)))))))
+
+(defn rule-table
+  "Every rule in R: index, decoded key, and its microprogram."
+  []
+  (let [R (py/get-attr (W) "R")]
+    (for [i (range (py/get-attr R "n"))]
+      {:index i
+       :name ((v :rule-names) i)
+       :key (decode-key (py/call-attr R "key" i))
+       :code (disassemble (py/get-item (py/call-attr (W) "select" (py/call-attr R "key" i)) 2))})))
+
+(defn print-rule-table []
+  (doseq [{:keys [index name key code]} (rule-table)]
+    (println (format "%2d %-16s %s" index name (pr-str key)))
+    (doseq [x code] (println "      " (pr-str x)))))
+
+(defn- frames
+  "Frame types on the continuation `k`, top first, read from W."
+  [k]
+  (loop [k k out []]
+    (let [t (opm-name (field k (named 'T) 1) 0.9)]
+      (if (or (nil? t) (= t 'halt-fr) (> (count out) 40))
+        (conj out t)
+        (recur (field k (named 'N) 0) (conj out t))))))
+
+(defn trace
+  "Run `form`, returning one map per machine step: the rule selected and the
+  state it fired on (mode, control, frame stack), all decoded from vectors."
+  [form]
+  (let [out (atom [])]
+    (binding [*trace* (fn [step i regs]
+                        (swap! out conj {:step step
+                                         :rule ((v :rule-names) i)
+                                         :mode (opm-name (reg regs 'M) 0.9)
+                                         :control (vsc/decode (reg regs 'C))
+                                         :frames (frames (reg regs 'K))}))]
+      {:value (run form) :steps @out})))
+
+(defn print-trace [form]
+  (let [{:keys [value steps]} (trace form)]
+    (doseq [{:keys [step rule mode control frames]} steps]
+      (println (format "%3d %-6s %-40s %-16s %s" step mode (pr-str control) rule
+                       (str/join " " (map #(str/replace (str %) "-fr" "") frames)))))
+    (println "=>" (pr-str value))))
+
+(defn stats
+  "Counters since the last reset: machine steps and instructions, and the
+  substrate's own (full scans of M, memo hits, FFTs, W allocations, GCs)."
+  []
+  (merge @counters (into {} (map (fn [[k x]] [(keyword k) x]))
+                         (py/->jvm (py/call-attr (W) "get_stats")))))
+
+(defn reset-stats! []
+  (reset! counters {:steps 0 :instrs 0})
+  (py/call-attr (W) "reset_stats"))

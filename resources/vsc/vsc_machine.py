@@ -390,17 +390,41 @@ class Work:
     # -- W collector ----------------------------------------------------------
 
     def gc(self, root, force=False):
-        """Mark the W records reachable from root through any role, drop the
-        rest. Runs when W has doubled since the last collection."""
+        """Mark the W records reachable from root, drop the rest. Runs when W
+        has doubled since the last collection.
+
+        A record's W-pointer fields are found through the constituents it was
+        built from: a constituent is a W pointer iff its bytes are a W key.
+        That is the result the VSA route gives (unbind every role, clean up
+        in W, keep matches above ACCEPT; see gc_vsa), at hash cost instead of
+        O(|W|) per field."""
         if not force and self.W.count() < self.gc_at:
             return 0
         self.stats["gc"] += 1
         marked = set()
         stack = []
         if root is not None:
-            i, s = self.W.nearest(root)
-            if s > 0.9:
+            i = self.wh.get(_h(root))
+            if i is not None:
                 stack.append(i)
+        while stack:
+            i = stack.pop()
+            if i in marked:
+                continue
+            marked.add(i)
+            for c in self.wparts[i].cands:
+                j = self.wh.get(_h(c))
+                if j is not None and j not in marked:
+                    stack.append(j)
+        return self._sweep(marked)
+
+    def gc_vsa(self, root):
+        """The collector's marking done by VSA operations alone (slow; kept to
+        check that gc marks the same set)."""
+        marked, stack = set(), []
+        i, s = self.W.nearest(root)
+        if s > 0.9:
+            stack.append(i)
         while stack:
             i = stack.pop()
             if i in marked:
@@ -412,6 +436,20 @@ class Work:
             for j, sj in zip(np.argmax(S, axis=1), np.max(S, axis=1)):
                 if sj > ACCEPT and int(j) not in marked:
                     stack.append(int(j))
+        return marked
+
+    def gc_agrees(self, root):
+        """Do both markings find the same live set?"""
+        fast = set()
+        stack = [self.wh[_h(root)]]
+        while stack:
+            i = stack.pop()
+            if i not in fast:
+                fast.add(i)
+                stack.extend(self.wh[_h(c)] for c in self.wparts[i].cands if _h(c) in self.wh)
+        return [len(fast), fast == self.gc_vsa(root)]
+
+    def _sweep(self, marked):
         dropped = 0
         for i in range(self.W.n):
             if self.W.live[i] and i not in marked:

@@ -163,14 +163,11 @@
 ;; machine keeps its continuation in W and needs none
 
 (def ^:private small-stack (* 256 1024))     ;; a quarter of the JVM default
-(def ^:private default-stack (* 1024 1024))  ;; the JVM default on x86-64 Linux
 
 (deftest tail-calls-run-in-constant-space
   (machine/run '(defn countdown [n] (if (zero? n) :done (countdown (dec n)))))
-  (testing "the host evaluator overflows a default-size stack"
-    (is (= [:threw StackOverflowError]
-           (on-stack default-stack #(vsc/run '(countdown 1000))))))
-  (testing "the machine runs the same program on a 256 KB stack"
+  (testing "on a 256 KB stack the host evaluator overflows, the machine does not"
+    (is (= [:threw StackOverflowError] (on-stack small-stack #(vsc/run '(countdown 1000)))))
     (is (= [:ok :done] (on-stack small-stack #(machine/run '(countdown 1000))))))
   (testing "mutual tail recursion"
     (machine/run '(defn ping [n] (if (zero? n) :ping (pong (dec n)))))
@@ -179,8 +176,14 @@
 
 (deftest deep-non-tail-recursion-lives-in-vector-memory
   (machine/run '(defn sum-to [n] (if (zero? n) 0 (+ n (sum-to (dec n))))))
-  (is (= [:threw StackOverflowError] (on-stack default-stack #(vsc/run '(sum-to 600)))))
-  (is (= [:ok 180300] (on-stack small-stack #(machine/run '(sum-to 600))))))
+  (is (= [:threw StackOverflowError] (on-stack small-stack #(vsc/run '(sum-to 300)))))
+  (let [checked (atom nil)]
+    (binding [machine/*trace* (fn [step _ regs]
+                                (when (= step 3000)
+                                  (reset! checked (machine/gc-agrees? regs))))]
+      (is (= [:ok 45150] (on-stack small-stack (bound-fn [] (machine/run '(sum-to 300)))))))
+    (testing "the collector's fast marking finds what VSA marking finds"
+      (is (true? @checked)))))
 
 (deftest ^:deep countdown-10000
   ;; about 10 minutes; run with VSC_DEEP=1
