@@ -709,3 +709,512 @@ def versions():
     except Exception:  # noqa: BLE001
         pass
     return info
+
+
+# ---------------------------------------------------------------------------
+# W1: superposition ("many worlds"). Everything below is new and self-
+# contained: the `proj` backend, its cleanup, the integer-world readout and
+# the world readout used by `worlds`. Design and measurements:
+# docs/W0-superposition-design.md (section 6), results: docs/results-W.md.
+
+def z_floor(n, margin=1.0):
+    """Detection z-score: the maximum of n chance similarities (Gaussian,
+    std 1/√D) sits near √(2 ln n); `margin` more standard deviations make a
+    false detection rare (margin 1: ~1e-3 per probe, margin 3: ~1e-8)."""
+    return float(np.sqrt(2.0 * np.log(max(int(n), 2))) + margin)
+
+
+class Proj(Memory):
+    """Threshold + projection memory (W0 section 6): a superposition-
+    preserving heteroassociative memory.
+
+      S          = {j : |kⱼ·p|/|p| > τ},  τ = (√(2 ln N) + margin)/√D
+      clean(p)   = Σ_S cⱼ kⱼ          c = K_S⁺ p, clipped at 0, Σ c = 1
+      deref(p)   = Σ_S cⱼ gⱼ vⱼ       gⱼ = the norm of trace j before it was
+                                      normalised (the exact field gain)
+
+    With |S| ≤ 1 (every single-world probe, noisy or not) it is the codebook
+    exactly: the argmax row, bit for bit. Coefficients are a distribution
+    (non-negative, sum 1), so worlds keep their weights through any number of
+    reads, and a superposition is a value like any other.
+
+    Gains: a cell trace ν(L⊗a + R⊗b) carries each field at 1/|L⊗a + R⊗b|.
+    Without the gain every read would shrink every world by its own ≈ √2, and
+    worlds that exit a recursion at different depths would come back with
+    wrong weights (W0 section 3). `intern` records the norm of the trace as
+    given, so the caller passes traces unnormalised where the gain matters.
+
+    `margin` sets τ. 3 keeps false supports (a chance row above τ) at about
+    1e-8 per probe, which is what makes single-world runs bit-identical to the
+    codebook over millions of cleanups; the price is capacity (fewer, weaker
+    worlds are detected). `kmax` caps the support."""
+
+    backend = "proj"
+    superposes = True
+
+    def __init__(self, space, capacity=4096, name=None, margin=3.0, kmax=64):
+        super().__init__(space, capacity, name)
+        self.margin = float(margin)
+        self.kmax = int(kmax)
+        self.gain = np.ones(int(capacity), dtype=np.float64)
+
+    def _grow(self):
+        super()._grow()
+        self.gain = np.concatenate([self.gain, np.ones_like(self.gain)])
+
+    def tau(self):
+        return z_floor(self.n, self.margin) / np.sqrt(self.dim)
+
+    def support(self, a):
+        """Rows whose score clears τ (at most kmax, strongest first)."""
+        if a is None:
+            return np.zeros(0, dtype=int)
+        S = np.flatnonzero(np.abs(a) > self.tau())
+        if len(S) > self.kmax:
+            S = S[np.argsort(-np.abs(a[S]))[: self.kmax]]
+        return S
+
+    def worlds_of(self, u, a):
+        """The support of probe u (scores a): the rows above τ, plus rows
+        that are above a lower bar τ₀ (margin −1) and clear τ against the
+        residual that the top row leaves. That second test finds a light
+        world next to a heavy one (weight 0.9/0.1: the light one scores
+        below τ against the whole probe), yet costs no scan: only the few
+        rows above τ₀ are compared with the residual."""
+        S = self.support(a)
+        if a is None or len(S) != 1:
+            return S
+        lo = z_floor(self.n, -1.0) / np.sqrt(self.dim)
+        C = np.flatnonzero(np.abs(a) > lo)
+        C = C[C != S[0]]
+        if len(C) == 0:
+            return S
+        u = np.asarray(u, dtype=np.float64)
+        k = self.M[S[0]].astype(np.float64)
+        r = u - (u @ k) * k
+        rn = np.linalg.norm(r)
+        if rn < 1e-9:
+            return S
+        rel = np.abs(self.M[C].astype(np.float64) @ r) / rn
+        extra = C[rel > self.tau()]
+        return np.concatenate([S, extra]) if len(extra) else S
+
+    def coeffs(self, u, a):
+        """(support, distribution) of probe u, or None for a single world."""
+        S = self.worlds_of(u, a)
+        if len(S) <= 1:
+            return None
+        S, c = self.refine(np.asarray(u, dtype=np.float64), list(S))
+        c = np.clip(c, 0.0, None)
+        t = c.sum()
+        if t <= 0:
+            return None
+        keep = c > 0
+        if keep.sum() <= 1:
+            return None
+        return S[keep], c[keep] / t
+
+    def refine(self, u, S):
+        """Least squares on support S, then matching pursuit on what is left:
+        a row whose score against the residual (relative to the residual's
+        norm) clears τ joins the support. The first scan thresholds against
+        the whole probe, so a light world next to heavy ones hides below τ;
+        against the residual it does not. Costs one extra scan only when
+        something is left over. Returns (S, least-squares coefficients)."""
+        S = [int(j) for j in S]
+        tau = self.tau()
+        nu_ = np.linalg.norm(u)
+        while True:
+            K = self.M[S].astype(np.float64)
+            c, *_ = np.linalg.lstsq(K.T, u, rcond=None)
+            r = u - K.T @ c
+            rn = np.linalg.norm(r)
+            if rn < 1e-6 * nu_ or len(S) >= self.kmax:
+                break
+            self.space.tick("rows", self.n)
+            a = self.M[: self.n] @ (r / rn).astype(np.float32)
+            j = int(np.argmax(np.abs(a)))
+            if abs(a[j]) < tau or j in S:
+                break
+            S.append(j)
+        return np.array(S, dtype=int), c
+
+    def _clean(self, u, a, i):
+        r = self.coeffs(u, a)
+        if r is None:
+            return super()._clean(u, a, i)
+        S, c = r
+        return c @ self.M[S].astype(np.float64)
+
+    def _deref(self, u, a, i):
+        r = self.coeffs(u, a)
+        if r is None:
+            return super()._deref(u, a, i)
+        S, c = r
+        return (c * self.gain[S]) @ self.V[S].astype(np.float64)
+
+    def intern(self, key, trace, label, dedupe=0.999):
+        n0 = self.n
+        i = super().intern(key, trace, label, dedupe)
+        if self.n > n0:
+            m = self.space.mask
+            t = trace * m if m is not None else trace
+            self.gain[i] = float(np.linalg.norm(t))
+        return i
+
+
+BACKENDS["proj"] = Proj
+
+
+# -- integer worlds -----------------------------------------------------------
+# B^m restricted to p's band is the fixed candidate spectrum of the residue
+# m mod p, so the similarity of v to every B^m in a range needs one FFT and
+# six small band products, not a codebook of vectors. Readout is bounded to a
+# range [lo, hi]: outside it, residue integers have chimeras (integers that
+# match a superposition's residues in every band as well as its true worlds
+# do; W0 section 2), and the CRT readout happily prints them.
+# (If the integer encoding gains a tag, B^n ⊗ Z, unbind Z in `_int_spec`.)
+
+def _int_spec(nums, v):
+    return np.fft.rfft(np.asarray(v, dtype=np.float64))
+
+
+def _band_scores(nums, X):
+    """Per band p: Re(conj(B̂^r)·X) summed over the band, r = 0..p-1."""
+    return [(c @ X[band]).real for band, c in zip(nums.bands, nums.cands)]
+
+
+def int_dots(nums, v, lo, hi):
+    """(ms, v·B^m for every m in [lo, hi]), exact (Parseval)."""
+    d = nums.space.dim
+    X = _int_spec(nums, v)
+    sc = _band_scores(nums, X)
+    ms = np.arange(int(lo), int(hi) + 1)
+    tot = np.zeros(len(ms))
+    for s, p in zip(sc, nums.moduli):
+        tot += s[ms % p]
+    edge = X[0].real + (X[-1].real if d % 2 == 0 else 0.0)
+    return ms, (edge + 2.0 * tot) / d
+
+
+def more_ints(nums, v, n, lo, hi, margin=3.0):
+    """Is there integer structure in v beyond B^n (n its residue readout)?
+    An integer outside [lo, hi] agrees with many inside it on most residues
+    (400000 and -400 share the bands of 5, 7, 11 and 13), so matching the
+    range against v itself would explain one big integer as a superposition
+    of small ones. Against the residual v − (v·Bⁿ)Bⁿ the range finds only
+    what Bⁿ does not explain: the other worlds of a true superposition."""
+    u = np.asarray(v, dtype=np.float64)
+    u = u / (np.linalg.norm(u) or 1.0)
+    b = nums.vec(int(n))
+    r = u - (u @ b) * b
+    rn = np.linalg.norm(r)
+    if rn < 1e-9:
+        return False
+    tau = z_floor(hi - lo + 1, margin) / np.sqrt(nums.space.dim)
+    _, dots = int_dots(nums, r / rn, lo, hi)
+    return bool(dots.max() >= tau)
+
+
+class ProjCleanup(Cleanup):
+    """The combined cleanup over a `proj` item memory: worlds of M (threshold
+    + projection, as in Proj) and integer worlds (bounded-range matching
+    pursuit), solved jointly by least squares. A single-world probe takes
+    the codebook path unchanged, so everything the plain Cleanup returns for
+    a single world it returns bit for bit.
+
+    Integers are looked for only in [int_lo, int_hi], and only when the best
+    integer of that range clears the detection floor at `int_margin`
+    (relative to what the item-memory worlds leave). A single integer found
+    that way is still returned by the codebook path (its residue readout).
+
+    `roles` (L, R), set by the language layer, makes cell fields exact under
+    superposition: when a field read comes back superposed, the other field
+    is read too and subtracted from the trace before the field is read again,
+    so the crosstalk term (the other field, unbound) no longer disturbs the
+    least squares weights."""
+
+    def __init__(self, space, mem, nums, theta=0.9, int_lo=-1024, int_hi=1024,
+                 int_margin=3.0, int_kmax=16):
+        super().__init__(space, mem, nums, theta)
+        self.int_lo, self.int_hi = int(int_lo), int(int_hi)
+        self.int_margin, self.int_kmax = float(int_margin), int(int_kmax)
+        self.roles = None
+
+    def set_int_range(self, lo, hi):
+        self.int_lo, self.int_hi = int(lo), int(hi)
+
+    def set_roles(self, left, right):
+        self.roles = (left, right)
+
+    def cleanup(self, v):
+        self.space.tick("cleanup")
+        return self._cleanup(v)[0]
+
+    def _cleanup(self, v):
+        """(cleaned vector, superposed?)"""
+        v = self.space.perturb(v)
+        (label, i, s), u, a = self._recognize(v)
+        S = self.mem.worlds_of(u, a)
+        if len(S) == 0 and label == self.NUM and not self._more_ints(v, i):
+            return self.nums.vec(i), False
+        ints = self._int_omp(v, S)
+        if len(S) + len(ints) >= 2:
+            self.space.tick("superposed")
+            return self._joint(v, S, ints), True
+        return (self.nums.vec(i) if label == self.NUM else self.mem._clean(u, a, i)), False
+
+    def _more_ints(self, v, n):
+        return more_ints(self.nums, v, n, self.int_lo, self.int_hi, self.int_margin)
+
+    def _int_omp(self, v, S):
+        """Greedy integer worlds of the part of v that the rows S leave."""
+        d = self.space.dim
+        u = np.asarray(v, dtype=np.float64)
+        u = u / (np.linalg.norm(u) or 1.0)
+        A = [self.mem.M[j].astype(np.float64) for j in S]
+        found = []
+        tau = z_floor(self.int_hi - self.int_lo + 1, self.int_margin) / np.sqrt(d)
+        for _ in range(self.int_kmax):
+            if A:
+                K = np.stack(A)
+                c, *_ = np.linalg.lstsq(K.T, u, rcond=None)
+                r = u - K.T @ c
+            else:
+                r = u
+            rn = np.linalg.norm(r)
+            if rn < 1e-9:
+                break
+            ms, dots = int_dots(self.nums, r, self.int_lo, self.int_hi)
+            j = int(np.argmax(dots))
+            if dots[j] / rn < tau or int(ms[j]) in found:
+                break
+            found.append(int(ms[j]))
+            A.append(self.nums.vec(int(ms[j])))
+        return found
+
+    def _joint(self, v, S, ints):
+        """Least squares over item-memory rows S and integers `ints`, grown by
+        matching pursuit against the residual (rows first, then integers)."""
+        mem, d = self.mem, self.space.dim
+        u = np.asarray(v, dtype=np.float64)
+        u = u / (np.linalg.norm(u) or 1.0)
+        S, ints = [int(j) for j in S], list(ints)
+        tau_m = mem.tau()
+        tau_i = z_floor(self.int_hi - self.int_lo + 1, self.int_margin) / np.sqrt(d)
+        while True:
+            A = [mem.M[j].astype(np.float64) for j in S] + [self.nums.vec(n) for n in ints]
+            K = np.stack(A)
+            c, *_ = np.linalg.lstsq(K.T, u, rcond=None)
+            r = u - K.T @ c
+            rn = np.linalg.norm(r)
+            if rn < 1e-6 or len(S) + len(ints) >= mem.kmax:
+                break
+            if mem.n:
+                self.space.tick("rows", mem.n)
+                a = mem.M[: mem.n] @ (r / rn).astype(np.float32)
+                j = int(np.argmax(np.abs(a)))
+                if abs(a[j]) >= tau_m and j not in S:
+                    S.append(j)
+                    continue
+            ms, dots = int_dots(self.nums, r / rn, self.int_lo, self.int_hi)
+            j = int(np.argmax(dots))
+            if dots[j] >= tau_i and int(ms[j]) not in ints:
+                ints.append(int(ms[j]))
+                continue
+            break
+        c = np.clip(c, 0.0, None)
+        t = c.sum()
+        if t <= 0:
+            return u
+        return (c / t) @ K
+
+    def _deref2(self, p):
+        """(deref(p) exactly as Memory.deref, the raw trace: gain-scaled)."""
+        mem = self.mem
+        self.space.tick("deref")
+        u = mem._probe(p)
+        i, _, a = mem._select(u, "deref")
+        r = mem.coeffs(u, a) if a is not None else None
+        if r is None:
+            t = mem._deref(u, a, i)
+            return t, (mem.gain[i] * t if i >= 0 else t)
+        S, c = r
+        t = (c * mem.gain[S]) @ mem.V[S].astype(np.float64)
+        return t, t
+
+    def _other(self, role):
+        if self.roles is None:
+            return None
+        left, right = self.roles
+        if role is left or np.array_equal(role, left):
+            return right
+        if role is right or np.array_equal(role, right):
+            return left
+        return None
+
+    def part(self, role, p):
+        self.space.tick("cleanup")
+        t, raw = self._deref2(p)
+        x, sup = self._cleanup(self.space.unbind(role, t))
+        other = self._other(role) if sup else None
+        if other is None:
+            return x
+        y, _ = self._cleanup(self.space.unbind(other, raw))
+        rest = raw - self.space.bind(other, y)
+        return self._cleanup(self.space.unbind(role, rest))[0]
+
+
+def make_cleanup(space, mem, nums, **opts):
+    """The combined cleanup for `mem`: ProjCleanup over a superposing memory,
+    else the plain Cleanup."""
+    if getattr(mem, "superposes", False):
+        return ProjCleanup(space, mem, nums, **opts)
+    return Cleanup(space, mem, nums)
+
+
+# -- world readout ------------------------------------------------------------
+
+def readout(cleanup, v, int_lo=-1024, int_hi=1024, margin=1.0, kmax=64):
+    """The worlds of v: orthogonal matching pursuit over the item memory M
+    and the integers in [int_lo, int_hi], with least squares on the growing
+    support. Stops when the best residual match is chance (z/√D, z from
+    `z_floor` over all candidates). Returns [worlds, residual], worlds a list
+    of [label, index, weight] (label Cleanup.NUM and index n for integers),
+    weights clipped at 0 and normalised to sum 1; residual the fraction of
+    v's energy left unexplained. This is a measurement: it never changes M."""
+    space, mem, nums = cleanup.space, cleanup.mem, cleanup.nums
+    space.tick("readout")
+    x = np.asarray(space.perturb(v), dtype=np.float64)
+    nx = np.linalg.norm(x)
+    if nx == 0:
+        return [[], 1.0]
+    x = x / nx
+    d = space.dim
+    # a clean single world: exactly one row, or exactly one integer
+    if mem.n:
+        space.tick("rows", mem.n)
+        a = mem.M[: mem.n] @ x.astype(np.float32)
+        i = int(np.argmax(a))
+        if a[i] > 0.999:
+            return [[[int(mem.labels[i]), i, 1.0]], 0.0]
+    n, sn = nums._read(x)
+    if sn > 0.999:
+        return [[[Cleanup.NUM, int(n), 1.0]], 0.0]
+    # one integer, possibly outside [int_lo, int_hi], plus noise
+    top = float(a.max()) if mem.n else 0.0
+    if sn > max(top, 0.25) and not more_ints(nums, x, n, int_lo, int_hi):
+        return [[[Cleanup.NUM, int(n), 1.0]], float(1.0 - sn * sn)]
+    tau = z_floor(mem.n + (int_hi - int_lo + 1), margin) / np.sqrt(d)
+    atoms, keys, r, c = [], [], x, None
+    for _ in range(int(kmax)):
+        rn = np.linalg.norm(r)
+        if rn < 1e-9:
+            break
+        best, key, vec = -np.inf, None, None
+        if mem.n:
+            space.tick("rows", mem.n)
+            a = mem.M[: mem.n] @ (r / rn).astype(np.float32)
+            j = int(np.argmax(a))
+            best, key, vec = float(a[j]), ("m", j), mem.M[j].astype(np.float64)
+        ms, dots = int_dots(nums, r / rn, int_lo, int_hi)
+        j = int(np.argmax(dots))
+        if dots[j] > best:
+            best, key, vec = float(dots[j]), ("n", int(ms[j])), None
+        if best < tau or key in keys:
+            break
+        if vec is None:
+            vec = nums.vec(key[1])
+        keys.append(key)
+        atoms.append(vec)
+        K = np.stack(atoms)
+        c, *_ = np.linalg.lstsq(K.T, x, rcond=None)
+        r = x - K.T @ c
+    resid = float(np.linalg.norm(r) ** 2)
+    if not keys:
+        return [[], resid]
+    c = np.clip(c, 0.0, None)
+    t = c.sum()
+    if t <= 0:
+        return [[], resid]
+    out = []
+    for (kind, j), w in zip(keys, c / t):
+        if w <= 0:
+            continue
+        if kind == "m":
+            out.append([int(mem.labels[j]), int(j), float(w)])
+        else:
+            out.append([Cleanup.NUM, int(j), float(w)])
+    return [out, resid]
+
+
+def int_worlds(nums, v, lo=-1024, hi=1024, margin=1.0, kmax=16):
+    """[[n, weight] ...] of an integer superposition, read against [lo, hi]
+    only (the printer's readout); [] when v carries no integer worlds."""
+    d = nums.space.dim
+    x = np.asarray(v, dtype=np.float64)
+    nx = np.linalg.norm(x)
+    if nx == 0:
+        return []
+    x = x / nx
+    tau = z_floor(hi - lo + 1, margin) / np.sqrt(d)
+    found, atoms, r, c = [], [], x, None
+    for _ in range(int(kmax)):
+        rn = np.linalg.norm(r)
+        if rn < 1e-9:
+            break
+        ms, dots = int_dots(nums, r / rn, lo, hi)
+        j = int(np.argmax(dots))
+        if dots[j] < tau or int(ms[j]) in found:
+            break
+        found.append(int(ms[j]))
+        atoms.append(nums.vec(int(ms[j])))
+        K = np.stack(atoms)
+        c, *_ = np.linalg.lstsq(K.T, x, rcond=None)
+        r = x - K.T @ c
+    if not found:
+        return []
+    c = np.clip(c, 0.0, None)
+    t = c.sum()
+    return [[n, float(w / t)] for n, w in zip(found, c) if w > 0] if t > 0 else []
+
+
+def lincomb(space, vs, ws):
+    """Σ wᵢ vᵢ: a weighted superposition, as a bundle (op noise applies)."""
+    acc = np.zeros(space.dim)
+    for v, w in zip(vs, ws):
+        acc = acc + float(w) * space._in(np.asarray(v, dtype=np.float64))
+    return space._op("bundle", acc)
+
+
+def coef(a, b):
+    """a·b/|b|: the coefficient of unit direction b in a (not a cosine: a
+    distribution's coefficient on one of its worlds is that world's weight)."""
+    nb = np.linalg.norm(b)
+    return float(np.asarray(a, dtype=np.float64) @ b / nb) if nb > 0 else 0.0
+
+
+def associate(mem, key, trace, label):
+    """Store the row key -> trace as it is: no hash-consing (two keys may
+    well share a trace), the gain recorded on a proj memory."""
+    i = mem.add(key, label)
+    mem.V[i] = mem._store(trace)
+    if hasattr(mem, "gain"):
+        m = mem.space.mask
+        t = trace * m if m is not None else trace
+        mem.gain[i] = float(np.linalg.norm(t))
+    return i
+
+
+def follow(cleanup, p):
+    """cleanup(deref(p)) over the rows that the worlds of p hit, in one
+    lookup; None when p hits no row above τ (a key that is not stored)."""
+    mem = cleanup.mem
+    space = cleanup.space
+    space.tick("deref")
+    u = mem._probe(p)
+    i, _, a = mem._select(u, "deref")
+    S = mem.worlds_of(u, a) if hasattr(mem, "worlds_of") else ([i] if i >= 0 else [])
+    if len(S) == 0:
+        return None
+    return cleanup.cleanup(mem._deref(u, a, i))
