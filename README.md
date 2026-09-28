@@ -45,6 +45,8 @@ or the interpreter named in `$VSC_PYTHON`.
 | `resources/vsc/hdc.py` | substrate: HRR algebra, cleanup memories, integer readout |
 | `src/vsc/hdc.clj` | thin libpython-clj bridge; vectors stay opaque Python objects |
 | `src/vsc/core.clj` | encoding, evaluator, primitives, reader/printer boundary |
+| `src/vsc/machine.clj` | S2: a vector CEK machine, rules and microcode as vectors, no host `veval` (`docs/results-S2.md`) |
+| `resources/vsc/vsc_machine.py` | the machine's working memory, code/rule/operand memories and datapath |
 | `resources/vsc/prelude.clj` | `map`, `filter`, `reduce`, `*`, … written *in the dialect* |
 | `examples/metacircular.clj` | a λ-calculus interpreter written in the dialect |
 | `bench/` | P3 task suite, expected values derived in real Clojure (`bench/README.md`) |
