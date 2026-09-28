@@ -141,11 +141,15 @@
 (defn mk-vec [xs] (mk-seq :vec xs))
 
 (defn- cells
-  "Host seq of the elements of a list/vector cell chain."
-  [c]
-  (lazy-seq
-   (when-not (or (vnil? c) (empty-coll? c))
-     (cons (car c) (cells (cdr c))))))
+  "Host seq of the elements of a list/vector cell chain. Every cell is a row
+  of M, so a chain longer than M is a cycle (a misread cdr), not a list."
+  ([c] (cells c (h/mem-size (m :M))))
+  ([c budget]
+   (lazy-seq
+    (when-not (or (vnil? c) (empty-coll? c))
+      (when (neg? budget)
+        (throw (ex-info "cyclic cell chain" {})))
+      (cons (car c) (cells (cdr c) (dec budget)))))))
 
 (defn- distinct-by-eq [xs]
   (reduce (fn [acc x] (if (some #(eq? x %) acc) acc (conj acc x))) [] xs))
@@ -169,7 +173,7 @@
 (defn- recall-slot
   "The map/set constituent nearest to `p` (never a bare integer)."
   [p]
-  (h/mem-get (m :M) (first (h/nearest (m :M) p))))
+  (h/clean (m :M) p))
 
 (defn- noise-floor
   "Similarity that chance alone reaches only at ~4.5σ, σ = 1/√D."
@@ -201,7 +205,7 @@
   (long (/ 1.0 (* parts (Math/pow (* 1.25 (noise-floor)) 2)))))
 
 (defn- check-capacity [what parts n]
-  (when (> n (capacity parts))
+  (when (and (m :enforce-capacity?) (> n (capacity parts)))
     (throw (ex-info (str what " of " n " exceeds the capacity of a D=" (m :dim)
                          " space (" (capacity parts) "); init! with a larger :dim")
                     {:n n :capacity (capacity parts)}))))
@@ -212,7 +216,11 @@
   (if (empty-coll? cv)
     0
     (let [[_ n] (h/recognize (m :C) (unbind (role :C) (deref-ptr cv)))]
-      n)))
+      ;; every constituent is a row of M, so a larger count is a misread
+      ;; (an overloaded or noisy trace), not a size to peel that many times
+      (if (<= 0 n (h/mem-size (m :M)))
+        n
+        (throw (ex-info (str "unreadable collection size " n) {:n n}))))))
 
 (defn mk-map
   "Map from a seq of [k v] vector pairs; later keys win.
@@ -335,6 +343,14 @@
       (when (> (sim (unbind (role :L) slot) sym) theta-def)
         [i slot]))))
 
+(defn- global-value
+  "F(L⊗sym) read out by the memory backend, then its R field cleaned up."
+  [sym]
+  (when (pos? (h/mem-size (m :F)))
+    (let [slot (h/clean (m :F) (bind (role :L) sym))]
+      (when (> (sim (unbind (role :L) slot) sym) theta-def)
+        (cleanup (unbind (role :R) slot))))))
+
 (defn define!
   "F ↞ cons(sym, val), replacing an earlier definition of `sym`."
   [sym val]
@@ -347,9 +363,8 @@
 (defn- lookup [sym env]
   (loop [env env]
     (if (empty-coll? env)
-      (if-let [[_ slot] (global-slot sym)]
-        (cleanup (unbind (role :R) slot))
-        (fail "unable to resolve symbol: " sym))
+      (or (global-value sym)
+          (fail "unable to resolve symbol: " sym))
       (let [binding (car env)]
         (if (eq? (car binding) sym)
           (cdr binding)
@@ -560,15 +575,44 @@
 
 (declare run-string)
 
+(def knob-keys
+  "Substrate noise knobs, all off by default (see hdc.py, Space.configure)."
+  [:op-noise :probe-noise :lesion :noise-seed])
+
 (defn init!
   "Build a fresh machine: space, cleanup memories, roles, tags, numbers,
-  primitives, then load the prelude (written in the vector-symbolic dialect)."
+  primitives, then load the prelude (written in the vector-symbolic dialect).
+
+  Options:
+    :dim :seed :prelude?
+    :memory        cleanup backend, :codebook (default), :linear or :mhn
+    :memory-opts   options for the backend (e.g. {:beta 16 :mode :snap})
+    :op-noise σ    noise on every bind/unbind/bundle output
+    :probe-noise σ noise on every cleanup probe
+    :lesion f      a fixed fraction f of dimensions is dead everywhere
+    :noise-seed    seed of the noise stream (default: derived from :seed)
+    :memory-damage σ  remembered for `damage!`, which experiments call once
+                   the memory is filled; init! itself does not damage
+    :count-ops? :log-margins?  instrumentation (see `instruments`)
+    :enforce-capacity?  refuse maps and sets beyond `capacity` (default true)
+
+  The knobs act from the start, so a noisy init! also loads the prelude
+  noisily; `set-knobs!` switches them later."
   ([] (init! {}))
-  ([{:keys [dim seed prelude?] :or {dim default-dim seed 42 prelude? true}}]
+  ([{:keys [dim seed prelude? memory memory-opts memory-damage enforce-capacity?]
+     :or {dim default-dim seed 42 prelude? true memory :codebook memory-opts {}
+          enforce-capacity? true}
+     :as opts}]
    (let [s (h/space dim seed)
-         M (h/memory dim)]
-     (reset! machine {:space s :M M :dim dim
-                      :F (h/memory dim) :SF (h/memory dim) :P (h/memory dim)
+         _ (h/configure! s opts)
+         _ (h/instrument! s opts)
+         mem (fn [nm] (h/memory s memory (assoc memory-opts :name nm)))
+         M (mem "M")]
+     (reset! machine {:space s :M M :dim dim :backend memory
+                      :F (mem "F") :SF (mem "SF") :P (mem "P")
+                      :knobs (select-keys opts knob-keys)
+                      :memory-damage memory-damage
+                      :enforce-capacity? enforce-capacity?
                       :roles (zipmap [:L :R :K :C] (repeatedly #(h/unitary s)))
                       :atoms (atom {}) :lexicon (atom {})})
      ;; the empty collections are atoms of their collection's kind
@@ -618,5 +662,47 @@
 
 (defn stats []
   {:dim (m :dim)
+   :backend (m :backend)
    :traces (h/mem-size (m :M))
    :globals (h/mem-size (m :F))})
+
+;; ---------------------------------------------------------------------------
+;; experiment hooks: knobs and instruments live in the substrate (hdc.py), so
+;; no code path of the interpreter can bypass them
+
+(defn space "The machine's HRR space (the Python object)." [] (sp))
+
+(defn set-knobs!
+  "Replace the noise knobs (:op-noise :probe-noise :lesion :noise-seed);
+  missing ones are off. Setting :lesion also lesions every stored row."
+  [knobs]
+  (swap! machine assoc :knobs (select-keys knobs knob-keys))
+  (h/configure! (sp) knobs))
+
+(defn damage!
+  "Synaptic damage: noise of norm σ added once to every stored row of M, F,
+  SF and P. Without σ, the :memory-damage given to init!."
+  ([] (damage! (or (m :memory-damage) 0.0)))
+  ([sigma] (when (pos? sigma) (h/damage! (sp) sigma)) sigma))
+
+(defn instrument!
+  "Switch {:count-ops? :log-margins?} on or off; missing keys are unchanged."
+  [opts]
+  (h/instrument! (sp) opts))
+
+(defn reset-instruments! [] (h/reset-instruments! (sp)))
+
+(defn instruments
+  "{:counts {kind n} :margins {:n :min :p05 :median ..}} since the last reset."
+  []
+  {:counts (h/op-counts (sp)) :margins (h/margin-stats (sp))})
+
+(defn margin-log [] (h/margin-log (sp)))
+
+(defn item-memory "The item memory M (atoms and pointers)." [] (m :M))
+
+(defn digest
+  "{memory sha1} over the stored rows of M, F, SF and P: two runs agree
+  bit for bit iff their digests do."
+  []
+  (into {} (for [k [:M :F :SF :P]] [k (h/mem-digest (m k))])))

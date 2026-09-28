@@ -1,0 +1,14 @@
+;; E1: primitive cleanup. A codebook of `load` random unitary atoms, probed
+;; with one of them plus substrate probe noise of expected norm σ; success =
+;; nearest returns that atom. 20 probes per run, 20 seeds per point.
+;; Theory overlay (scripts/plot.py): P(1 + ε₀ > max εᵢ), ε₀ ~ N(0, σ²/D),
+;; εᵢ ~ N(0, (1+σ²)/D) over load − 1 distractors.
+{:name "e1"
+ :workers 2
+ :grid [[:dim [512 1024 2048 4096 8192]]
+        [:load [100 1000 10000 100000]]
+        [:seed {:range [0 20]}]
+        [:probe-noise [0 2 4 6 8 10 12 16 20 24 32 40]]]
+ ;; 1e5 × D float32 rows: 0.4 GB at D=1024, too much above D=2048
+ :exclude [{:dim 4096 :load 100000} {:dim 8192 :load 100000}]
+ :task {:gen vsc.experiments.tasks/primitive-probe :trials 20}}

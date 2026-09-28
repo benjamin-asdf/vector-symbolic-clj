@@ -3,4 +3,4 @@ name = "vector-symbolic-clj-substrate"
 version = "0.1.0"
 description = "Python/numpy HDC substrate for the vector-symbolic Clojure"
 requires-python = ">=3.11"
-dependencies = ["numpy>=2.0"]
+dependencies = ["numpy>=2.0", "matplotlib>=3.8"]

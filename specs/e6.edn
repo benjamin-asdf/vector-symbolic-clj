@@ -1,0 +1,9 @@
+;; E6: cost per substrate op, measured inside Python (no host bridge), for
+;; the codebook and the linear readout, over D and |M|. 3 repeats.
+{:name "e6"
+ :workers 1
+ :grid [[:memory [:codebook :linear]]
+        [:dim [512 1024 2048 4096 8192]]
+        [:load [100 1000 10000]]
+        [:seed [0 1 2]]]
+ :task {:gen vsc.experiments.tasks/micro}}

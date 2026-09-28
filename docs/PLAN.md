@@ -26,13 +26,13 @@ P6 write-up
 
 Goal: one reproducible command per figure.
 
-1. **Pluggable cleanup memory.** Split `hdc.py`'s `Memory` into an interface
+1. [x] **Pluggable cleanup memory.** Split `hdc.py`'s `Memory` into an interface
    (`nearest`, `recall`, `intern`, `deref`, `peel`) with interchangeable
    backends. The interpreter must not care which backend it runs on. Backends:
    - `codebook`: the current lookup table, hardmax(M p) M
    - `mhn`: a modern Hopfield network, softmax(β M p) M (P2)
    - `linear`: β = 0, plain M^T M p; the limiting case, needed for W
-2. **Noise knobs**, all in the substrate so that no path can bypass them:
+2. [x] **Noise knobs**, all in the substrate so that no path can bypass them:
    - `op-noise σ`: Gaussian noise added to the output of every
      bind/unbind/bundle (a noisy neural substrate)
    - `probe-noise σ`: noise on every cleanup probe
@@ -42,16 +42,16 @@ Goal: one reproducible command per figure.
      stored ones included (cell death: the paper's "degrades gracefully"
      claim, tested directly)
    - `degrade` (exists): one-shot noise on an input value
-3. **Instrumentation.** Count operations per kind, record the top-1/top-2
+3. [~] **Instrumentation.** Count operations per kind, record the top-1/top-2
    similarity margin of every cleanup, and record the first failing cleanup
    (wrong index) when ground truth is known. Ground truth comes from running
    the same machine with noise off and the same seed.
-4. **Runner.** `vsc.experiments` takes an EDN experiment spec (grid of
+4. [x] **Runner.** `vsc.experiments` takes an EDN experiment spec (grid of
    dim × backend × noise × seed × task) and writes one CSV row per run.
    Execution goes through a process pool. The memory cap follows CLAUDE.md:
    each worker is a JVM at `-Xmx2g` plus Python ≈ 3 GB, so run 5 workers,
    after checking `free -g`.
-5. **Plots.** `scripts/plot.py` (matplotlib, in `.venv`) turns CSVs into
+5. [x] **Plots.** `scripts/plot.py` (matplotlib, in `.venv`) turns CSVs into
    figures with Wilson 95% intervals over at least 20 seeds. Theory curves are
    overlaid where there is a closed form.
 
@@ -64,12 +64,12 @@ Done when: `clojure -M:jvm:exp specs/e1.edn` → `out/e1.csv` →
 
 | exp | question | x-axis | y-axis | series |
 |---|---|---|---|---|
-| E1 | primitive cleanup | probe noise σ | P(correct) | D ∈ {512…8192}, load \|M\| ∈ {1e2…1e5} |
-| E2 | structure retrieval | noise σ | P(exact round-trip) | list length, map n, set n |
-| E3 | capacity | n (entries) | P(get correct), P(false +) | D; theory line for 1/√(parts·n) vs 4.5/√D |
-| E4 | lesion | % dims zeroed | P(correct) | D, structure type |
-| E5 | interference over a run | #traces in M (program length) | first-failure rate | D |
-| E6 | cost | D, \|M\| | wall time/op, ops/task | backend |
+| [x] E1 | primitive cleanup | probe noise σ | P(correct) | D ∈ {512…8192}, load \|M\| ∈ {1e2…1e5} |
+| [x] E2 | structure retrieval | noise σ | P(exact round-trip) | list length, map n, set n |
+| [x] E3 | capacity | n (entries) | P(get correct), P(false +) | D; theory line for 1/√(parts·n) vs 4.5/√D |
+| [x] E4 | lesion | % dims zeroed | P(correct) | D, structure type |
+| [x] E5 | interference over a run | #traces in M (program length) | first-failure rate | D |
+| [x] E6 | cost | D, \|M\| | wall time/op, ops/task | backend |
 
 Theory for E1 (overlay): the probe is signal s plus noise.
 P(correct) = P(s + ε₀ > maxᵢ εᵢ) with εᵢ ~ N(0, σ_eff²/D) over |M| − 1

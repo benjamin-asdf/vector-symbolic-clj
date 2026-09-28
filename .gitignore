@@ -7,3 +7,5 @@ __pycache__/
 classes/
 ## agent worktrees
 .claude/
+## experiment output (CSVs, logs, PNGs); curated figures live in figures/
+out/

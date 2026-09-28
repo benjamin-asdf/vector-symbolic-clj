@@ -7,6 +7,8 @@
   :run {:main-opts ["-m" "vsc.main"]}
   ;; the P3 task suite: clojure -M:jvm:bench [task ...] [--dim D]
   :bench {:main-opts ["-m" "vsc.bench"]}
+  ;; experiment runner: clojure -M:jvm:exp specs/e1.edn
+  :exp {:main-opts ["-m" "vsc.experiments"]}
   :test {:extra-paths ["test"]
          :extra-deps {io.github.cognitect-labs/test-runner
                       {:git/tag "v0.5.1" :git/sha "dfb30dd"}}

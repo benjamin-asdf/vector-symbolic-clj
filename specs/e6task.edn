@@ -1,0 +1,12 @@
+;; E6, task level: (fact 4) on a hand-rolled multiply, through the whole
+;; interpreter and host bridge, over D, the backend, and extra atoms
+;; preloaded into M. Wall time and op counts per task.
+{:name "e6task"
+ :workers 1
+ :init {:prelude? false}
+ :budget {:max-ops 300000 :max-rows 80000 :seconds 90}
+ :grid [[:memory [:codebook :linear]]
+        [:dim [512 1024 2048 4096]]
+        [:load [0 1000 10000]]
+        [:seed {:range [0 5]}]]
+ :task {:gen vsc.experiments.tasks/program-cost}}

@@ -1,0 +1,18 @@
+;; E3: capacity. A map (keyword → keyword) or set of n keywords, stored as
+;; a quoted literal with capacity enforcement off, no noise. :get asks
+;; (get m k) (maps) or (contains? s k) (sets) for up to 24 present keys;
+;; :absent asks (contains? m z) for 24 keys that are not there.
+;; Theory (scripts/plot.py): each item's share 1/√(parts·n) of the trace
+;; against the chance floor 4.5/√D; parts = 3 for maps, 2 for sets.
+{:name "e3"
+ :workers 2
+ :init {:prelude? false :enforce-capacity? false}
+ :budget {:max-ops 5000000 :max-rows 60000 :seconds 60}
+ :grid [[:dim [1024 2048 4096]]
+        [:n [2 4 8 12 16 24 32 48 64 96 128]]
+        [:seed {:range [0 20]}]
+        [:task [:map-get :map-absent :set-get :set-absent]]]
+ :tasks {:map-get {:gen vsc.experiments.tasks/capacity :struct :map :probe :get}
+         :map-absent {:gen vsc.experiments.tasks/capacity :struct :map :probe :absent}
+         :set-get {:gen vsc.experiments.tasks/capacity :struct :set :probe :get}
+         :set-absent {:gen vsc.experiments.tasks/capacity :struct :set :probe :absent}}}

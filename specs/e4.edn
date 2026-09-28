@@ -1,0 +1,17 @@
+;; E4: lesion. Store noise-free, then kill a fixed random fraction f of the
+;; dimensions: stored rows are zeroed there and renormalised, and every
+;; vector produced or compared afterwards is zero there too (cell death
+;; after learning). Then read back / compute.
+{:name "e4"
+ :workers 2
+ :init {:prelude? false}
+ :budget {:max-ops 300000 :max-rows 60000 :seconds 15}
+ :grid [[:dim [1024 2048 4096]]
+        [:lesion [0 0.005 0.01 0.02 0.05 0.1 0.2 0.3 0.5 0.7 0.9]]
+        [:seed {:range [0 20]}]
+        [:task [:list16 :map8 :set8 :arith :program]]]
+ :tasks {:list16 {:gen vsc.experiments.tasks/structure :struct :list :n 16}
+         :map8 {:gen vsc.experiments.tasks/structure :struct :map :n 8}
+         :set8 {:gen vsc.experiments.tasks/structure :struct :set :n 8}
+         :arith {:gen vsc.experiments.tasks/structure :struct :arith}
+         :program {:gen vsc.experiments.tasks/structure :struct :program}}}
