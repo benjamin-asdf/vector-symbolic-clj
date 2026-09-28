@@ -1,0 +1,13 @@
+;; E5b: interference from the size of M alone. A fixed program, (cd 10 ()),
+;; on a memory preloaded with `load` random atoms (a large vocabulary), at
+;; fixed probe noise σ, with a noise-free reference run per seed.
+{:name "e5b"
+ :workers 2
+ :init {:prelude? false}
+ :reference? true
+ :budget {:max-ops 3000000 :max-rows 80000 :seconds 90}
+ :grid [[:dim [1024 2048 4096]]
+        [:probe-noise [1.0 1.4]]
+        [:seed {:range [0 20]}]
+        [:load [0 1000 10000 30000]]]
+ :task {:gen vsc.experiments.tasks/vocabulary}}

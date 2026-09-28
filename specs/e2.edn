@@ -1,0 +1,21 @@
+;; E2: structure round trips. Each structure is stored noise-free as a
+;; global (def x (quote …)), then `x` is evaluated and decoded with probe
+;; noise σ on every cleanup (the lookup, every car/cdr, every peel, every
+;; kind check). Success = the decoded value equals the original.
+{:name "e2"
+ :workers 2
+ :init {:prelude? false}
+ :budget {:max-ops 2000000 :max-rows 60000 :seconds 60}
+ :grid [[:dim [1024 2048 4096]]
+        [:probe-noise {:linspace [0 3 16]}]
+        [:seed {:range [0 20]}]
+        [:task [:list4 :list16 :list64 :map3 :map8 :intmap8 :set3 :set8 :nested3]]]
+ :tasks {:list4 {:gen vsc.experiments.tasks/structure :struct :list :n 4}
+         :list16 {:gen vsc.experiments.tasks/structure :struct :list :n 16}
+         :list64 {:gen vsc.experiments.tasks/structure :struct :list :n 64}
+         :map3 {:gen vsc.experiments.tasks/structure :struct :map :n 3}
+         :map8 {:gen vsc.experiments.tasks/structure :struct :map :n 8}
+         :intmap8 {:gen vsc.experiments.tasks/structure :struct :intmap :n 8}
+         :set3 {:gen vsc.experiments.tasks/structure :struct :set :n 3}
+         :set8 {:gen vsc.experiments.tasks/structure :struct :set :n 8}
+         :nested3 {:gen vsc.experiments.tasks/structure :struct :nested :n 3}}}

@@ -110,6 +110,30 @@ implementation.
    latched onto "chimera" numbers. Map keys, map values and set members are
    therefore boxed behind hash-consed pointers, which are near-orthogonal.
 
+## Experiments
+
+The substrate is instrumented for robustness experiments (docs/PLAN.md, P0).
+Everything acts inside `hdc.py`, so no interpreter path bypasses it:
+
+| option to `init!` / `set-knobs!` | effect |
+|---|---|
+| `:memory :codebook` / `:linear` / `:mhn` | cleanup backend: hardmax table, β = 0 linear readout, modern Hopfield (P2, a slot) |
+| `:op-noise σ` | v + σ‖v‖/√D·z on every bind/unbind/bundle output |
+| `:probe-noise σ` | the same on every cleanup probe |
+| `:lesion f` | a fixed fraction f of dimensions is zero in every vector, stored rows included |
+| `:memory-damage σ` | noise of norm σ on every stored row, applied by `(vsc/damage!)` |
+| `:count-ops? :log-margins?` | per-kind op counters, top1 − top2 margin of every cleanup |
+
+With every knob off the stored rows are bit-identical to the plain substrate.
+
+```sh
+clojure -M:jvm:exp specs/e1.edn            # grid → out/e1.csv (2 JVM workers)
+.venv/bin/python scripts/plot.py e1         # → out/e1.png, e1-threshold.png
+```
+
+Results of P1 (codebook robustness curves): `docs/results-P1.md`, figures in
+`figures/`.
+
 ## Limits
 
 - **Capacity grows linearly with D.** Measured, and enforced with an error
