@@ -40,7 +40,10 @@ def plot_e4c():
 
 
 def x50(pts):
-    """x where P falls through 0.5; inf if it never does in range."""
+    """x where P falls through 0.5; inf if it never does in range, 0 if it
+    starts below."""
+    if pts[0][1] < 0.5:
+        return 0.0
     v = crossing([p[0] for p in pts], [p[1] for p in pts], 0.5)
     if v != v and pts[-1][1] >= 0.5:
         return float("inf")
@@ -148,19 +151,26 @@ def plot_p2_e1():
     fig, axes = plt.subplots(len(groups), len(cols), figsize=(2.7 * len(cols), 2.2 * len(groups)),
                              sharey=True, squeeze=False)
     s50, cos0 = {}, {}
+    try:
+        crows, _ = read("p2-e1c")
+        for r in crows:
+            r["backend"] = "classical"
+    except FileNotFoundError:
+        crows = []
     for j, (d, L) in enumerate(cols):
-        sub = [r for r in rows if int(num(r["dim"])) == d and int(num(r["load"])) == L]
+        sub = [r for r in rows + crows if int(num(r["dim"])) == d and int(num(r["load"])) == L]
         data = pooled(sub, lambda r: r["backend"], lambda r: num(r["probe-noise"]))
         for lab, pts in data.items():
             s50[(d, L, lab)] = x50(pts)
-            cs = [num(r["m.cos"]) for r in sub if r["backend"] == lab and num(r["probe-noise"]) == 0]
+            cs = [num(r.get("m.cos")) for r in sub if r["backend"] == lab and num(r["probe-noise"]) == 0]
             cos0[(d, L, lab)] = float(np.mean(cs)) if cs else float("nan")
         for i, (mode, it) in enumerate(groups):
             ax = axes[i, j]
-            for ref, col, ls in (("codebook", INK, "-"), ("linear", INK2, ":")):
+            for ref, col, ls in (("codebook", INK, "-"), ("linear", INK2, ":"),
+                                 ("classical", CAT[7], "-.")):
                 if ref in data:
                     ax.plot([p[0] for p in data[ref]], [p[1] for p in data[ref]], ls, color=col,
-                            linewidth=1.3, label=ref)
+                            linewidth=1.3, label=ref if ref != "classical" else "classical Hopfield")
             for beta in [1, 4, 16, 64]:
                 lab = f"mhn-{mode}-b{beta}-i{it}"
                 if lab in data:
@@ -180,8 +190,9 @@ def plot_p2_e1():
     print("P2 E1 σ50 and cos(readout, atom) at σ=0 (D, load, backend)")
     for k in sorted(s50):
         print(f"  {k[0]:>5} {k[1]:>6} {k[2]:>18}  σ50 {s50[k]:6.2f}  cos0 {cos0[k]:5.3f}")
-    fig, axes = plt.subplots(1, len(cols), figsize=(2.9 * len(cols), 3.0), sharey=True, squeeze=False)
-    for ax, (d, L) in zip(axes.flat, cols):
+    fig, axes = plt.subplots(len(loads), len(dims), figsize=(3.0 * len(dims), 2.7 * len(loads)),
+                             sharey=True, sharex=True, squeeze=False)
+    for ax, (d, L) in zip(axes.T.flat, cols):
         ref = s50.get((d, L, "codebook"))
         for mode, col in (("snap", CAT[0]), ("soft", CAT[1])):
             for it in (1, 3, 10):
@@ -195,8 +206,10 @@ def plot_p2_e1():
         ax.axhline(s50.get((d, L, "linear"), float("nan")) / ref, color=INK2, linestyle=":", linewidth=1)
         ax.set_xscale("log", base=2)
         ax.set_title(f"D={d}, |M|={L:,}")
+    for ax in axes[-1]:
         ax.set_xlabel("β")
-    axes.flat[0].set_ylabel("σ₅₀ / σ₅₀(codebook)")
+    for ax in axes[:, 0]:
+        ax.set_ylabel("σ₅₀ / σ₅₀(codebook)")
     h, l = axes.flat[0].get_legend_handles_labels()
     fig.legend(h, l, loc="center left", bbox_to_anchor=(1.0, 0.5), fontsize=8)
     fig.suptitle("P2 E1  noise tolerance relative to the codebook (black = 1, dotted = linear); "
@@ -325,7 +338,7 @@ def plot_p2_collapse():
         axes[0, 0].set_ylabel("items surviving (PR)")
         axes[1, 0].set_ylabel("noise + distractor energy")
         axes[0, 0].legend(fontsize=7)
-        fig.suptitle(f"P2  β as a collapse knob: a {w}-weight k-item probe (+ noise of equal norm) "
+        fig.suptitle(f"P2  β as a collapse knob: k-item probe, {w} weights (+ noise of equal norm) "
                      "through the soft mhn backend (mean over seeds); dashed: 'keeps 0.8k' / 'cleans'",
                      x=0.01, y=1.02, ha="left")
         finish(fig, f"p2-collapse-{w}", blas_note(header))

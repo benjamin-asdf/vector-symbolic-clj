@@ -56,6 +56,44 @@ def probe_trials(dim, load, seed, sigma, trials, backend, opts):
     return {"successes": hits, "trials": int(trials), "cos": cos / int(trials)}
 
 
+_classical = {}
+
+
+def classical_trials(dim, load, seed, sigma, trials, steps=10):
+    """E1 baseline: a classical Hopfield network (Hopfield 1982). `load`
+    random bipolar (±1) patterns, Hebbian weights W = XᵀX/D with zero
+    diagonal, synchronous sign updates for `steps` steps. The probe is a
+    pattern plus Gaussian noise of norm σ·|x| (the same relative noise as
+    the other backends' probe noise). Correct if the final state's nearest
+    pattern is the probed one; `exact` is the rate of perfect recall.
+    Capacity is ≈ 0.14·D patterns, so it needs no HRR vectors at all but
+    also cannot hold much."""
+    key = (int(dim), int(load), int(seed))
+    if key not in _classical:
+        _classical.clear()
+        rng = np.random.default_rng([int(seed), 13])
+        X = rng.choice(np.array([-1.0, 1.0], dtype=np.float32), size=(int(load), int(dim)))
+        W = X.T @ X / np.float32(dim)
+        np.fill_diagonal(W, 0.0)
+        _classical[key] = (X, W)
+    X, W = _classical[key]
+    d = X.shape[1]
+    rng = np.random.default_rng([int(seed), int(round(float(sigma) * 1000)), 17])
+    hits, exact = 0, 0
+    for _ in range(int(trials)):
+        i = int(rng.integers(X.shape[0]))
+        s = X[i] + np.float32(sigma) * rng.standard_normal(d).astype(np.float32)
+        s = np.where(s >= 0, 1.0, -1.0).astype(np.float32)
+        for _ in range(int(steps)):
+            t = np.where(W @ s >= 0, 1.0, -1.0).astype(np.float32)
+            if np.array_equal(t, s):
+                break
+            s = t
+        hits += int(np.argmax(X @ s)) == i
+        exact += bool(np.array_equal(s, X[i]))
+    return {"successes": hits, "trials": int(trials), "exact": exact / int(trials)}
+
+
 def collapse(dim, n_items, k, seed, sigma, beta, iters, weights="equal"):
     """The β collapse curve. N atoms in a soft modern Hopfield memory; the
     probe is a superposition of k of them (equal weights, or 1 … 0.4) plus

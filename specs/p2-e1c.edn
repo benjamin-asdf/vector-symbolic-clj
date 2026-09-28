@@ -1,0 +1,10 @@
+;; P2 E1 baseline: a classical Hopfield network (Hebbian weights, sign
+;; activation, bipolar patterns, 10 synchronous steps) on the E1 grid.
+;; Same relative probe noise; correct = nearest pattern after settling.
+{:name "p2-e1c"
+ :workers 1
+ :grid [[:dim [1024 2048 4096]]
+        [:load [100 1000]]
+        [:seed {:range [0 20]}]
+        [:probe-noise [0 0.5 1 1.5 2 3 4 6 8 12 16]]]
+ :task {:gen vsc.experiments.tasks/p2-classical :trials 20}}

@@ -178,6 +178,16 @@
        {:successes (get r "successes") :trials (get r "trials") :m-size load
         :metrics {:cos (get r "cos")}}))})
 
+(defn p2-classical
+  "E1 baseline: a classical Hebbian Hopfield network on bipolar patterns."
+  [{:keys [dim load seed probe-noise trials steps] :or {trials 20 steps 10}}]
+  {:trials trials
+   :native
+   (fn []
+     (let [r (py/->jvm (py/call-attr (p2) "classical_trials" dim load seed probe-noise trials steps))]
+       {:successes (get r "successes") :trials (get r "trials") :m-size load
+        :metrics {:exact (get r "exact")}}))})
+
 (defn p2-collapse
   "The β collapse curve: a k-item superposition through a soft mhn memory
   of `load` atoms; success = it keeps ≥ 0.8k items and cleans (noise < 0.1)."
