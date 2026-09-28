@@ -1,0 +1,18 @@
+D=1024 N=1000 10s
+D=1024 N=4000 27s
+D=1024 N=16000 132s
+D=2048 N=1000 36s
+D=2048 N=4000 56s
+D=2048 N=16000 214s
+D=4096 N=1000 79s
+D=4096 N=4000 192s
+D=4096 N=16000 810s
+D= 1024 N=  1000 cap(first)={'codebook': 1, 'linear': 2, 'thresh': 4, 'softmax(β=10)': 1, 'softmax(β=30)': 1, 'softmax(β=100)': 1} chain4 clean={'linear': 1, 'thresh': 4} raw={'linear': 0, 'thresh': 2}
+D= 1024 N=  4000 cap(first)={'codebook': 1, 'linear': 1, 'thresh': 4, 'softmax(β=10)': 1, 'softmax(β=30)': 1, 'softmax(β=100)': 1} chain4 clean={'linear': 1, 'thresh': 4} raw={'linear': 0, 'thresh': 2}
+D= 1024 N= 16000 cap(first)={'codebook': 1, 'linear': 1, 'thresh': 8, 'softmax(β=10)': 1, 'softmax(β=30)': 1, 'softmax(β=100)': 1} chain4 clean={'linear': 0, 'thresh': 4} raw={'linear': 0, 'thresh': 2}
+D= 2048 N=  1000 cap(first)={'codebook': 1, 'linear': 0, 'thresh': 8, 'softmax(β=10)': 1, 'softmax(β=30)': 1, 'softmax(β=100)': 1} chain4 clean={'linear': 0, 'thresh': 4} raw={'linear': 0, 'thresh': 4}
+D= 2048 N=  4000 cap(first)={'codebook': 1, 'linear': 0, 'thresh': 8, 'softmax(β=10)': 1, 'softmax(β=30)': 1, 'softmax(β=100)': 1} chain4 clean={'linear': 0, 'thresh': 8} raw={'linear': 0, 'thresh': 4}
+D= 2048 N= 16000 cap(first)={'codebook': 1, 'linear': 1, 'thresh': 8, 'softmax(β=10)': 1, 'softmax(β=30)': 1, 'softmax(β=100)': 1} chain4 clean={'linear': 1, 'thresh': 8} raw={'linear': 0, 'thresh': 4}
+D= 4096 N=  1000 cap(first)={'codebook': 1, 'linear': 0, 'thresh': 16, 'softmax(β=10)': 1, 'softmax(β=30)': 1, 'softmax(β=100)': 1} chain4 clean={'linear': 0, 'thresh': 8} raw={'linear': 0, 'thresh': 8}
+D= 4096 N=  4000 cap(first)={'codebook': 1, 'linear': 0, 'thresh': 16, 'softmax(β=10)': 1, 'softmax(β=30)': 1, 'softmax(β=100)': 1} chain4 clean={'linear': 0, 'thresh': 8} raw={'linear': 0, 'thresh': 8}
+D= 4096 N= 16000 cap(first)={'codebook': 1, 'linear': 0, 'thresh': 16, 'softmax(β=10)': 1, 'softmax(β=30)': 1, 'softmax(β=100)': 1} chain4 clean={'linear': 0, 'thresh': 8} raw={'linear': 0, 'thresh': 8}
