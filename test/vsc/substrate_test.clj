@@ -153,8 +153,40 @@
     ;; before the calibrated eq? (P1 E6) no closure call survived a blend
     (vsc/run '(defn mul [a b] (if (zero? b) 0 (+ a (mul a (dec b))))))
     (is (= 12 (vsc/run '(mul 3 4)))))
-  (testing "mhn is a slot for P2"
-    (is (thrown? Exception (vsc/init! {:prelude? false :memory :mhn})))))
+  (testing "mhn rejects bad options"
+    (is (thrown? Exception (vsc/init! {:prelude? false :memory :mhn :memory-opts {:mode :fuzzy}})))))
+
+(deftest hopfield-backend
+  (let [base (fingerprint {})]
+    (testing "β = inf is the codebook, bit for bit"
+      (is (= base (fingerprint {:memory :mhn :memory-opts {:beta ##Inf :iters 3}}))))
+    (testing "large β gives the codebook's results, snapped or soft"
+      (is (= base (fingerprint {:memory :mhn :memory-opts {:beta 1e4}})))
+      (is (= base (fingerprint {:memory :mhn :memory-opts {:beta 1e4 :iters 3}})))
+      (is (= (first base)
+             (first (fingerprint {:memory :mhn :memory-opts {:beta 1e4 :mode :soft}}))))))
+  (testing "soft mode returns blends, snap mode stored rows"
+    (vsc/init! {:prelude? false})
+    (let [s (vsc/space)
+          rows (vec (repeatedly 50 #(h/unitary s)))
+          fill (fn [opts] (let [mem (h/memory s :mhn opts)] (doseq [r rows] (h/mem-add! mem r 0)) mem))
+          probe (h/bundle s (rows 3) (rows 7))
+          sims (fn [opts] (let [y (h/clean (fill opts) probe)]
+                            [(h/sim s y (rows 3)) (h/sim s y (rows 7))]))
+          [a b] (sims {:beta 16 :mode :soft})
+          [c d] (sims {:beta 16 :mode :snap})
+          [e f] (sims {:beta 16 :mode :soft :iters 10})]
+      (is (and (< 0.6 a 0.8) (< 0.6 b 0.8)) "one step keeps both items of an equal blend")
+      (is (> (max c d) 0.999) "snap returns one stored row")
+      (is (> (max e f) 0.99) "ten steps collapse the blend onto one item")
+      (is (= (first (h/nearest (fill {:beta 16 :mode :soft}) (h/degrade s (rows 9) 1.0))) 9)
+          "nearest is the winner after iterating")))
+  (testing "the interpreter runs on mhn"
+    (doseq [opts [{:beta 16} {:beta 64 :mode :soft} {:beta 16 :iters 3 :mode :soft}]]
+      (vsc/init! {:prelude? false :memory :mhn :memory-opts opts})
+      (vsc/run '(defn mul [a b] (if (zero? b) 0 (+ a (mul a (dec b))))))
+      (is (= [12 {:a 1 :b 2} '(x y z)] (vsc/run '[(mul 3 4) {:a 1 :b 2} (quote (x y z))]))
+          (pr-str opts)))))
 
 (deftest op-budget
   (vsc/init! {:prelude? false})
