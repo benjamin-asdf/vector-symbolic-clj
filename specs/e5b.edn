@@ -5,9 +5,9 @@
  :workers 2
  :init {:prelude? false}
  :reference? true
- :budget {:max-ops 3000000 :max-rows 80000 :seconds 90}
- :grid [[:dim [1024 2048 4096]]
+ :budget {:max-ops 1000000 :max-rows 80000 :seconds 45}
+ :grid [[:dim [1024 2048]]
         [:probe-noise [1.0 1.4]]
         [:seed {:range [0 20]}]
-        [:load [0 1000 10000 30000]]]
+        [:load [0 1000 3000 10000]]]
  :task {:gen vsc.experiments.tasks/vocabulary}}

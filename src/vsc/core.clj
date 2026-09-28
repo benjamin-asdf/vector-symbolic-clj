@@ -141,11 +141,15 @@
 (defn mk-vec [xs] (mk-seq :vec xs))
 
 (defn- cells
-  "Host seq of the elements of a list/vector cell chain."
-  [c]
-  (lazy-seq
-   (when-not (or (vnil? c) (empty-coll? c))
-     (cons (car c) (cells (cdr c))))))
+  "Host seq of the elements of a list/vector cell chain. Every cell is a row
+  of M, so a chain longer than M is a cycle (a misread cdr), not a list."
+  ([c] (cells c (h/mem-size (m :M))))
+  ([c budget]
+   (lazy-seq
+    (when-not (or (vnil? c) (empty-coll? c))
+      (when (neg? budget)
+        (throw (ex-info "cyclic cell chain" {})))
+      (cons (car c) (cells (cdr c) (dec budget)))))))
 
 (defn- distinct-by-eq [xs]
   (reduce (fn [acc x] (if (some #(eq? x %) acc) acc (conj acc x))) [] xs))
@@ -205,7 +209,11 @@
   (if (empty-coll? cv)
     0
     (let [[_ n] (h/recognize (m :C) (unbind (role :C) (deref-ptr cv)))]
-      n)))
+      ;; every constituent is a row of M, so a larger count is a misread
+      ;; (an overloaded or noisy trace), not a size to peel that many times
+      (if (<= 0 n (h/mem-size (m :M)))
+        n
+        (throw (ex-info (str "unreadable collection size " n) {:n n}))))))
 
 (defn mk-map
   "Map from a seq of [k v] vector pairs; later keys win.

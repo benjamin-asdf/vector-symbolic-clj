@@ -43,7 +43,8 @@ plt.rcParams.update({
 
 def ramp(n):
     """n ordinal steps of the blue ramp, evenly spread, light to dark."""
-    idx = np.linspace(0, len(BLUES) - 1, n).round().astype(int) if n > 1 else [2]
+    picks = {1: [2], 2: [1, 4], 3: [0, 2, 5], 4: [0, 2, 3, 5], 5: [0, 1, 2, 3, 5]}
+    idx = picks.get(n) or np.linspace(0, len(BLUES) - 1, n).round().astype(int)
     return [BLUES[i] for i in idx]
 
 
@@ -101,14 +102,14 @@ def draw(ax, pts, color, label, marker="o", ls="-"):
     p = np.array([p[1] for p in pts])
     lo = np.array([p[2] for p in pts])
     hi = np.array([p[3] for p in pts])
-    ax.fill_between(xs, lo, hi, color=color, alpha=0.18, linewidth=0)
+    ax.fill_between(xs, lo, hi, color=color, alpha=0.12, linewidth=0)
     ax.plot(xs, p, ls, color=color, marker=marker, label=label, markeredgecolor=SURFACE,
             markeredgewidth=0.8)
 
 
 def finish(fig, name, note=None):
     if note:
-        fig.text(0.01, 0.005, note, fontsize=7, color=INK2, ha="left", va="bottom")
+        fig.text(0.01, -0.02, note, fontsize=7, color=INK2, ha="left", va="top")
     path = OUT / f"{name}.png"
     fig.savefig(path, dpi=150, bbox_inches="tight")
     plt.close(fig)
@@ -168,11 +169,13 @@ def plot_e1():
             xs = np.linspace(0, max(p[0] for p in data[d]), 120)
             ax.plot(xs, [e1_theory(s, d, L) for s in xs], "--", color=colors[d], linewidth=1.2)
         ax.set_title(f"|M| = {L:,}")
-        ax.set_xlabel("probe noise σ (noise norm / signal norm)")
+        ax.set_xlabel("probe noise σ")
     np.atleast_1d(axes)[0].set_ylabel("P(nearest = stored atom)")
-    np.atleast_1d(axes)[-1].legend(loc="upper right", fontsize=8)
-    fig.suptitle("E1  primitive cleanup: measured (solid, Wilson 95%) vs theory (dashed)",
-                 x=0.01, ha="left")
+    h, l = np.atleast_1d(axes)[0].get_legend_handles_labels()
+    fig.legend(h, l, loc="center left", bbox_to_anchor=(1.0, 0.5), fontsize=8)
+    fig.suptitle("E1  primitive cleanup: measured (solid, Wilson 95%, 20 seeds × 20 probes)"
+                 " vs theory (dashed); σ = noise norm / signal norm",
+                 x=0.01, y=1.03, ha="left")
     finish(fig, "e1", blas_note(header))
 
     # threshold σ₅₀ vs √D, measured (interpolated) and theory
@@ -250,7 +253,7 @@ def small_multiples(exp, xkey, xlabel, title, xscale=None):
     for ax in axes[:, 0]:
         ax.set_ylabel("P(correct)")
     axes.flat[0].legend(fontsize=8, loc="lower left")
-    fig.suptitle(title, x=0.01, ha="left")
+    fig.suptitle(title, x=0.01, y=0.99, ha="left")
     finish(fig, exp, blas_note(header))
     return summary
 
@@ -314,7 +317,7 @@ def plot_e3():
                 ax.set_ylabel("proportion")
     axes[0, 0].legend(fontsize=8, loc="lower left")
     fig.suptitle("E3  capacity, no noise (dotted: n* where 1/√(parts·n) = 4.5/√D;"
-                 " dashed: theory)", x=0.01, ha="left")
+                 " dashed: theory)", x=0.01, y=1.03, ha="left")
     finish(fig, "e3", blas_note(header))
     for struct in ("map", "set"):
         sub = [r for r in rows if r["task"] == f"{struct}-get"]
@@ -349,6 +352,7 @@ def plot_e5():
     colors = dict(zip(dims, ramp(len(dims))))
     fig, axes = plt.subplots(1, len(sigmas) + 1, figsize=(3.4 * (len(sigmas) + 1), 3.2))
     print("E5 (σ, D, n, median M, P(correct), P(diverged), median first divergence / cleanups)")
+    hazard = []
     for ax, s in zip(axes, sigmas):
         for d in dims:
             sub = [r for r in rows if num(r["probe-noise"]) == s and int(num(r["dim"])) == d]
@@ -358,43 +362,36 @@ def plot_e5():
                 rs = [r for r in sub if int(num(r["n"])) == n]
                 m = float(np.median([num(r["m-size"]) for r in rs]))
                 k = sum(num(r["successes"], 0) for r in rs)
-                pts.append((m, *wilson(k, len(rs)), len(rs)))
+                pts.append((n, *wilson(k, len(rs)), len(rs)))
                 dv = [num(r["first-divergence"]) for r in rs]
                 nd = sum(1 for x in dv if x >= 0)
-                refc = np.median([num(r["ref-cleanups"]) for r in rs])
+                refc = float(np.median([num(r["ref-cleanups"]) for r in rs]))
                 fd = np.median([x for x in dv if x >= 0]) if nd else float("nan")
-                div.append((m, nd / len(rs)))
-                print(f"  {s:4.1f} {d:>5} {n:>3} {m:7.0f}  {k / len(rs):5.2f}  {nd / len(rs):5.2f}"
+                div.append((n, nd / len(rs)))
+                p = k / len(rs)
+                if 0 < p < 1:
+                    hazard.append((s, d, n, -math.log(p) / refc * 1000))
+                print(f"  {s:4.2f} {d:>5} {n:>3} {m:7.0f}  {p:5.2f}  {nd / len(rs):5.2f}"
                       f"  {fd:7.0f} / {refc:7.0f}")
             draw(ax, pts, colors[d], f"D={d}")
             ax.plot([p[0] for p in div], [1 - p[1] for p in div], ":", color=colors[d],
                     linewidth=1.2)
-        ax.set_xscale("log")
+        ax.set_ylim(-0.03, 1.03)
         ax.set_title(f"probe noise σ = {s:g}")
-        ax.set_xlabel("traces in M at the end of the run")
+        ax.set_xlabel("n (recursion depth of (cd n ()))")
     axes[0].set_ylabel("P(correct)  (dotted: P(no divergence))")
-    axes[0].legend(fontsize=8, loc="lower left")
-    # hazard per cleanup: −ln P(correct) / cleanups
+    axes[0].legend(fontsize=8, loc="center right")
     ax = axes[-1]
-    for d in dims:
-        for s, mk in zip(sigmas, "os^"):
-            sub = [r for r in rows if num(r["probe-noise"]) == s and int(num(r["dim"])) == d]
-            xs, ys = [], []
-            for n in sorted({int(num(r["n"])) for r in sub}):
-                rs = [r for r in sub if int(num(r["n"])) == n]
-                p = sum(num(r["successes"], 0) for r in rs) / len(rs)
-                c = np.median([num(r["ref-cleanups"]) for r in rs])
-                if 0 < p < 1:
-                    xs.append(np.median([num(r["m-size"]) for r in rs]))
-                    ys.append(-math.log(p) / c * 1000)
-            if xs:
-                ax.plot(xs, ys, mk + "-", color=colors[d], label=f"D={d}, σ={s:g}")
-    ax.set_xscale("log")
-    ax.set_title("failure hazard per 1000 cleanups")
-    ax.set_xlabel("traces in M at the end of the run")
+    for s, mk in zip(sigmas, "os^"):
+        for d in dims:
+            pts = [(n, h) for (s2, d2, n, h) in hazard if s2 == s and d2 == d]
+            ax.plot([p[0] for p in pts], [p[1] for p in pts], mk + "-", color=colors[d],
+                    label=f"D={d}, σ={s:g}")
+    ax.set_title("−ln P(correct) per 1000 cleanups (0 < P < 1 only)")
+    ax.set_xlabel("n")
     ax.legend(fontsize=7)
-    fig.suptitle("E5  interference over a run: (cd n ()) for n = 5 … 60 (Wilson 95%, 20 seeds)",
-                 x=0.01, ha="left")
+    fig.suptitle("E5  interference over a run (Wilson 95%, 20 seeds); M holds ≈ 150 + 5n traces",
+                 x=0.01, y=1.03, ha="left")
     finish(fig, "e5", blas_note(header))
 
 
@@ -418,7 +415,7 @@ def plot_e5b():
         ax.set_xlabel("extra atoms preloaded into M (+1)")
     np.atleast_1d(axes)[0].set_ylabel("P((cd 10 ()) correct)")
     np.atleast_1d(axes)[0].legend(fontsize=8, loc="lower left")
-    fig.suptitle("E5b  interference from |M| alone (Wilson 95%, 20 seeds)", x=0.01, ha="left")
+    fig.suptitle("E5b  interference from |M| alone (Wilson 95%, 20 seeds)", x=0.01, y=1.03, ha="left")
     finish(fig, "e5b", blas_note(header))
 
 
@@ -453,7 +450,7 @@ def plot_e6():
     axes[0].set_ylabel("µs per call (median of 3)")
     axes[0].legend(fontsize=8)
     fig.suptitle("E6  cost per substrate op, in Python (solid: codebook, dashed: linear)",
-                 x=0.01, ha="left")
+                 x=0.01, y=1.03, ha="left")
     finish(fig, "e6", blas_note(header))
 
     path = OUT / "e6task.csv"
@@ -489,7 +486,7 @@ def plot_e6():
         ax.set_xlabel("D")
     axes[0].legend(fontsize=7)
     fig.suptitle("E6  task-level cost of (fact 4) (median of 5 seeds; solid codebook, dashed linear)",
-                 x=0.01, ha="left")
+                 x=0.01, y=1.03, ha="left")
     finish(fig, "e6task", blas_note(header))
 
 

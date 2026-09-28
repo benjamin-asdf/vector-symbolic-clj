@@ -2,13 +2,15 @@
 ;; grows with n (the program length). Fixed probe noise σ; every run is
 ;; paired with a noise-free reference run of the same seed, and the
 ;; first cleanup whose winner differs is recorded (first-divergence).
+;; σ sits just below the probe-noise cliff of E2 (σ ≈ 1.73, where a clean
+;; probe's cosine drops under the 0.5 recognition threshold).
 {:name "e5"
  :workers 2
  :init {:prelude? false}
  :reference? true
- :budget {:max-ops 3000000 :max-rows 60000 :seconds 90}
+ :budget {:max-ops 1000000 :max-rows 60000 :seconds 20}
  :grid [[:dim [1024 2048 4096]]
-        [:probe-noise [1.0 1.4]]
+        [:probe-noise [1.5 1.6]]
         [:seed {:range [0 20]}]
-        [:n [5 10 20 40 60]]]
+        [:n [5 10 20 40]]]
  :task {:gen vsc.experiments.tasks/countdown}}

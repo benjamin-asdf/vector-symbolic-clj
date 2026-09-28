@@ -7,7 +7,7 @@
 {:name "e3"
  :workers 2
  :init {:prelude? false :enforce-capacity? false}
- :budget {:max-ops 5000000 :max-rows 60000 :seconds 120}
+ :budget {:max-ops 5000000 :max-rows 60000 :seconds 60}
  :grid [[:dim [1024 2048 4096]]
         [:n [2 4 8 12 16 24 32 48 64 96 128]]
         [:seed {:range [0 20]}]

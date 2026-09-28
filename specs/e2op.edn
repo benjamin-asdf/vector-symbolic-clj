@@ -4,7 +4,7 @@
 {:name "e2op"
  :workers 2
  :init {:prelude? false}
- :budget {:max-ops 2000000 :max-rows 60000 :seconds 60}
+ :budget {:max-ops 300000 :max-rows 60000 :seconds 15}
  :grid [[:dim [1024 2048 4096]]
         [:op-noise {:linspace [0 3 16]}]
         [:seed {:range [0 20]}]

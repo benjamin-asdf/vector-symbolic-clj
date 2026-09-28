@@ -93,7 +93,11 @@
   (let [v (structure-value struct n)
         present (take (min n trials) (shuffle-by n (kws "k" n)))
         absent (kws "z" trials)
-        ask (fn [form] (vsc/run form))]
+        ;; each query gets its own budget, so one runaway query (a misread
+        ;; count or cdr) cannot starve the others
+        ask (fn [form]
+              (h/budget! (vsc/space) {:max-ops 200000 :seconds 10})
+              (vsc/run form))]
     {:setup [(list 'def 'm (list 'quote v))]
      :trials (if (= probe :get) (count present) (count absent))
      :run (fn []

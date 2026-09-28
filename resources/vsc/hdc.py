@@ -686,8 +686,16 @@ def bench(space, mem, k=50):
 
 
 def collect():
-    """Run Python's cyclic garbage collector; the number of objects freed."""
-    return gc.collect()
+    """Run Python's cyclic garbage collector and hand freed heap back to the
+    OS (glibc keeps it otherwise: after a large array is freed its dynamic
+    mmap threshold rises and later arrays fragment the heap)."""
+    n = gc.collect()
+    try:
+        import ctypes
+        ctypes.CDLL("libc.so.6").malloc_trim(0)
+    except (OSError, AttributeError):
+        pass
+    return n
 
 
 def versions():

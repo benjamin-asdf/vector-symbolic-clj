@@ -103,6 +103,14 @@
 (defn- init-opts [spec params]
   (merge {:prelude? true} (:init spec) (select-keys params [:dim :seed :memory :memory-opts])))
 
+(defn- err-msg
+  "A one-line error: a Python traceback shrinks to its last line."
+  [^Throwable e]
+  (let [m (or (ex-message e) (.getName (class e)))]
+    (if (str/includes? m "Traceback")
+      (last (remove str/blank? (str/split-lines m)))
+      m)))
+
 (defn- run-task
   "Run task `t` on the current machine: setup, knobs, damage, measure. The
   clock covers the task only, not the setup."
@@ -114,7 +122,7 @@
         (doseq [f (:setup t)] (vsc/run f))
         (when-let [p (:prepare t)] (p))
         (catch Throwable e
-          (throw (ex-info (str "setup: " (or (ex-message e) (.getName (class e)))) {} e))))
+          (throw (ex-info (str "setup: " (err-msg e)) {} e))))
       (vsc/set-knobs! (knobs params))
       (vsc/damage! (or (:memory-damage params) 0.0))
       (vsc/reset-instruments!)
@@ -128,7 +136,7 @@
         (assoc r :wall-ms (ms)))
       (catch Throwable e
         {:successes 0 :trials (or (:trials t) 1) :wall-ms (ms)
-         :error (or (ex-message e) (.getName (class e)))})
+         :error (err-msg e)})
       (finally
         (h/budget! (vsc/space) {})))))
 
@@ -152,7 +160,7 @@
       (let [t0 (System/nanoTime)
             r (try (f) (catch Throwable e
                          {:successes 0 :trials (or (:trials t) 1)
-                          :error (or (ex-message e) (.getName (class e)))}))]
+                          :error (err-msg e)}))]
         (merge {:wall-ms (/ (- (System/nanoTime) t0) 1e6)} r))
       (let [ref (when (:reference? spec)
                   (init! spec params)
