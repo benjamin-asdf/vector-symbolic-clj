@@ -195,6 +195,11 @@
   [s m k]
   (jvm-map (py/call-attr @module "bench" s m k)))
 
+(defn collect!
+  "Run Python's cyclic garbage collector."
+  []
+  (py/call-attr @module "collect"))
+
 (defn versions
   "{:numpy version :blas description} of the substrate."
   []

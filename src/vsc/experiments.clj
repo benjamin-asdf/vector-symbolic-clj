@@ -219,6 +219,15 @@
       (vec (keep #(try (edn/read-string %) (catch Exception _ nil)) (line-seq r))))
     []))
 
+(defn- rss-mb
+  "Resident set size of this process (JVM + embedded Python), in MB."
+  []
+  (try
+    (let [l (first (filter #(str/starts-with? % "VmRSS")
+                           (java.nio.file.Files/readAllLines (.toPath (io/file "/proc/self/status")))))]
+      (quot (parse-long (re-find #"\d+" l)) 1024))
+    (catch Exception _ -1)))
+
 (defn run-shard
   "Run shard `i` of `n`, appending one EDN row per line to its part file."
   [spec i n {:keys [resume?]}]
@@ -234,12 +243,13 @@
           (.write w (str (pr-str r) "\n"))
           (.flush w)
           (binding [*out* *err*]
-            (println (format "[%s %d/%d shard %d] run %d %s -> %s/%s %s%.0f ms"
+            (println (format "[%s %d/%d shard %d] run %d %s -> %s/%s %s%.0f ms, rss %d MB"
                              (:name spec) (inc j) (count todo) i (:run params)
                              (pr-str (dissoc params :run)) (:successes r) (:trials r)
                              (if (:error r) (str "error: " (:error r) " ") "")
-                             (double (:wall-ms r)))))
-          (System/gc))))))
+                             (double (:wall-ms r)) (rss-mb))))
+          (System/gc)
+          (h/collect!))))))
 
 ;; ---------------------------------------------------------------------------
 ;; process pool
@@ -255,11 +265,27 @@
 (def ^:private reserve-gb 10.0)
 (def ^:private max-workers 2)
 
+(defn- slice-headroom-gb
+  "Headroom of the cgroup slice this process's scope sits in (a mem-scope
+  wrapper puts JVMs under one aggregate cap), or nil outside one."
+  []
+  (try
+    (let [cg (-> (java.nio.file.Files/readAllLines (.toPath (io/file "/proc/self/cgroup")))
+                 first (str/split #":" 3) last)
+          dir (.getParentFile (io/file (str "/sys/fs/cgroup" cg)))
+          rd #(str/trim (slurp (io/file dir %)))
+          mx (rd "memory.max")]
+      (when-not (= "max" mx)
+        (/ (- (parse-long mx) (parse-long (rd "memory.current"))) 1073741824.0)))
+    (catch Exception _ nil)))
+
 (defn- pool-size
-  "Workers the machine can afford: each JVM + Python ≈ 2 GB, and 10 GB stay free."
+  "Workers the machine can afford: each JVM + Python ≈ 2 GB, 10 GB of RAM
+  stay free, and the aggregate cgroup cap keeps 2 GB of headroom."
   [wanted]
   (let [avail (mem-available-gb)
-        fit (long (Math/floor (/ (- avail reserve-gb) gb-per-worker)))]
+        fit (long (Math/floor (/ (- avail reserve-gb) gb-per-worker)))
+        fit (if-let [h (slice-headroom-gb)] (min fit (long (Math/floor (/ (- h 2.0) gb-per-worker)))) fit)]
     (max 1 (min wanted max-workers fit))))
 
 (defn- spawn [spec-path i n resume?]
@@ -286,8 +312,9 @@
         n (pool-size (or workers (:workers spec) 1))
         runs (expand spec)
         _ (binding [*out* *err*]
-            (println (format "%s: %d runs on %d worker(s), %.1f GB available"
-                             (:name spec) (count runs) n (mem-available-gb))))
+            (println (format "%s: %d runs on %d worker(s), %.1f GB available, slice headroom %s GB"
+                             (:name spec) (count runs) n (mem-available-gb)
+                             (some->> (slice-headroom-gb) (format "%.1f")))))
         children (doall (for [i (range 1 n)] (spawn spec-path i n resume?)))]
     (run-shard spec 0 n {:resume? resume?})
     (doseq [^Process p children] (.waitFor p))

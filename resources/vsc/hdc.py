@@ -20,8 +20,10 @@ Cleanup memories are pluggable backends behind one interface (`Memory`):
   mhn        softmax(β K p): modern Hopfield network (P2, a slot for now)
 """
 
+import gc
 import os
 import time
+import weakref
 
 # Matrix-vector products here are small; BLAS thread pools only burn cores.
 for _var in ("OPENBLAS_NUM_THREADS", "OMP_NUM_THREADS", "MKL_NUM_THREADS"):
@@ -42,7 +44,10 @@ class Space:
         self.dim = int(dim)
         self.seed = int(seed)
         self.rng = np.random.default_rng(int(seed))
-        self.memories = []
+        # weak: a memory refers to its space, so strong refs both ways would
+        # make a cycle and keep every discarded machine's arrays alive until
+        # Python's cyclic collector happens to run
+        self._memories = []
         # instrumentation
         self.counting = False
         self.counts = {}
@@ -76,7 +81,7 @@ class Space:
             dead = np.random.default_rng([base[0], 2]).permutation(self.dim)
             self.mask = np.ones(self.dim)
             self.mask[dead[: int(round(self.lesion * self.dim))]] = 0.0
-            for mem in self.memories:
+            for mem in self.memories():
                 mem._lesion_rows()
 
     def knobs(self):
@@ -119,8 +124,14 @@ class Space:
     def damage(self, sigma):
         """Synaptic damage: add noise of norm ~σ to every stored row of every
         memory of this space, once."""
-        for mem in self.memories:
+        for mem in self.memories():
             mem.damage(sigma)
+
+    def memories(self):
+        """The live memories over this space."""
+        live = [r() for r in self._memories]
+        self._memories = [weakref.ref(m) for m in live if m is not None]
+        return [m for m in live if m is not None]
 
     # -- instrumentation ----------------------------------------------------
 
@@ -393,7 +404,7 @@ class Memory:
         self.V = np.zeros((int(capacity), self.dim), dtype=np.float32)
         self.labels = np.full(int(capacity), -1, dtype=np.int32)
         self.n = 0
-        space.memories.append(self)
+        space._memories.append(weakref.ref(self))
 
     def _grow(self):
         self.M = np.concatenate([self.M, np.zeros_like(self.M)])
@@ -672,6 +683,11 @@ def bench(space, mem, k=50):
     t("deref", lambda: mem.deref(a))
     t("peel8", lambda: peel([mem], sup, -1.0, len(parts)))
     return out
+
+
+def collect():
+    """Run Python's cyclic garbage collector; the number of objects freed."""
+    return gc.collect()
 
 
 def versions():
