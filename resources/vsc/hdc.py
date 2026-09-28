@@ -160,15 +160,27 @@ class Space:
         return dict(self.counts)
 
     def record(self, kind, a, i):
-        """Log one cleanup: [kind, winner, top-1 similarity, top1 − top2]."""
+        """Log one cleanup: [kind, winner, top-1 similarity, top1 − top2].
+        A best match below the chance floor 4.5/√D is a miss (a lookup that
+        is meant to fail, such as a symbol that is not a special form): it
+        is logged with winner -1 and no margin."""
         if not self.logging:
             return
         s1 = float(a[i]) if i >= 0 else 0.0
+        if s1 < 4.5 / np.sqrt(self.dim):
+            self.log.append((kind, -1, s1, float("nan")))
+            return
         if a.shape[0] >= 2:
             s2 = float(np.partition(a, -2)[-2])
         else:
             s2 = 0.0
         self.log.append((kind, int(i), s1, s1 - s2))
+
+    def relabel(self, kind, winner, s1):
+        """Replace the last log entry: the winner came from a readout, not
+        from the table, so it has no runner-up margin."""
+        if self.logging and self.log:
+            self.log[-1] = (kind, int(winner), float(s1), float("nan"))
 
     def get_log(self):
         return [list(e) for e in self.log]
@@ -182,6 +194,8 @@ class Space:
             return {"n": 0}
         m = np.array([e[3] for e in self.log if e[3] == e[3]])
         s = np.array([e[2] for e in self.log])
+        if m.size == 0:
+            return {"n": len(self.log)}
         return {"n": len(self.log), "min": float(m.min()),
                 "p05": float(np.percentile(m, 5)), "median": float(np.median(m)),
                 "s1_min": float(s.min()), "s1_median": float(np.median(s))}
@@ -612,6 +626,7 @@ class Cleanup:
             return [int(mem.labels[i]), i, s], u, a
         n, sn = self.nums._read(v)
         if sn > s:
+            self.space.relabel("num", n, sn)
             return [self.NUM, n, sn], u, a
         return [int(mem.labels[i]) if i >= 0 else -1, i, s], u, a
 
@@ -628,6 +643,35 @@ class Cleanup:
     def part(self, role, p):
         """M(role ⊘ M(p)): one field of the trace pointer p refers to."""
         return self.cleanup(self.space.unbind(role, self.mem.deref(p)))
+
+
+def bench(space, mem, k=50):
+    """Seconds per call of the substrate ops, measured inside Python (no
+    host bridge), on memory `mem` as it is. Fills the trace rows V with a
+    permutation of the keys so that `deref` has something to return."""
+    rng = np.random.default_rng(0)
+    if mem.n:
+        mem.V[: mem.n] = mem.M[rng.permutation(mem.n)]
+    a, b = space.unitary(), space.unitary()
+    parts = [mem.get(i) for i in range(min(8, mem.n))]
+    sup = np.sum(parts, axis=0) if parts else a
+    out = {}
+
+    def t(name, f):
+        t0 = time.perf_counter()
+        for _ in range(int(k)):
+            f()
+        out[name] = (time.perf_counter() - t0) / int(k)
+
+    t("bind", lambda: space.bind(a, b))
+    t("unbind", lambda: space.unbind(a, b))
+    t("bundle", lambda: space.bundle(a, b, a))
+    t("sim", lambda: space.sim(a, b))
+    t("nearest", lambda: mem.nearest(a))
+    t("clean", lambda: mem.clean(a))
+    t("deref", lambda: mem.deref(a))
+    t("peel8", lambda: peel([mem], sup, -1.0, len(parts)))
+    return out
 
 
 def versions():

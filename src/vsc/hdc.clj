@@ -190,6 +190,11 @@
   [s]
   (jvm-map (py/call-attr s "margin_stats")))
 
+(defn bench
+  "{op seconds-per-call} measured inside Python on memory `m` of space `s`."
+  [s m k]
+  (jvm-map (py/call-attr @module "bench" s m k)))
+
 (defn versions
   "{:numpy version :blas description} of the substrate."
   []

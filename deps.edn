@@ -5,6 +5,8 @@
  {;; Python owns the HDC substrate; keep the JVM small.
   :jvm {:jvm-opts ["-Xmx1g" "-Xss512m" "--enable-native-access=ALL-UNNAMED"]}
   :run {:main-opts ["-m" "vsc.main"]}
+  ;; experiment runner: clojure -M:jvm:exp specs/e1.edn
+  :exp {:main-opts ["-m" "vsc.experiments"]}
   :test {:extra-paths ["test"]
          :extra-deps {io.github.cognitect-labs/test-runner
                       {:git/tag "v0.5.1" :git/sha "dfb30dd"}}

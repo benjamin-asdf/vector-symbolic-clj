@@ -684,6 +684,8 @@
 
 (defn margin-log [] (h/margin-log (sp)))
 
+(defn item-memory "The item memory M (atoms and pointers)." [] (m :M))
+
 (defn digest
   "{memory sha1} over the stored rows of M, F, SF and P: two runs agree
   bit for bit iff their digests do."
