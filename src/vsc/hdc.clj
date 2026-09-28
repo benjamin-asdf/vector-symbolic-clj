@@ -5,6 +5,7 @@
   vector; it only combines, compares and cleans them up through this ns."
   (:require
    [clojure.java.io :as io]
+   [clojure.string :as str]
    [libpython-clj2.python :as py]))
 
 (defn- python-executable
@@ -30,10 +31,29 @@
   [dim seed]
   (py/call-attr @module "Space" dim seed))
 
+(defn- py-kw
+  "Clojure option map -> Python keyword args (:op-noise -> op_noise)."
+  [opts]
+  (into {} (for [[k v] opts :when (some? v)]
+             [(str/replace (name k) "-" "_") (if (keyword? v) (name v) v)])))
+
+(defn configure!
+  "Set the noise knobs of space `s`: :op-noise, :probe-noise, :lesion,
+  :noise-seed. Missing knobs are off."
+  [s knobs]
+  (py/call-attr-kw s "configure" [] (py-kw (select-keys knobs [:op-noise :probe-noise :lesion :noise-seed]))))
+
+(defn damage!
+  "Add noise of norm ~`sigma` once to every stored row of every memory of `s`."
+  [s sigma]
+  (py/call-attr s "damage" sigma))
+
 (defn memory
-  "A fresh lookup-table cleanup memory."
-  [dim]
-  (py/call-attr @module "Memory" dim))
+  "A fresh cleanup memory over space `s`. `backend` is :codebook (the lookup
+  table), :linear or :mhn; `opts` go to the backend's constructor."
+  ([s] (memory s :codebook {}))
+  ([s backend opts]
+   (py/call-attr-kw @module "make_memory" [s (name backend)] (py-kw opts))))
 
 (defn numbers
   "Integer encoding n = B^n over space `s` (residue number system)."
@@ -74,8 +94,20 @@
   ([m v label dedupe] (py/call-attr m "add" v label dedupe)))
 
 (defn mem-put! [m i v] (py/call-attr m "put" i v))
+(defn mem-digest "sha1 of the stored rows." [m] (py/call-attr m "digest"))
 (defn mem-get [m i] (py/call-attr m "get" i))
 (defn mem-label ^long [m i] (py/call-attr m "label" i))
+
+(defn clean
+  "M(v): the memory backend's autoassociative readout (for the codebook, the
+  nearest stored row)."
+  [m v]
+  (py/call-attr m "clean" v))
+
+(defn add-random!
+  "Store `k` fresh random unitary atoms under `label`; the new size."
+  [m k label]
+  (py/call-attr m "add_random" k label))
 
 (defn nearest
   "[index similarity] of the closest trace."
@@ -118,3 +150,47 @@
   "M(role ⊘ M(p))."
   [c role p]
   (py/call-attr c "part" role p))
+
+;; ---------------------------------------------------------------------------
+;; instrumentation
+
+(defn instrument!
+  "Switch op counting and the cleanup margin log of space `s` on or off."
+  [s {:keys [count-ops? log-margins?]}]
+  (py/call-attr s "instrument" count-ops? log-margins?))
+
+(defn reset-instruments! [s] (py/call-attr s "reset_instruments"))
+
+(defn budget!
+  "Abort (a Python BudgetExceeded) past `max-ops` substrate ops, `max-rows`
+  rows in any memory, or `seconds` from now; nil lifts a limit."
+  [s {:keys [max-ops max-rows seconds]}]
+  (py/call-attr s "budget" max-ops max-rows seconds))
+
+(defn- jvm-map [x] (into {} (map (fn [[k v]] [(keyword (str/replace k "_" "-")) v])) (py/->jvm x)))
+
+(defn op-counts
+  "{kind count} of the substrate ops since the last reset. :rows is the
+  number of stored rows scanned, the real cost of a table cleanup."
+  [s]
+  (jvm-map (py/call-attr s "get_counts")))
+
+(defn margin-log
+  "[kind winner top1 margin] of every logged cleanup, in order."
+  [s]
+  (mapv vec (py/->jvm (py/call-attr s "get_log"))))
+
+(defn winner-log
+  "[kind winner] of every logged cleanup, for diffs against a reference run."
+  [s]
+  (mapv vec (py/->jvm (py/call-attr s "log_indices"))))
+
+(defn margin-stats
+  "Summary of the margin log: :n :min :p05 :median :s1-min :s1-median."
+  [s]
+  (jvm-map (py/call-attr s "margin_stats")))
+
+(defn versions
+  "{:numpy version :blas description} of the substrate."
+  []
+  (jvm-map (py/call-attr @module "versions")))
