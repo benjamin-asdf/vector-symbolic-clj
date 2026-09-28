@@ -30,7 +30,7 @@ a
 uv venv .venv && uv pip install --python .venv/bin/python numpy   # substrate
 clojure -M:jvm:run                          # line REPL
 clojure -M:jvm:run examples/demo.clj        # run a file
-clojure -M:jvm:test                         # 103 assertions, ~20 s
+clojure -M:jvm:test                         # 134 assertions
 ```
 
 The `.venv` matters. A distro numpy built against reference BLAS makes every
