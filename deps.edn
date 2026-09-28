@@ -3,7 +3,7 @@
         clj-python/libpython-clj {:mvn/version "2.026"}}
  :aliases
  {;; Python owns the HDC substrate; keep the JVM small.
-  :jvm {:jvm-opts ["-Xmx3g" "-Xss512m" "--enable-native-access=ALL-UNNAMED"]}
+  :jvm {:jvm-opts ["-Xmx1g" "-Xss512m" "--enable-native-access=ALL-UNNAMED"]}
   :run {:main-opts ["-m" "vsc.main"]}
   :test {:extra-paths ["test"]
          :extra-deps {io.github.cognitect-labs/test-runner
