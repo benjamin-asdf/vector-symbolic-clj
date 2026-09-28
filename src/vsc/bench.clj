@@ -56,7 +56,9 @@
   "Run one task on a fresh machine (`init-opts` as for vsc.core/init!).
   Returns the decoded value, whether it matches, wall time of the program
   (not of init!), trace growth of M, and the substrate calls it made with
-  the share of the wall time spent inside them."
+  the share of the wall time spent inside them. An optional :budget in
+  `init-opts` ({:max-ops :max-rows :seconds}, see vsc.hdc/budget!) bounds the
+  program; exceeding it is an error result."
   ([task] (run-task task {}))
   ([task init-opts]
    (let [{:keys [file expected]} (get (tasks) task)
@@ -64,8 +66,13 @@
      (vsc/init! init-opts)
      (let [before (vsc/stats)
            t0 (System/nanoTime)
-           [value calls nanos] (counting #(try (vsc/run-string src)
-                                         (catch Exception e {::error (ex-message e)})))
+           [value calls nanos] (counting #(try (when-let [b (:budget init-opts)]
+                                                 (h/budget! (vsc/space) b))
+                                               (vsc/run-string src)
+                                               (catch Exception e
+                                                 {::error (last (remove str/blank?
+                                                                        (str/split-lines (str (ex-message e)))))})
+                                               (finally (h/budget! (vsc/space) {}))))
            ms (/ (- (System/nanoTime) t0) 1e6)
            after (vsc/stats)]
        {:task task
