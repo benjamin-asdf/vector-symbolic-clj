@@ -30,7 +30,8 @@ a
 uv venv .venv && uv pip install --python .venv/bin/python numpy   # substrate
 clojure -M:jvm:run                          # line REPL
 clojure -M:jvm:run examples/demo.clj        # run a file
-clojure -M:jvm:test                         # 103 assertions, ~20 s
+clojure -M:jvm:test                         # 123 assertions incl. the bench suite, ~80 s
+clojure -M:jvm:bench                        # P3 task suite: timing table (bench/README.md)
 ```
 
 The `.venv` matters. A distro numpy built against reference BLAS makes every
@@ -46,6 +47,8 @@ or the interpreter named in `$VSC_PYTHON`.
 | `src/vsc/core.clj` | encoding, evaluator, primitives, reader/printer boundary |
 | `resources/vsc/prelude.clj` | `map`, `filter`, `reduce`, `*`, … written *in the dialect* |
 | `examples/metacircular.clj` | a λ-calculus interpreter written in the dialect |
+| `bench/` | P3 task suite, expected values derived in real Clojure (`bench/README.md`) |
+| `src/vsc/bench.clj` | suite runner: timing, trace growth, substrate call counts |
 
 ## Encoding
 
@@ -58,7 +61,7 @@ inverse, ν normalisation, and M the cleanup memory.
 | `(a . b)` | pointer *p*, with M: *p* ↦ ν(L⊗a + R⊗b) |
 | `first` / `rest` | M(L ⊘ M(p)) / M(R ⊘ M(p)), the paper's eqs. 3–4 |
 | `[a b]` | the same, labelled as a vector cell |
-| `{k v …}` | *p* ↦ ν(ν(Σ k⊗v) + ν(K⊗Σ k) + C⊗n) |
+| `{k v …}` | *p* ↦ ν(ν(Σ k⊗⟨v⟩) + ν(K⊗Σ k) + C⊗n), ⟨v⟩ a pointer to v |
 | `#{x …}` | *p* ↦ ν(ν(Σ x) + C⊗n) |
 | `(fn …)` closure | *p* ↦ ν(L⊗form + R⊗env) |
 | integer n | Bⁿ, so `+` is ⊗, `-` is ⊘, `inc` is ⊗B |
@@ -109,6 +112,11 @@ implementation.
    and n+p agree on p's band, so explaining away over a set of integers
    latched onto "chimera" numbers. Map keys, map values and set members are
    therefore boxed behind hash-consed pointers, which are near-orthogonal.
+4. **Map values get their own pointer.** Binding commutes, so if a value is
+   also a key, the entry k′⊗k answers the probe k with k′ at full strength:
+   `(get {1 2 2 3} 2)` returned 1. Each value is stored as ⟨v⟩, a
+   hash-consed pointer to v that no key ever equals. The P3 `map-update`
+   task found this.
 
 ## Limits
 
@@ -120,6 +128,9 @@ implementation.
   | 2048 (default) | 21 | 32 |
   | 4096 | 43 | 64 |
 
+  These are single-lookup margins. A workload that reads a map hundreds of
+  times fails sooner: the `map-update` bench task is exact up to 12 entries at
+  D=2048, but not at 16 or 20 (`bench/README.md`).
   Change it with `(vsc/init! {:dim 4096})`. Lists have no capacity limit,
   because every cell is its own pointer: a 200-element vector round-trips.
 - **Speed.** `(fib 10)` takes about 9 s. The evaluator re-reads the program
