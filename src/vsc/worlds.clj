@@ -83,10 +83,11 @@
   (if (= label NUM) (num-vec i) (h/mem-get (m :M) i)))
 
 (defn- single?
-  "Is v one clean world (a stored row or an exact integer)?"
+  "Is v one clean world (a stored row or an exact integer)? The bar is
+  high: a 1% world next to a 99% one leaves a similarity of 0.99995."
   [v]
   (let [[_ _ s] (h/recognize (m :C) v)]
-    (> s 0.995)))
+    (> s 0.999999)))
 
 (defn readout
   "The raw readout of v: [[label index weight] ...], heaviest first, index
@@ -235,7 +236,9 @@
       (#{'first 'rest} nm)
       (let [ws (readout (first args))]
         (if (and (> (count ws) 1) (cells-of-one-kind? ws))
-          (plain args)
+          ;; straight through the memory: the kind checks of the plain
+          ;; primitive see only the heaviest world
+          ((if (= 'first nm) core/car core/cdr) (first args))
           (enumerate plain args)))
       :else (enumerate plain args))))
 
@@ -346,6 +349,15 @@
       (> pi (- 1.0 eps)) (then-fn env tv)
       (< pi eps) (else-fn env tv)
       :else (split-branch env test-form tv pi then-fn else-fn))))
+
+(defn- global-hook
+  "A global's value: F holds ν(L⊗sym + R⊗val), so R⊘slot carries the
+  crosstalk R⊘L⊗sym. For a superposed value, subtract the known L field
+  first, so the least squares weights are exact (as for cells)."
+  [sym slot]
+  (let [L (get (m :roles) :L) R (get (m :roles) :R)
+        l (h/bind (sp) L sym)]
+    (core/cleanup (h/unbind (sp) R (h/lincomb (sp) [slot l] [1.0 (- (h/coef slot l))])))))
 
 ;; -- for-worlds -----------------------------------------------------------------
 
@@ -531,5 +543,6 @@
                        :branch branch-hook
                        :construct construct-hook
                        :decode decode-hook
+                       :global global-hook
                        :special special-hook})
      :ready)))

@@ -1096,10 +1096,10 @@ def readout(cleanup, v, int_lo=-1024, int_hi=1024, margin=1.0, kmax=64):
         space.tick("rows", mem.n)
         a = mem.M[: mem.n] @ x.astype(np.float32)
         i = int(np.argmax(a))
-        if a[i] > 0.999:
+        if a[i] > 0.999999:
             return [[[int(mem.labels[i]), i, 1.0]], 0.0]
     n, sn = nums._read(x)
-    if sn > 0.999:
+    if sn > 0.999999:
         return [[[Cleanup.NUM, int(n), 1.0]], 0.0]
     # one integer, possibly outside [int_lo, int_hi], plus noise
     top = float(a.max()) if mem.n else 0.0

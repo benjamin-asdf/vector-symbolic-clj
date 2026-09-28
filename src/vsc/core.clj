@@ -128,9 +128,12 @@
 ;; data structures
 
 ;; [W1 hook] the trace goes to M unnormalised: M stores it unit length either
-;; way, and a :proj memory records its norm as the exact field gain
+;; way, and a :proj memory records its norm as the exact field gain. Under
+;; vsc.worlds each field is unit length too: a superposition Σ wᵢvᵢ (Σ wᵢ = 1)
+;; is shorter than one value, and would drown in the other field's crosstalk
 (defn- cell [kind a b]
-  (pointer kind (bundle (bind (role :L) a) (bind (role :R) b))))
+  (let [f (if (hook :construct) nu identity)]
+    (pointer kind (bundle (bind (role :L) (f a)) (bind (role :R) (f b))))))
 
 (defn car [c] (h/part (m :C) (role :L) c))
 (defn cdr [c] (h/part (m :C) (role :R) c))
@@ -400,7 +403,10 @@
   (when (pos? (h/mem-size (m :F)))
     (let [slot (h/clean (m :F) (bind (role :L) sym))]
       (when (> (sim (unbind (role :L) slot) sym) theta-def)
-        (cleanup (unbind (role :R) slot))))))
+        ;; [W1 hook] vsc.worlds reads a superposed value without crosstalk
+        (if-let [h (hook :global)]
+          (h sym slot)
+          (cleanup (unbind (role :R) slot)))))))
 
 (defn define!
   "F ↞ cons(sym, val), replacing an earlier definition of `sym`."
