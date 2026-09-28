@@ -280,7 +280,15 @@ class Space:
 
 
 class Numbers:
-    """Integers as powers of one unitary base: n = B^n, so n + m = B^n ⊗ B^m.
+    """Integers as powers of one unitary base, offset by a random unitary Z:
+    n = B^n ⊗ Z. Then n + 1 = B ⊗ n, n + m = (n ⊗ m) ⊘ Z, n − m = Z ⊗ (m ⊘ n)
+    (see `step`, `offset`).
+
+    Z is there because B^0 alone is the identity of binding, a delta at
+    index 0: a lesion that kills dimension 0 made 0 the zero vector and broke
+    all arithmetic (P1, E4). With Z every integer, 0 included, is a dense
+    unitary vector. Z comes from its own random stream, so the atom stream
+    (and every other vector of the space) is unchanged.
 
     B is a residue-number-system base (cf. Tomkins-Flanagan & Kelly, "Hey
     Pentti, We Did (More of) It!"): the Fourier bins are split at random into
@@ -309,12 +317,27 @@ class Numbers:
             r = np.arange(p)[:, None]
             self.cands.append(np.exp(-2j * np.pi * r * a[None, :] / p))
         self.spec = np.exp(2j * np.pi * self.expo)
+        # the offset Z: unitary (real ±1 at DC and Nyquist), own stream
+        zr = np.random.default_rng([space.seed, 3])
+        self.zspec = np.exp(1j * zr.uniform(-np.pi, np.pi, d // 2 + 1))
+        self.zspec[0] = zr.choice([-1.0, 1.0])
+        if d % 2 == 0:
+            self.zspec[-1] = zr.choice([-1.0, 1.0])
+        self.zconj = np.conj(self.zspec)
 
     def base(self):
         return self.vec(1)
 
+    def step(self):
+        """B itself: inc is B ⊗ n, dec is B ⊘ n."""
+        return self.space._made("num_vec", np.fft.irfft(self.spec, n=self.space.dim))
+
+    def offset(self):
+        """Z, the vector of 0 (= B^0 ⊗ Z)."""
+        return self.space._made("num_vec", np.fft.irfft(self.zspec, n=self.space.dim))
+
     def vec(self, n):
-        spec = np.exp(2j * np.pi * ((self.expo * int(n)) % 1.0))
+        spec = np.exp(2j * np.pi * ((self.expo * int(n)) % 1.0)) * self.zspec
         return self.space._made("num_vec", np.fft.irfft(spec, n=self.space.dim))
 
     def _crt(self, residues):
@@ -331,7 +354,7 @@ class Numbers:
 
     def _read(self, v):
         self.space.tick("num_read")
-        X = np.fft.rfft(v)
+        X = np.fft.rfft(v) * self.zconj
         residues = [int(np.argmax((c @ X[band]).real))
                     for band, c in zip(self.bands, self.cands)]
         n = self._crt(residues)
@@ -624,19 +647,30 @@ class Cleanup:
     into one call keeps the host/substrate chatter down."""
 
     NUM = 4
+    # Chance level of the integer readout, in units of 1/√D: on a random
+    # probe the band-wise argmax still reaches sim ≈ (4.0 ± 0.5)/√D at every
+    # D (measured, D = 1024…4096), because it maximises over the candidates
+    # of each band. The table's chance level is the expected maximum of n
+    # unrelated similarities, ≈ √(2 ln n)/√D.
+    NUM_NULL = 4.0
 
     def __init__(self, space, mem, nums, theta=0.9):
         self.space, self.mem, self.nums, self.theta = space, mem, nums, theta
 
     def _recognize(self, v):
-        """v is already perturbed; returns ([label, index, sim], u, scores)."""
+        """v is already perturbed; returns ([label, index, sim], u, scores).
+        An integer wins if the readout's similarity exceeds its chance level
+        by more than the table's best match exceeds the table's (a raw
+        comparison let the biased readout win once noise brought an atom's
+        similarity down to ≈ 5/√D)."""
         mem = self.mem
         u = mem._unit(v)
         i, s, a = mem._select(u, "recognize")
         if s > self.theta:
             return [int(mem.labels[i]), i, s], u, a
         n, sn = self.nums._read(v)
-        if sn > s:
+        rd = np.sqrt(self.space.dim)
+        if sn - self.NUM_NULL / rd > s - np.sqrt(2 * np.log(max(mem.n, 2))) / rd:
             self.space.relabel("num", n, sn)
             return [self.NUM, n, sn], u, a
         return [int(mem.labels[i]) if i >= 0 else -1, i, s], u, a

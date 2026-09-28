@@ -89,6 +89,53 @@
                                          (libpython-clj2.python/call-attr v "tolist")))))]
     (is (= 256 zeros))))
 
+(defn- nonzeros [v]
+  (count (remove zero? (libpython-clj2.python/->jvm (libpython-clj2.python/call-attr v "tolist")))))
+
+(defn- dead-dim-0-seed
+  "A noise seed whose lesion mask at fraction f kills dimension 0."
+  [f]
+  (first (filter (fn [k]
+                   (vsc/set-knobs! {:lesion f :noise-seed k})
+                   (zero? (libpython-clj2.python/->jvm
+                           (libpython-clj2.python/get-item
+                            (libpython-clj2.python/get-attr (vsc/space) "mask") 0))))
+                 (range 1000))))
+
+(deftest integers-survive-losing-dimension-0
+  ;; P1 E4: 0 was B^0, a delta at index 0, so killing that one dimension
+  ;; made 0 the zero vector and broke all arithmetic. Now n = B^n ⊗ Z.
+  (vsc/init! {:prelude? false :dim 2048})
+  (testing "0 is a dense vector"
+    (is (< 2000 (nonzeros (vsc/encode 0)))))
+  (let [k (dead-dim-0-seed 0.005)]
+    (vsc/init! {:prelude? false :dim 2048})
+    (vsc/run '(defn mul [a b] (if (zero? b) 0 (+ a (mul a (dec b))))))
+    (vsc/set-knobs! {:lesion 0.005 :noise-seed k})
+    (is (some? k))
+    (is (= 42 (vsc/run '(+ 17 25))))
+    (is (= [true false 0 -3] (vsc/run '[(zero? (- 5 5)) (zero? 1) (+ 0 0) (- 3)])))
+    (is (= 12 (vsc/run '(mul 3 4))))))
+
+(deftest decisions-scale-with-the-noise-floor
+  ;; P1 E2: every structure failed at probe noise √3 (the kind check's
+  ;; θ = 0.5) and at op noise 1.46 (the global lookup's θ = 0.4), for every D
+  (testing "probe noise twice the old cliff"
+    (vsc/init! {:prelude? false :dim 2048})
+    (vsc/run '(def x (quote (a b c d e f g h))))
+    (vsc/run '(def m {:a :x :b :y}))
+    (vsc/set-knobs! {:probe-noise 3.5})
+    (is (= '(a b c d e f g h) (vsc/run 'x)))
+    (is (= :y (vsc/run '(get m :b)))))
+  (testing "op noise past the old cliff"
+    (vsc/init! {:prelude? false :dim 2048})
+    (vsc/run '(def m {:a 1 :b 2}))
+    (vsc/set-knobs! {:op-noise 2.5})
+    (is (= {:a 1 :b 2} (vsc/run 'm))))
+  (testing "eq? compares identities, so integers sharing residue bands differ"
+    (vsc/init! {:prelude? false})
+    (is (= [false true false] (vsc/run '[(= 0 5005) (= 5005 (+ 5000 5)) (zero? 5005)])))))
+
 (deftest memory-backends
   (testing "the codebook snaps, the linear memory does not"
     (doseq [[backend snapped?] [[:codebook true] [:linear false]]]
@@ -102,7 +149,10 @@
         (is (= snapped? (> (h/sim s (h/clean mem probe) (rows 7)) 0.999)) (name backend)))))
   (testing "the interpreter runs on the linear backend for small programs"
     (vsc/init! {:prelude? false :memory :linear})
-    (is (= 3 (vsc/run '(+ 1 2)))))
+    (is (= 3 (vsc/run '(+ 1 2))))
+    ;; before the calibrated eq? (P1 E6) no closure call survived a blend
+    (vsc/run '(defn mul [a b] (if (zero? b) 0 (+ a (mul a (dec b))))))
+    (is (= 12 (vsc/run '(mul 3 4)))))
   (testing "mhn is a slot for P2"
     (is (thrown? Exception (vsc/init! {:prelude? false :memory :mhn})))))
 
