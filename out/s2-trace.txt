@@ -1,0 +1,22 @@
+  0 EVAL   ((fn [x] (if (zero? x) :zero (inc x))) 1) call             halt
+  1 EVAL   (fn [x] (if (zero? x) :zero (inc x)))    fn               args halt
+  2 RET    #fn (fn [x] (if (zero? x) :zero (inc x))) arg              args halt
+  3 EVAL   1                                        self-evaluating  args halt
+  4 RET    1                                        arg              args halt
+  5 APPLY  #fn (fn [x] (if (zero? x) :zero (inc x))) closure          halt
+  6 EVAL   (if (zero? x) :zero (inc x))             if               halt
+  7 EVAL   (zero? x)                                call             if halt
+  8 EVAL   zero?                                    symbol           args if halt
+  9 RET    #prim zero?                              arg              args if halt
+ 10 EVAL   x                                        symbol           args if halt
+ 11 RET    1                                        arg              args if halt
+ 12 APPLY  #prim zero?                              primitive        if halt
+ 13 RET    false                                    if-branch        if halt
+ 14 EVAL   (inc x)                                  call             halt
+ 15 EVAL   inc                                      symbol           args halt
+ 16 RET    #prim inc                                arg              args halt
+ 17 EVAL   x                                        symbol           args halt
+ 18 RET    1                                        arg              args halt
+ 19 APPLY  #prim inc                                primitive        halt
+ 20 RET    2                                        halt             halt
+=> 2
