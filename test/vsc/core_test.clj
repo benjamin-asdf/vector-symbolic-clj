@@ -68,6 +68,18 @@
     (is (= #{:a :b :c} (set (vsc/run '(keys {:a 1 :b 2 :c 3})))))
     (is (= #{1 2 3} (set (vsc/run '(vals {:a 1 :b 2 :c 3})))))))
 
+(deftest map-values-that-are-also-keys
+  ;; binding commutes: without value pointers, the entry 1⊗2 answered the
+  ;; probe 2 with 1, found by the bench task map-update
+  (doseq [form '[(get {1 2 2 3} 2)
+                 (get {1 2 2 3} 1)
+                 (get {1 1 2 3} 2)
+                 (get {:a :b :b :c} :b)
+                 ({:x :y :y :z :z :x} :y)
+                 (update (update {0 0 1 1 2 4} 0 inc) 1 inc)]]
+    (same-as-clojure form))
+  (is (= #{2 3} (set (vsc/run '(vals {1 2 2 3}))))))
+
 (deftest arithmetic-is-binding
   (doseq [form '[(+ 40 2) (+ 1 2 3 4) (- 10 3) (- 3 10) (- 5) (inc 41) (dec 0)
                  (zero? 0) (zero? 1) (+ 400000 400000)

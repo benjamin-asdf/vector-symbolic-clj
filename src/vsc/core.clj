@@ -15,7 +15,7 @@
     first(c)     = M(L⊘M(c))                       ;; paper eq. 3
     rest(c)      = M(R⊘M(c))                       ;; paper eq. 4
     [a b]        = same, labelled as a vector cell
-    {k v, ...}   = p  with  M: p ↦ ν(ν(Σ k⊗v) + ν(K⊗Σ k) + C⊗n)
+    {k v, ...}   = p  with  M: p ↦ ν(ν(Σ k⊗⟨v⟩) + ν(K⊗Σ k) + C⊗n)
     #{x, ...}    = p  with  M: p ↦ ν(ν(Σ x) + C⊗n)
     (fn ...)     = p  with  M: p ↦ ν(L⊗form + R⊗env)   ;; a closure
     n            = B^n, B unitary; + is ⊗, - is ⊘, zero? is sim(x, B^0);
@@ -49,7 +49,7 @@
 ;; memory labels = kinds
 (def ^:private label->kind
   {1 :sym 2 :kw 3 :str 4 :num 5 :nil 6 :true 7 :false 8 :prim
-   10 :list 11 :vec 12 :map 13 :set 14 :fn 15 :box})
+   10 :list 11 :vec 12 :map 13 :set 14 :fn 15 :box 16 :vbox})
 (def ^:private kind->label (zipmap (vals label->kind) (keys label->kind)))
 
 (def ^:private coll-kinds [:list :vec :map :set])
@@ -157,7 +157,14 @@
 ;; behind a hash-consed pointer wherever it enters a map or set.
 
 (defn- slot [x] (if (= :num (kind-of x)) (pointer :box x) x))
-(defn- unslot [y] (if (= :box (kind-of y)) (cleanup (deref-ptr y)) y))
+(defn- unslot [y] (if (#{:box :vbox} (kind-of y)) (cleanup (deref-ptr y)) y))
+
+;; Binding commutes, so if a map value were the same vector as a key, the
+;; entry k'⊗k would answer the probe k with k' at full strength:
+;; (get {1 2 2 3} 2) returned 1. Map values therefore sit behind their own
+;; hash-consed pointer, which no key ever equals.
+
+(defn- value-slot [x] (pointer :vbox x))
 
 (defn- recall-slot
   "The map/set constituent nearest to `p` (never a bare integer)."
@@ -209,12 +216,12 @@
 
 (defn mk-map
   "Map from a seq of [k v] vector pairs; later keys win.
-  Trace: ν(ν(Σ k⊗v) + ν(K⊗Σ k) + C⊗n)."
+  Trace: ν(ν(Σ k⊗⟨v⟩) + ν(K⊗Σ k) + C⊗n), ⟨v⟩ the value's own pointer."
   [entries]
   (let [entries (reduce (fn [acc [k v]] (conj (filterv #(not (eq? k (first %))) acc) [k v]))
                         [] entries)
         _ (check-capacity "map" 3 (count entries))
-        slots (mapv (fn [[k v]] [(slot k) (slot v)]) entries)]
+        slots (mapv (fn [[k v]] [(slot k) (value-slot v)]) entries)]
     (if (empty? entries)
       (tag :map)
       (pointer :map
