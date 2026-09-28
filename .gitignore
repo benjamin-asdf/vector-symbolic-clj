@@ -1,0 +1,7 @@
+.cpcache/
+.nrepl-port
+__pycache__/
+*.pyc
+.venv/
+## dtype-next writes generated FFI bindings here
+classes/
