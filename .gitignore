@@ -5,3 +5,5 @@ __pycache__/
 .venv/
 ## dtype-next writes generated FFI bindings here
 classes/
+## agent worktrees
+.claude/
