@@ -1,0 +1,25 @@
+Sep 28, 2026 1:11:34 PM clojure.tools.logging$eval673$fn__676 invoke
+INFO: Prefixing java library path: /home/benj/.local/share/uv/python/cpython-3.12.11-linux-x86_64-gnu/lib
+Sep 28, 2026 1:11:34 PM clojure.tools.logging$eval673$fn__676 invoke
+INFO: Loading python library: /home/benj/.local/share/uv/python/cpython-3.12.11-linux-x86_64-gnu/lib/libpython3.12.so
+Sep 28, 2026 1:11:34 PM clojure.tools.logging$eval673$fn__676 invoke
+INFO: Reference thread starting
+-- 1. arithmetic lifting (similarity is printed ×100)
+(similarity (+ (bundle 1 2) 10) (bundle 11 12))            => 100
+(similarity (+ (bundle 1 2) 10) 11)                        => 67
+(similarity (+ (bundle 1 2) 10) 12)                        => 67
+(similarity (+ (bundle 1 2) 10) 13)                        => -17
+(+ (bundle 1 2) 10)                                        => 646657
+(let [x (bundle 1 2)] (similarity (+ x x) 3))              => -11
+(let [x (bundle 1 2)] (similarity (+ x x) 2))              => 44
+(let [x (bundle 1 2)] (similarity (+ x x) 4))              => 44
+-- 2. structural ops snap: the codebook pointer memory collapses
+(similarity (bundle (quote (a b)) (quote (c d))) (quote (a b))) => 70
+(first (bundle (quote (a b)) (quote (c d))))               => c
+(first (bundle (quote (a b)) (quote (c d)) (quote (c d)))) => c
+(first (bundle (quote (a b)) (quote (a x))))               => a
+(similarity (cleanup (bundle (quote a) (quote c))) (quote a)) => -3
+-- 3. a superposed test: if is host control flow, so it picks one branch
+(similarity (bundle true false) true)                      => 71
+(if (bundle true false) :then :else)                       => :else
+(if (bundle false nil) :then :else)                        => :else

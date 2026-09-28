@@ -1,0 +1,200 @@
+D=512 n=30 0.0s
+D=512 n=100 0.1s
+D=512 n=300 0.2s
+D=512 n=1000 0.8s
+D=512 n=3000 1.4s
+D=1024 n=30 0.0s
+D=1024 n=100 0.1s
+D=1024 n=300 0.3s
+D=1024 n=1000 1.5s
+D=1024 n=3000 2.5s
+D=2048 n=30 0.1s
+D=2048 n=100 0.2s
+D=2048 n=300 0.7s
+D=2048 n=1000 3.7s
+D=2048 n=3000 5.9s
+D=4096 n=30 0.1s
+D=4096 n=100 0.4s
+D=4096 n=300 2.0s
+D=4096 n=1000 9.2s
+D=4096 n=3000 10.6s
+D=8192 n=30 0.2s
+D=8192 n=100 0.9s
+D=8192 n=300 4.0s
+D=8192 n=1000 15.9s
+D=8192 n=3000 20.6s
+linear                       D=  512 n=   30 exact=0.12 node_acc=0.956 peak=10
+linear                       D=  512 n=  100 exact=0.00 node_acc=0.679 peak=31
+linear                       D=  512 n=  300 exact=0.00 node_acc=0.366 peak=86
+linear                       D=  512 n= 1000 exact=0.00 node_acc=0.126 peak=288
+linear                       D=  512 n= 3000 exact=0.00 node_acc=0.029 peak=859
+linear                       D= 1024 n=   30 exact=0.81 node_acc=0.985 peak=10
+linear                       D= 1024 n=  100 exact=0.00 node_acc=0.833 peak=31
+linear                       D= 1024 n=  300 exact=0.00 node_acc=0.557 peak=91
+linear                       D= 1024 n= 1000 exact=0.00 node_acc=0.254 peak=292
+linear                       D= 1024 n= 3000 exact=0.00 node_acc=0.079 peak=874
+linear                       D= 2048 n=   30 exact=0.94 node_acc=0.998 peak=10
+linear                       D= 2048 n=  100 exact=0.00 node_acc=0.942 peak=31
+linear                       D= 2048 n=  300 exact=0.00 node_acc=0.767 peak=92
+linear                       D= 2048 n= 1000 exact=0.00 node_acc=0.419 peak=288
+linear                       D= 2048 n= 3000 exact=0.00 node_acc=0.167 peak=862
+linear                       D= 4096 n=   30 exact=1.00 node_acc=1.000 peak=9
+linear                       D= 4096 n=  100 exact=0.25 node_acc=0.987 peak=32
+linear                       D= 4096 n=  300 exact=0.00 node_acc=0.887 peak=89
+linear                       D= 4096 n= 1000 exact=0.00 node_acc=0.623 peak=296
+linear                       D= 4096 n= 3000 exact=0.00 node_acc=0.311 peak=862
+linear                       D= 8192 n=   30 exact=1.00 node_acc=1.000 peak=10
+linear                       D= 8192 n=  100 exact=0.94 node_acc=0.999 peak=30
+linear                       D= 8192 n=  300 exact=0.00 node_acc=0.973 peak=90
+linear                       D= 8192 n= 1000 exact=0.00 node_acc=0.787 peak=288
+linear                       D= 8192 n= 3000 exact=0.00 node_acc=0.497 peak=863
+softmax(β=10)                D=  512 n=   30 exact=0.00 node_acc=0.906 peak=10
+softmax(β=10)                D=  512 n=  100 exact=0.00 node_acc=0.684 peak=31
+softmax(β=10)                D=  512 n=  300 exact=0.00 node_acc=0.379 peak=86
+softmax(β=10)                D=  512 n= 1000 exact=0.00 node_acc=0.146 peak=288
+softmax(β=10)                D=  512 n= 3000 exact=0.00 node_acc=0.068 peak=859
+softmax(β=10)                D= 1024 n=   30 exact=0.56 node_acc=0.973 peak=10
+softmax(β=10)                D= 1024 n=  100 exact=0.00 node_acc=0.793 peak=31
+softmax(β=10)                D= 1024 n=  300 exact=0.00 node_acc=0.451 peak=91
+softmax(β=10)                D= 1024 n= 1000 exact=0.00 node_acc=0.166 peak=292
+softmax(β=10)                D= 1024 n= 3000 exact=0.00 node_acc=0.071 peak=874
+softmax(β=10)                D= 2048 n=   30 exact=0.75 node_acc=0.992 peak=10
+softmax(β=10)                D= 2048 n=  100 exact=0.00 node_acc=0.857 peak=31
+softmax(β=10)                D= 2048 n=  300 exact=0.00 node_acc=0.524 peak=92
+softmax(β=10)                D= 2048 n= 1000 exact=0.00 node_acc=0.201 peak=288
+softmax(β=10)                D= 2048 n= 3000 exact=0.00 node_acc=0.073 peak=862
+softmax(β=10)                D= 4096 n=   30 exact=1.00 node_acc=1.000 peak=9
+softmax(β=10)                D= 4096 n=  100 exact=0.00 node_acc=0.913 peak=32
+softmax(β=10)                D= 4096 n=  300 exact=0.00 node_acc=0.536 peak=89
+softmax(β=10)                D= 4096 n= 1000 exact=0.00 node_acc=0.222 peak=296
+softmax(β=10)                D= 4096 n= 3000 exact=0.00 node_acc=0.089 peak=862
+softmax(β=10)                D= 8192 n=   30 exact=1.00 node_acc=1.000 peak=10
+softmax(β=10)                D= 8192 n=  100 exact=0.00 node_acc=0.951 peak=30
+softmax(β=10)                D= 8192 n=  300 exact=0.00 node_acc=0.560 peak=90
+softmax(β=10)                D= 8192 n= 1000 exact=0.00 node_acc=0.230 peak=288
+softmax(β=10)                D= 8192 n= 3000 exact=0.00 node_acc=0.100 peak=863
+softmax(β=100)               D=  512 n=   30 exact=0.00 node_acc=0.487 peak=10
+softmax(β=100)               D=  512 n=  100 exact=0.00 node_acc=0.272 peak=31
+softmax(β=100)               D=  512 n=  300 exact=0.00 node_acc=0.230 peak=86
+softmax(β=100)               D=  512 n= 1000 exact=0.00 node_acc=0.124 peak=288
+softmax(β=100)               D=  512 n= 3000 exact=0.00 node_acc=0.056 peak=859
+softmax(β=100)               D= 1024 n=   30 exact=0.00 node_acc=0.506 peak=10
+softmax(β=100)               D= 1024 n=  100 exact=0.00 node_acc=0.274 peak=31
+softmax(β=100)               D= 1024 n=  300 exact=0.00 node_acc=0.253 peak=91
+softmax(β=100)               D= 1024 n= 1000 exact=0.00 node_acc=0.185 peak=292
+softmax(β=100)               D= 1024 n= 3000 exact=0.00 node_acc=0.116 peak=874
+softmax(β=100)               D= 2048 n=   30 exact=0.00 node_acc=0.602 peak=10
+softmax(β=100)               D= 2048 n=  100 exact=0.00 node_acc=0.363 peak=31
+softmax(β=100)               D= 2048 n=  300 exact=0.00 node_acc=0.224 peak=92
+softmax(β=100)               D= 2048 n= 1000 exact=0.00 node_acc=0.218 peak=288
+softmax(β=100)               D= 2048 n= 3000 exact=0.00 node_acc=0.162 peak=862
+softmax(β=100)               D= 4096 n=   30 exact=0.00 node_acc=0.646 peak=9
+softmax(β=100)               D= 4096 n=  100 exact=0.00 node_acc=0.403 peak=32
+softmax(β=100)               D= 4096 n=  300 exact=0.00 node_acc=0.240 peak=89
+softmax(β=100)               D= 4096 n= 1000 exact=0.00 node_acc=0.185 peak=296
+softmax(β=100)               D= 4096 n= 3000 exact=0.00 node_acc=0.182 peak=862
+softmax(β=100)               D= 8192 n=   30 exact=0.00 node_acc=0.779 peak=10
+softmax(β=100)               D= 8192 n=  100 exact=0.00 node_acc=0.512 peak=30
+softmax(β=100)               D= 8192 n=  300 exact=0.00 node_acc=0.360 peak=90
+softmax(β=100)               D= 8192 n= 1000 exact=0.00 node_acc=0.240 peak=288
+softmax(β=100)               D= 8192 n= 3000 exact=0.00 node_acc=0.262 peak=863
+softmax(β=30)                D=  512 n=   30 exact=0.00 node_acc=0.690 peak=10
+softmax(β=30)                D=  512 n=  100 exact=0.00 node_acc=0.478 peak=31
+softmax(β=30)                D=  512 n=  300 exact=0.00 node_acc=0.324 peak=86
+softmax(β=30)                D=  512 n= 1000 exact=0.00 node_acc=0.172 peak=288
+softmax(β=30)                D=  512 n= 3000 exact=0.00 node_acc=0.082 peak=859
+softmax(β=30)                D= 1024 n=   30 exact=0.00 node_acc=0.783 peak=10
+softmax(β=30)                D= 1024 n=  100 exact=0.00 node_acc=0.612 peak=31
+softmax(β=30)                D= 1024 n=  300 exact=0.00 node_acc=0.424 peak=91
+softmax(β=30)                D= 1024 n= 1000 exact=0.00 node_acc=0.251 peak=292
+softmax(β=30)                D= 1024 n= 3000 exact=0.00 node_acc=0.140 peak=874
+softmax(β=30)                D= 2048 n=   30 exact=0.19 node_acc=0.908 peak=10
+softmax(β=30)                D= 2048 n=  100 exact=0.00 node_acc=0.786 peak=31
+softmax(β=30)                D= 2048 n=  300 exact=0.00 node_acc=0.624 peak=92
+softmax(β=30)                D= 2048 n= 1000 exact=0.00 node_acc=0.414 peak=288
+softmax(β=30)                D= 2048 n= 3000 exact=0.00 node_acc=0.220 peak=862
+softmax(β=30)                D= 4096 n=   30 exact=0.44 node_acc=0.971 peak=9
+softmax(β=30)                D= 4096 n=  100 exact=0.00 node_acc=0.857 peak=32
+softmax(β=30)                D= 4096 n=  300 exact=0.00 node_acc=0.796 peak=89
+softmax(β=30)                D= 4096 n= 1000 exact=0.00 node_acc=0.589 peak=296
+softmax(β=30)                D= 4096 n= 3000 exact=0.00 node_acc=0.330 peak=862
+softmax(β=30)                D= 8192 n=   30 exact=0.75 node_acc=0.988 peak=10
+softmax(β=30)                D= 8192 n=  100 exact=0.12 node_acc=0.978 peak=30
+softmax(β=30)                D= 8192 n=  300 exact=0.00 node_acc=0.915 peak=90
+softmax(β=30)                D= 8192 n= 1000 exact=0.00 node_acc=0.728 peak=288
+softmax(β=30)                D= 8192 n= 3000 exact=0.00 node_acc=0.408 peak=863
+thresh                       D=  512 n=   30 exact=0.31 node_acc=0.963 peak=10
+thresh                       D=  512 n=  100 exact=0.00 node_acc=0.741 peak=31
+thresh                       D=  512 n=  300 exact=0.00 node_acc=0.394 peak=86
+thresh                       D=  512 n= 1000 exact=0.00 node_acc=0.199 peak=288
+thresh                       D=  512 n= 3000 exact=0.00 node_acc=0.097 peak=859
+thresh                       D= 1024 n=   30 exact=0.88 node_acc=0.992 peak=10
+thresh                       D= 1024 n=  100 exact=0.00 node_acc=0.901 peak=31
+thresh                       D= 1024 n=  300 exact=0.00 node_acc=0.588 peak=91
+thresh                       D= 1024 n= 1000 exact=0.00 node_acc=0.303 peak=292
+thresh                       D= 1024 n= 3000 exact=0.00 node_acc=0.172 peak=874
+thresh                       D= 2048 n=   30 exact=0.88 node_acc=0.996 peak=10
+thresh                       D= 2048 n=  100 exact=0.00 node_acc=0.963 peak=31
+thresh                       D= 2048 n=  300 exact=0.00 node_acc=0.823 peak=92
+thresh                       D= 2048 n= 1000 exact=0.00 node_acc=0.421 peak=288
+thresh                       D= 2048 n= 3000 exact=0.00 node_acc=0.237 peak=862
+thresh                       D= 4096 n=   30 exact=1.00 node_acc=1.000 peak=9
+thresh                       D= 4096 n=  100 exact=0.62 node_acc=0.994 peak=32
+thresh                       D= 4096 n=  300 exact=0.00 node_acc=0.931 peak=89
+thresh                       D= 4096 n= 1000 exact=0.00 node_acc=0.605 peak=296
+thresh                       D= 4096 n= 3000 exact=0.00 node_acc=0.327 peak=862
+thresh                       D= 8192 n=   30 exact=1.00 node_acc=1.000 peak=10
+thresh                       D= 8192 n=  100 exact=1.00 node_acc=1.000 peak=30
+thresh                       D= 8192 n=  300 exact=0.00 node_acc=0.988 peak=90
+thresh                       D= 8192 n= 1000 exact=0.00 node_acc=0.839 peak=288
+thresh                       D= 8192 n= 3000 exact=0.00 node_acc=0.467 peak=863
+thresh, no snap              D=  512 n=   30 exact=0.00 node_acc=0.871 peak=10
+thresh, no snap              D=  512 n=  100 exact=0.00 node_acc=0.604 peak=31
+thresh, no snap              D=  512 n=  300 exact=0.00 node_acc=0.367 peak=86
+thresh, no snap              D=  512 n= 1000 exact=0.00 node_acc=0.208 peak=288
+thresh, no snap              D=  512 n= 3000 exact=0.00 node_acc=0.145 peak=859
+thresh, no snap              D= 1024 n=   30 exact=0.06 node_acc=0.910 peak=10
+thresh, no snap              D= 1024 n=  100 exact=0.00 node_acc=0.744 peak=31
+thresh, no snap              D= 1024 n=  300 exact=0.00 node_acc=0.499 peak=91
+thresh, no snap              D= 1024 n= 1000 exact=0.00 node_acc=0.270 peak=292
+thresh, no snap              D= 1024 n= 3000 exact=0.00 node_acc=0.186 peak=874
+thresh, no snap              D= 2048 n=   30 exact=0.38 node_acc=0.952 peak=10
+thresh, no snap              D= 2048 n=  100 exact=0.00 node_acc=0.831 peak=31
+thresh, no snap              D= 2048 n=  300 exact=0.00 node_acc=0.621 peak=92
+thresh, no snap              D= 2048 n= 1000 exact=0.00 node_acc=0.369 peak=288
+thresh, no snap              D= 2048 n= 3000 exact=0.00 node_acc=0.222 peak=862
+thresh, no snap              D= 4096 n=   30 exact=0.38 node_acc=0.952 peak=9
+thresh, no snap              D= 4096 n=  100 exact=0.00 node_acc=0.894 peak=32
+thresh, no snap              D= 4096 n=  300 exact=0.00 node_acc=0.743 peak=89
+thresh, no snap              D= 4096 n= 1000 exact=0.00 node_acc=0.491 peak=296
+thresh, no snap              D= 4096 n= 3000 exact=0.00 node_acc=0.290 peak=862
+thresh, no snap              D= 8192 n=   30 exact=0.31 node_acc=0.958 peak=10
+thresh, no snap              D= 8192 n=  100 exact=0.00 node_acc=0.935 peak=30
+thresh, no snap              D= 8192 n=  300 exact=0.00 node_acc=0.828 peak=90
+thresh, no snap              D= 8192 n= 1000 exact=0.00 node_acc=0.618 peak=288
+thresh, no snap              D= 8192 n= 3000 exact=0.00 node_acc=0.394 peak=863
+thresh, vector visited       D=  512 n=   30 exact=0.31 node_acc=0.958 peak=10
+thresh, vector visited       D=  512 n=  100 exact=0.00 node_acc=0.736 peak=31
+thresh, vector visited       D=  512 n=  300 exact=0.00 node_acc=0.393 peak=86
+thresh, vector visited       D=  512 n= 1000 exact=0.00 node_acc=0.169 peak=288
+thresh, vector visited       D=  512 n= 3000 exact=0.00 node_acc=0.105 peak=859
+thresh, vector visited       D= 1024 n=   30 exact=0.88 node_acc=0.992 peak=10
+thresh, vector visited       D= 1024 n=  100 exact=0.00 node_acc=0.898 peak=31
+thresh, vector visited       D= 1024 n=  300 exact=0.00 node_acc=0.576 peak=91
+thresh, vector visited       D= 1024 n= 1000 exact=0.00 node_acc=0.287 peak=292
+thresh, vector visited       D= 1024 n= 3000 exact=0.00 node_acc=0.165 peak=874
+thresh, vector visited       D= 2048 n=   30 exact=0.88 node_acc=0.996 peak=10
+thresh, vector visited       D= 2048 n=  100 exact=0.00 node_acc=0.964 peak=31
+thresh, vector visited       D= 2048 n=  300 exact=0.00 node_acc=0.810 peak=92
+thresh, vector visited       D= 2048 n= 1000 exact=0.00 node_acc=0.407 peak=288
+thresh, vector visited       D= 2048 n= 3000 exact=0.00 node_acc=0.222 peak=862
+thresh, vector visited       D= 4096 n=   30 exact=1.00 node_acc=1.000 peak=9
+thresh, vector visited       D= 4096 n=  100 exact=0.62 node_acc=0.994 peak=32
+thresh, vector visited       D= 4096 n=  300 exact=0.00 node_acc=0.929 peak=89
+thresh, vector visited       D= 4096 n= 1000 exact=0.00 node_acc=0.599 peak=296
+thresh, vector visited       D= 4096 n= 3000 exact=0.00 node_acc=0.311 peak=862
+thresh, vector visited       D= 8192 n=   30 exact=1.00 node_acc=1.000 peak=10
+thresh, vector visited       D= 8192 n=  100 exact=1.00 node_acc=1.000 peak=30
+thresh, vector visited       D= 8192 n=  300 exact=0.00 node_acc=0.988 peak=90
+thresh, vector visited       D= 8192 n= 1000 exact=0.00 node_acc=0.834 peak=288
+thresh, vector visited       D= 8192 n= 3000 exact=0.00 node_acc=0.458 peak=863
