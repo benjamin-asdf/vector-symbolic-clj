@@ -21,6 +21,9 @@
 ;; (2024), which builds Lisp 1.5 this way, carried over to Clojure and
 ;; then run until it broke. Every result below is computed live when the
 ;; page renders.
+;;
+;; Code, tests, experiments and the paper draft:
+;; [github.com/benjamin-asdf/vector-symbolic-clj](https://github.com/benjamin-asdf/vector-symbolic-clj).
 
 ^:kindly/hide-code
 (defn figure
