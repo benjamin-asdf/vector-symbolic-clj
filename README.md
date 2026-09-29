@@ -6,11 +6,16 @@ the evaluator runs in.
 
 This is Tomkins-Flanagan & Kelly,
 [*Hey Pentti, We Did It!: A Fully Vector-Symbolic Lisp*](https://arxiv.org/abs/2510.17889)
-(ICCM 2024), redone for Clojure. They built Lisp 1.5 on holographic reduced
+(MathPsych/ICCM 2024), redone for Clojure. They built Lisp 1.5 on holographic reduced
 representations (HRR). This project builds a Clojure subset on HRR, with
 Python/numpy as the hyperdimensional-computing substrate (via libpython-clj).
 Fittingly, the paper opens with Carin Meier's Clojure/conj 2023 talk
 introducing VSAs to Clojure programmers.
+
+**Read the notebook:**
+[A Vector-Symbolic Clojure](https://faster-than-light-memes.xyz/vector-symbolic-clojure/),
+a Clay notebook whose results are computed live by this code. The paper
+draft is in [`paper/draft.md`](paper/draft.md).
 
 ```
 $ clojure -M:jvm:run examples/demo.clj
@@ -33,6 +38,7 @@ clojure -M:jvm:run examples/demo.clj        # run a file
 clojure -M:jvm:test                         # full suite, excluding ^:slow tests (~5 min)
 clojure -M:jvm:test-s1                      # S1 differential suite, tagged ^:slow (~25 min)
 clojure -M:jvm:bench                        # P3 task suite: timing table (bench/README.md)
+clojure -M:jvm:clay render_notebook.clj     # the Clay notebook → _notebook/ (needs Quarto)
 ```
 
 The `.venv` matters. A distro numpy built against reference BLAS makes every

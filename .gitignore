@@ -9,3 +9,5 @@ classes/
 .claude/
 ## experiment output (CSVs, logs, PNGs); curated figures live in figures/
 out/
+## the rendered notebook (render_notebook.clj); the published copy lives on the blog
+_notebook/

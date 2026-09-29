@@ -7,6 +7,11 @@
   :run {:main-opts ["-m" "vsc.main"]}
   ;; the P3 task suite: clojure -M:jvm:bench [task ...] [--dim D]
   :bench {:main-opts ["-m" "vsc.bench"]}
+  ;; the Clay notebook: clojure -M:jvm:clay render_notebook.clj
+  ;; Clay pulls fs 0.5.24, whose copy-tree breaks on Java 27.
+  :clay {:extra-paths ["notebooks"]
+         :extra-deps {org.scicloj/clay {:mvn/version "2-beta32"}
+                      babashka/fs {:mvn/version "0.5.34"}}}
   ;; experiment runner: clojure -M:jvm:exp specs/e1.edn
   :exp {:main-opts ["-m" "vsc.experiments"]}
   :test {:extra-paths ["test"]
