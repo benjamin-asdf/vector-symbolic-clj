@@ -30,7 +30,8 @@ a
 uv venv .venv && uv pip install --python .venv/bin/python numpy   # substrate
 clojure -M:jvm:run                          # line REPL
 clojure -M:jvm:run examples/demo.clj        # run a file
-clojure -M:jvm:test                         # 103 assertions, ~20 s
+clojure -M:jvm:test                         # core suite + S1 smoke test, ~1.5 min
+clojure -M:jvm:test-s1                      # full S1 differential suite, ~30 min
 ```
 
 The `.venv` matters. A distro numpy built against reference BLAS makes every
@@ -45,6 +46,7 @@ or the interpreter named in `$VSC_PYTHON`.
 | `src/vsc/hdc.clj` | thin libpython-clj bridge; vectors stay opaque Python objects |
 | `src/vsc/core.clj` | encoding, evaluator, primitives, reader/printer boundary |
 | `resources/vsc/prelude.clj` | `map`, `filter`, `reduce`, `*`, … written *in the dialect* |
+| `resources/vsc/eval.clj` | S1: an evaluator for the whole dialect, written in the dialect (`docs/results-S1.md`) |
 | `examples/metacircular.clj` | a λ-calculus interpreter written in the dialect |
 
 ## Encoding

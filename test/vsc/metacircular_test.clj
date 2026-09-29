@@ -8,8 +8,8 @@
   the forms are small, and each deftest starts from a fresh machine: cleanup
   cost grows with the size of M, and M only grows.
 
-  `s1-smoke` runs with the default suite (about two minutes). The full
-  differential set is tagged ^:slow (about half an hour) and is excluded from
+  `s1-smoke` runs with the default suite (about 1.5 minutes for the whole default suite). The full
+  differential set is tagged ^:slow (20-30 minutes) and is excluded from
   `clojure -M:jvm:test`; run it with `clojure -M:jvm:test-s1`. Set
   VSC_S1_TIMING=1 to print the S1 wall time and |M| per form."
   (:require

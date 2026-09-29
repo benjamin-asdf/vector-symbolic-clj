@@ -17,7 +17,9 @@
     (alter-var-root v (fn [_] (fn [& args] (swap! counts update k (fnil inc 0)) (apply f args))))))
 
 ;; JVM stack depth, sampled at every application while `sample?` is on (it
-;; costs a stack walk per call, so it is only on for the countdown forms)
+;; costs a stack walk per call, so it is only on for the countdown forms).
+;; getStackTrace stops at -XX:MaxJavaStackTraceDepth (1024 by default), so S1
+;; depths saturate; bench/s1_stack.clj measures them properly.
 (def max-depth (atom 0))
 (def sample? (atom false))
 (let [f @#'vsc.core/apply-fn]
