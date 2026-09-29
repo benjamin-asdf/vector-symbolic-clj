@@ -30,7 +30,8 @@ a
 uv venv .venv && uv pip install --python .venv/bin/python numpy   # substrate
 clojure -M:jvm:run                          # line REPL
 clojure -M:jvm:run examples/demo.clj        # run a file
-clojure -M:jvm:test                         # full suite incl. bench and machine tests
+clojure -M:jvm:test                         # full suite, excluding ^:slow tests (~5 min)
+clojure -M:jvm:test-s1                      # S1 differential suite, tagged ^:slow (~25 min)
 clojure -M:jvm:bench                        # P3 task suite: timing table (bench/README.md)
 ```
 
@@ -50,6 +51,7 @@ or the interpreter named in `$VSC_PYTHON`.
 | `src/vsc/worlds.clj` | W: superposition ("many worlds") programming on the `:proj` memory (`docs/results-W.md`) |
 | `examples/worlds/` | W2 demos: BFS one vector per level, parallel map, dice, a Bayes net |
 | `resources/vsc/prelude.clj` | `map`, `filter`, `reduce`, `*`, … written *in the dialect* |
+| `resources/vsc/eval.clj` | S1: an evaluator for the whole dialect, written in the dialect (`docs/results-S1.md`) |
 | `examples/metacircular.clj` | a λ-calculus interpreter written in the dialect |
 | `bench/` | P3 task suite, expected values derived in real Clojure (`bench/README.md`) |
 | `src/vsc/bench.clj` | suite runner: timing, trace growth, substrate call counts |
