@@ -163,9 +163,10 @@ the dialect has no floats.
 | `(relation spec)`, `(follow r x)` | a stored relation (key ↦ the set of its values), and one lookup that finds the successors of every world of x at once |
 
 Destructors (`first`, `rest`, `get`), variable lookup, `let`/`fn` and
-`+`/`inc` lift linearly: one memory read for all worlds. Other primitives and constructors enumerate the worlds. `if` on a
-superposed test runs both branches π : 1−π and splits the tested variable
-between them, so recursion whose depth differs between worlds terminates.
+`+`/`inc` lift linearly: one memory read for all worlds. Other primitives
+and constructors enumerate the worlds. `if` on a superposed test runs both
+branches π : 1−π and splits the tested variable between them, so recursion
+whose depth differs between worlds terminates.
 Choice is **run-time** (each occurrence is its own draw, as the second line
 shows), because a single vector carries no world identity. `for-worlds` gives
 call-time choice by explicit enumeration.
