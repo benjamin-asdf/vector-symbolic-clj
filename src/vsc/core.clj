@@ -68,6 +68,12 @@
 (defn- m [k] (get @machine k))
 (defn- sp [] (m :space))
 
+;; [W1 hook] superposition hooks, installed by vsc.worlds/init! and reset by
+;; every init!. Without them every hooked site below runs its plain code.
+(defn- hook [k] (get (m :hooks) k))
+(defn set-hooks! "Install {:apply :branch :construct :decode :special} fns." [hs]
+  (swap! machine assoc :hooks hs))
+
 (defn- intern-atom!
   "The unique vector for host value `x` of `kind`, creating it on first use."
   ([kind x] (intern-atom! kind x nil))
@@ -152,8 +158,13 @@
 ;; ---------------------------------------------------------------------------
 ;; data structures
 
+;; [W1 hook] the trace goes to M unnormalised: M stores it unit length either
+;; way, and a :proj memory records its norm as the exact field gain. Under
+;; vsc.worlds each field is unit length too: a superposition Σ wᵢvᵢ (Σ wᵢ = 1)
+;; is shorter than one value, and would drown in the other field's crosstalk
 (defn- cell [kind a b]
-  (pointer kind (nu (bundle (bind (role :L) a) (bind (role :R) b)))))
+  (let [f (if (hook :construct) nu identity)]
+    (pointer kind (bundle (bind (role :L) (f a)) (bind (role :R) (f b))))))
 
 (defn car [c] (h/part (m :C) (role :L) c))
 (defn cdr [c] (h/part (m :C) (role :R) c))
@@ -168,8 +179,11 @@
 (defn- mk-seq [tag-kind xs]
   (reduce (fn [acc x] (cell tag-kind x acc)) (tag tag-kind) (reverse xs)))
 
-(defn mk-list [xs] (mk-seq :list xs))
-(defn mk-vec [xs] (mk-seq :vec xs))
+;; [W1 hook] constructors: with superposed elements the hook enumerates worlds
+(defn- construct [k f xs] (if-let [h (hook :construct)] (h k f xs) (f xs)))
+
+(defn mk-list [xs] (construct :list #(mk-seq :list %) xs))
+(defn mk-vec [xs] (construct :vec #(mk-seq :vec %) xs))
 
 (defn- cells
   "Host seq of the elements of a list/vector cell chain. Every cell is a row
@@ -253,10 +267,15 @@
         n
         (throw (ex-info (str "unreadable collection size " n) {:n n}))))))
 
+(declare mk-map-plain mk-set-plain)
+
 (defn mk-map
   "Map from a seq of [k v] vector pairs; later keys win.
   Trace: ν(ν(Σ k⊗⟨v⟩) + ν(K⊗Σ k) + C⊗n), ⟨v⟩ the value's own pointer."
   [entries]
+  (construct :map mk-map-plain entries))
+
+(defn- mk-map-plain [entries]
   (let [entries (reduce (fn [acc [k v]] (conj (filterv #(not (eq? k (first %))) acc) [k v]))
                         [] entries)
         _ (check-capacity "map" 3 (count entries))
@@ -287,6 +306,9 @@
 (defn mk-set
   "Trace: ν(ν(Σ x) + C⊗n)."
   [xs]
+  (construct :set mk-set-plain xs))
+
+(defn- mk-set-plain [xs]
   (let [xs (distinct-by-eq xs)]
     (check-capacity "set" 2 (count xs))
     (if (empty? xs)
@@ -342,8 +364,39 @@
     (set? x) (mk-set (map encode x))
     :else (throw (ex-info (str "cannot encode " (pr-str x)) {:x x}))))
 
+(declare decode-plain)
+
 (defn decode
   "Vector → host Clojure data (the printer side)."
+  [v]
+  ;; [W1 hook] vsc.worlds prints superpositions as #worlds {value weight}
+  (if-let [h (hook :decode)] (h v) (decode-plain v)))
+
+(def int-print-range
+  "Superposed integers are read back only against [-r, r]: beyond it the
+  residue encoding has chimeras that match a superposition as well as its
+  true worlds do (646657 for (+ (bundle 1 2) 10); docs/W0 section 2)."
+  1024)
+
+(defn- num-value
+  "[W1] A clean integer by its residues (full ±range); a superposed one
+  (similarity to its best single integer below 0.99) by a bounded-range
+  readout, as #worlds {n weight} when it holds more than one world."
+  [v]
+  (let [[_ n s] (h/recognize (m :C) v)
+        r int-print-range]
+    (if (or (> s 0.99) (not (h/more-ints? (m :nums) v n (- r) r)))
+      n
+      (let [ws (->> (h/int-worlds (m :nums) v (- int-print-range) int-print-range 2.0)
+                    (filterv (fn [[_ w]] (> w 0.02))))]
+        (case (count ws)
+          0 n
+          1 (ffirst ws)
+          (let [t (reduce + (map second ws))]
+            (tagged-literal 'worlds (into {} (map (fn [[k w]] [k (/ (Math/round (* 1e4 (/ w t))) 1e4)])) ws))))))))
+
+(defn decode-plain
+  "decode without the superposition hook."
   [v]
   (let [[k e?] (kind v)
         atom-value #(second (lexicon-entry v))]
@@ -351,7 +404,8 @@
       :nil nil
       :true true
       :false false
-      (:num :sym :kw :str) (atom-value)
+      :num (num-value v)
+      (:sym :kw :str) (atom-value)
       :prim (tagged-literal 'prim (atom-value))
       :list (if e? () (apply list (map decode (cells v))))
       :vec (if e? [] (mapv decode (cells v)))
@@ -389,7 +443,10 @@
   (when (pos? (h/mem-size (m :F)))
     (let [slot (h/clean (m :F) (bind (role :L) sym))]
       (when (eq? (unbind (role :L) slot) sym)
-        (cleanup (unbind (role :R) slot))))))
+        ;; [W1 hook] vsc.worlds reads a superposed value without crosstalk
+        (if-let [h (hook :global)]
+          (h sym slot)
+          (cleanup (unbind (role :R) slot)))))))
 
 (defn define!
   "F ↞ cons(sym, val), replacing an earlier definition of `sym`."
@@ -425,7 +482,8 @@
       (let [atom (h/mem-get (m :M) i)
             [j sf] (h/recall (m :SF) atom)]
         (when (and (>= j 0) (eq? atom (h/mem-get (m :SF) j)))
-          (nth special-forms sf))))))
+          ;; [W1 hook] labels past special-forms are forms added by add-special!
+          (or (get special-forms sf) (get (m :extra-specials) sf)))))))
 
 (defn- eval-body [body env]
   (reduce (fn [_ form] (veval form env)) (nil-vec) (cells body)))
@@ -438,11 +496,25 @@
       (empty? args) (fail "too few arguments for params " params)
       :else (recur (env-extend env (first ps) (first args)) (rest ps) (rest args)))))
 
+(defn- branch
+  "[W1 hook] Every two-way decision of if/cond/and/or: `tv` is the value of
+  the test expression `test-form`, and each branch is a fn of the
+  environment and of the test value as that branch sees it (vsc.worlds may
+  run both, each with its own share of the worlds)."
+  [env test-form tv then-fn else-fn]
+  (if-let [h (hook :branch)]
+    (h env test-form tv then-fn else-fn)
+    (if (truthy? tv) (then-fn env tv) (else-fn env tv))))
+
 (defn- eval-special [sf args env]
-  (let [[a b c] (cells args)]
+  (let [[a b c] (cells args)
+        ;; and/or return the test value itself, as the branch sees it
+        test-value (fn [_ v] v)]
     (case sf
       quote a
-      if (if (truthy? (veval a env)) (veval b env) (if c (veval c env) (nil-vec)))
+      if (branch env a (veval a env)
+                 (fn [e _] (veval b e))
+                 (fn [e _] (if c (veval c e) (nil-vec))))
       do (eval-body args env)
       def (define! a (veval b env))
       defn (define! a (closure (cell :list (m :fn-sym) args) (tag :list)))
@@ -450,13 +522,29 @@
       let (let [env (reduce (fn [env [sym x]] (env-extend env sym (veval x env)))
                             env (partition 2 (cells a)))]
             (eval-body (cdr args) env))
-      cond (or (some (fn [[t x]] (when (truthy? (veval t env)) (veval x env)))
-                     (partition 2 (cells args)))
-               (nil-vec))
-      and (reduce (fn [_ x] (let [v (veval x env)] (if (truthy? v) v (reduced v))))
-                  (m :true) (cells args))
-      or (reduce (fn [_ x] (let [v (veval x env)] (if (truthy? v) (reduced v) v)))
-                 (nil-vec) (cells args)))))
+      cond ((fn clauses [env cs]
+              (if-let [[t x] (first cs)]
+                (branch env t (veval t env)
+                        (fn [e _] (veval x e))
+                        (fn [e _] (clauses e (rest cs))))
+                (nil-vec)))
+            env (partition 2 (cells args)))
+      and ((fn go [env xs]
+             (if-let [[x & more] (seq xs)]
+               (let [v (veval x env)]
+                 (if more (branch env x v (fn [e _] (go e more)) test-value) v))
+               (m :true)))
+           env (cells args))
+      or ((fn go [env xs]
+            (if-let [[x & more] (seq xs)]
+              (let [v (veval x env)]
+                (if more (branch env x v test-value (fn [e _] (go e more))) v))
+              (nil-vec)))
+          env (cells args))
+      ;; [W1 hook] forms added by add-special! (vsc.worlds: for-worlds)
+      (if-let [h (hook :special)]
+        (h sf args env)
+        (fail "unknown special form " (encode sf))))))
 
 (defn veval
   "Evaluate expression vector `e` in environment vector `env`."
@@ -488,7 +576,15 @@
         env (bind-params (if named? (env-extend env x f) env) params args)]
     (eval-body body env)))
 
+(declare apply-plain)
+
 (defn apply-fn [f args]
+  ;; [W1 hook] vsc.worlds lifts or enumerates applications to superpositions
+  (if-let [h (hook :apply)] (h f args) (apply-plain f args)))
+
+(defn apply-plain
+  "apply-fn without the superposition hook."
+  [f args]
   (case (kind-of f)
     :prim (let [[i _ s] (h/recall (m :P) f)]
             (when (< s (chance z-recognise)) (fail "unknown primitive " f))
@@ -626,13 +722,17 @@
   "Substrate noise knobs, all off by default (see hdc.py, Space.configure)."
   [:op-noise :probe-noise :lesion :noise-seed])
 
+(defn- default-memory []
+  (keyword (or (not-empty (System/getenv "VSC_MEMORY")) "codebook")))
+
 (defn init!
   "Build a fresh machine: space, cleanup memories, roles, tags, numbers,
   primitives, then load the prelude (written in the vector-symbolic dialect).
 
   Options:
     :dim :seed :prelude?
-    :memory        cleanup backend, :codebook (default), :linear or :mhn
+    :memory        cleanup backend, :codebook (default, or $VSC_MEMORY),
+                   :proj (superposition-preserving), :linear or :mhn
     :memory-opts   options for the backend (e.g. {:beta 16 :mode :snap})
     :op-noise σ    noise on every bind/unbind/bundle output
     :probe-noise σ noise on every cleanup probe
@@ -647,7 +747,8 @@
   noisily; `set-knobs!` switches them later."
   ([] (init! {}))
   ([{:keys [dim seed prelude? memory memory-opts memory-damage enforce-capacity?]
-     :or {dim default-dim seed 42 prelude? true memory :codebook memory-opts {}
+     ;; [W1 hook] $VSC_MEMORY picks the default backend (tests on :proj)
+     :or {dim default-dim seed 42 prelude? true memory (default-memory) memory-opts {}
           enforce-capacity? true}
      :as opts}]
    (let [s (h/space dim seed)
@@ -689,6 +790,35 @@
      (when prelude?
        (run-string (slurp (io/resource "vsc/prelude.clj"))))
      :ready)))
+
+;; ---------------------------------------------------------------------------
+;; [W1 hook] extension points for vsc.worlds
+
+(defn add-primitive!
+  "Register primitive `name` (a symbol) with host fn `f` of the argument
+  vectors, and define it globally."
+  [name f]
+  (let [i (count (m :prims))
+        pv (intern-atom! :prim name)]
+    (h/mem-add! (m :P) pv i)
+    (define! (encode name) pv)
+    (swap! machine update :prims conj {:name name :f f})
+    name))
+
+(defn prim-name
+  "The symbol of primitive vector `f`, or nil."
+  [f]
+  (let [[i _ s] (h/recall (m :P) f)]
+    (when (> s theta-atom) (:name (nth (m :prims) i)))))
+
+(defn add-special!
+  "Recognise symbol `sym` as a special form; eval-special hands it to the
+  :special hook."
+  [sym]
+  (let [label (+ (count special-forms) (count (m :extra-specials)))]
+    (h/mem-add! (m :SF) (encode sym) label)
+    (swap! machine update :extra-specials assoc label sym)
+    sym))
 
 (defn read-forms [src]
   (read-string (str "[" src "\n]")))

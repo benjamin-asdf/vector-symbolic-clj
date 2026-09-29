@@ -141,7 +141,11 @@
   [m p]
   (py/call-attr m "deref" p))
 
-(defn cleanup-machine [s mem nums] (py/call-attr @module "Cleanup" s mem nums))
+(defn cleanup-machine
+  "The combined cleanup of item memory `mem` and integers `nums`: the plain
+  Cleanup, or ProjCleanup (superposition-preserving) over a :proj memory."
+  [s mem nums]
+  (py/call-attr @module "make_cleanup" s mem nums))
 
 (defn recognize
   "[label index similarity] of `v`; for integers, index is the integer."
@@ -154,6 +158,63 @@
   "M(role ⊘ M(p))."
   [c role p]
   (py/call-attr c "part" role p))
+
+;; ---------------------------------------------------------------------------
+;; W1 superposition (hdc.py, section W1)
+
+(defn readout
+  "[worlds residual] of `v`: worlds a vector of [label index weight] (index
+  is n itself for integers), found by matching pursuit over the item memory
+  and the integers in [lo, hi]; residual the unexplained energy fraction."
+  [c v {:keys [int-lo int-hi margin kmax] :or {int-lo -1024 int-hi 1024 margin 1.0 kmax 64}}]
+  (let [[ws r] (py/->jvm (py/call-attr @module "readout" c v int-lo int-hi margin kmax))]
+    [(mapv vec ws) r]))
+
+(defn superposing?
+  "Does cleanup `c` preserve superpositions (a ProjCleanup)?"
+  [c]
+  (py/has-attr? c "set_roles"))
+
+(defn configure-cleanup!
+  "ProjCleanup only: the integer readout range, and the cell roles L, R that
+  make field reads exact under superposition."
+  [c {:keys [int-lo int-hi roles]}]
+  (when (superposing? c)
+    (when int-lo (py/call-attr c "set_int_range" int-lo int-hi))
+    (when roles (apply py/call-attr c "set_roles" roles))))
+
+(defn int-worlds
+  "[[n weight] ...] of an integer superposition, read against [lo, hi] only;
+  `margin` is the detection margin in standard deviations."
+  ([nums v lo hi] (int-worlds nums v lo hi 1.0))
+  ([nums v lo hi margin]
+   (mapv vec (py/->jvm (py/call-attr @module "int_worlds" nums v lo hi margin)))))
+
+(defn associate!
+  "Store row key -> trace in memory `m` as it is (no hash-consing)."
+  [m key trace label]
+  (py/call-attr @module "associate" m key trace label))
+
+(defn follow
+  "cleanup(deref(p)) in one lookup over every world of p; nil when p hits
+  no stored row."
+  [c p]
+  (py/call-attr @module "follow" c p))
+
+(defn more-ints?
+  "Does integer vector `v` hold integer worlds in [lo, hi] beyond B^n?"
+  [nums v n lo hi]
+  (py/call-attr @module "more_ints" nums v n lo hi))
+
+(defn lincomb
+  "Σ wᵢ vᵢ (a bundle: op noise applies)."
+  [s vs ws]
+  (py/call-attr @module "lincomb" s (py/->py-list vs) (py/->py-list (map double ws))))
+
+(defn coef
+  "a·b/|b|: the coefficient of the unit direction b in a."
+  ^double [a b]
+  (py/call-attr @module "coef" a b))
 
 ;; ---------------------------------------------------------------------------
 ;; instrumentation
