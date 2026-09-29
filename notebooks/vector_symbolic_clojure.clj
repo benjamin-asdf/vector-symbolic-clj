@@ -40,6 +40,9 @@
 ;;   computes on all of them at once. Getting this to work needed a new kind
 ;;   of memory.
 ;;
+;; How the interpreter is built, step by step, with all the code:
+;; [Building a Vector-Symbolic Interpreter](building/).
+;;
 ;; Code, tests, experiments and the paper draft:
 ;; [github.com/benjamin-asdf/vector-symbolic-clj](https://github.com/benjamin-asdf/vector-symbolic-clj).
 
