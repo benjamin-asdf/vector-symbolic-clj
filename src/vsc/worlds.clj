@@ -89,13 +89,22 @@
   (let [[_ _ s] (h/recognize (m :C) v)]
     (> s 0.999999)))
 
+(def ^:private dust
+  "Worlds lighter than this are least-squares round-off (1e-9 is typical
+  for a candidate the pursuit tried and the solve zeroed) and are dropped.
+  It is a numerical floor, not the :eps pruning of branches: real worlds
+  of 1% or less survive."
+  1e-6)
+
 (defn readout
   "The raw readout of v: [[label index weight] ...], heaviest first, index
   = n for integers. Throws beyond capacity or when the worlds found do not
   explain v (a residual energy fraction above 1/2 with several worlds)."
   [v]
   (let [[ws resid] (h/readout (m :C) v {:int-lo (cfg :int-lo) :int-hi (cfg :int-hi)})
-        ws (vec (sort-by (fn [[_ _ w]] (- w)) ws))
+        ws (filter (fn [[_ _ w]] (> w dust)) ws)
+        t (reduce + (map #(nth % 2) ws))
+        ws (vec (sort-by (fn [[_ _ w]] (- w)) (map (fn [[l i w]] [l i (/ w t)]) ws)))
         {cap-w :worlds cap-i :ints} (capacity)
         n-int (count (filter #(= NUM (first %)) ws))
         n-ptr (- (count ws) n-int)]
@@ -524,7 +533,8 @@
   "A machine for superposition programming: vsc.core/init! with the :proj
   memory (unless :memory says otherwise), then the hooks, primitives and
   for-worlds. Extra options:
-    :eps        pruning weight: worlds and branches below it are dropped (0.02)
+    :eps        pruning weight: branches whose worlds weigh less are not
+                evaluated (0.02)
     :int-range  integers are read as worlds only in [-r, r] (1024)"
   ([] (init! {}))
   ([opts]

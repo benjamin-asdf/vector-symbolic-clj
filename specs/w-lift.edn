@@ -1,0 +1,10 @@
+;; W3: exactness of linear lifting under op noise. Five superposition
+;; programs (recursion with a split if, cell reads at depth, a chain of 20
+;; bindings, let lookups) on vsc.worlds, op noise switched on after setup.
+{:name "w-lift"
+ :workers 1
+ :grid [[:dim [1024 2048 4096]]
+        [:lift [:dbl :len :nth3 :inc20 :let3]]
+        [:op-noise [0.0 0.05 0.1 0.2 0.3 0.5]]
+        [:seed {:range [0 5]}]]
+ :task {:gen vsc.experiments.worlds/lift-noise}}

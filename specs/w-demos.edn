@@ -1,0 +1,7 @@
+;; W3: the W2 demos vs D (TV against exact enumeration where it applies).
+{:name "w-demos"
+ :workers 1
+ :grid [[:dim [1024 2048 4096 8192]]
+        [:demo [:dice4 :dice6 :sprinkler :pmap :bfs12]]
+        [:seed {:range [0 5]}]]
+ :task {:gen vsc.experiments.worlds/demo}}

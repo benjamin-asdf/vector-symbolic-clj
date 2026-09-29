@@ -47,6 +47,8 @@ or the interpreter named in `$VSC_PYTHON`.
 | `src/vsc/core.clj` | encoding, evaluator, primitives, reader/printer boundary |
 | `src/vsc/machine.clj` | S2: a vector CEK machine, rules and microcode as vectors, no host `veval` (`docs/results-S2.md`) |
 | `resources/vsc/vsc_machine.py` | the machine's working memory, code/rule/operand memories and datapath |
+| `src/vsc/worlds.clj` | W: superposition ("many worlds") programming on the `:proj` memory (`docs/results-W.md`) |
+| `examples/worlds/` | W2 demos: BFS one vector per level, parallel map, dice, a Bayes net |
 | `resources/vsc/prelude.clj` | `map`, `filter`, `reduce`, `*`, … written *in the dialect* |
 | `examples/metacircular.clj` | a λ-calculus interpreter written in the dialect |
 | `bench/` | P3 task suite, expected values derived in real Clojure (`bench/README.md`) |
@@ -119,6 +121,35 @@ implementation.
    `(get {1 2 2 3} 2)` returned 1. Each value is stored as ⟨v⟩, a
    hash-consed pointer to v that no key ever equals. The P3 `map-update`
    task found this.
+
+## Superposition programming ("many worlds")
+
+A value can be a weighted superposition of ordinary values, still one
+vector. `vsc.worlds` runs the dialect on a threshold + least-squares memory
+(`:proj`) that keeps every world at its weight through memory reads:
+
+```clojure
+(require '[vsc.worlds :as w])
+(w/init! {:dim 4096})
+(w/run '(+ (amb 1 2) 10))                        ;; => #worlds {11 0.5, 12 0.5}
+(w/run '(let [x (amb 1 2)] (+ x x)))             ;; => #worlds {2 0.25, 3 0.5, 4 0.25}
+(w/run '(for-worlds [x (amb 1 2)] (+ x x)))      ;; => #worlds {2 0.5, 4 0.5}
+```
+
+Primitives: `amb`, `superpose`, `worlds`, `weight`, `collapse`, `sample`,
+`assert` (post-selection), `support`/`without`/`union`, `relation`/`follow`,
+and the special form `for-worlds`. Destructors, `let`/`fn` and `+`/`inc` lift
+linearly. Other primitives and constructors enumerate the worlds. `if` on a
+superposed test runs both branches π : 1−π and splits the tested variable
+between them, so recursion whose depth differs between worlds terminates.
+Choice is **run-time** (each occurrence is its own draw, as the second line
+shows), because a single vector carries no world identity. `for-worlds` gives
+call-time choice by explicit enumeration.
+
+Capacity is about D/100 worlds per memory step and 5 integer worlds at any D.
+Beyond that, `worlds` throws. It is not faster than enumeration. The API,
+the semantics, the demos, the curves and the limits are in
+`docs/results-W.md`.
 
 ## Experiments
 
