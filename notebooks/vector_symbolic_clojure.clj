@@ -2,6 +2,7 @@
 (ns vector-symbolic-clojure
   (:require
    [clojure.java.io :as io]
+   [clojure.string :as str]
    [scicloj.kindly.v4.kind :as kind]
    [vsc.core :as vsc]
    [vsc.machine :as machine]
@@ -278,16 +279,104 @@
 ;; wins by nearest neighbour, and shorter keys act as defaults. The host
 ;; loop is 47 lines and knows no Lisp. Tail calls come for free.
 
+;; One step of the machine goes round this loop. Everything in the blue
+;; boxes is a vector in memory; only the loop itself is host code.
+
 ^:kindly/hide-code
-(figure "paper-f8-cek-machine.png" "The vector CEK machine.")
+(defn cek-diagram []
+  (let [blue {:fill "#eef4fb" :stroke "#2c6fbb" :stroke-width 1.5 :rx 10}
+        box (fn [x y title lines]
+              (into [:g [:rect (merge blue {:x x :y y :width 320 :height 128})]
+                     [:text {:x (+ x 16) :y (+ y 28) :font-size 15 :font-weight 600
+                             :fill "#1b3a5c"} title]]
+                    (map-indexed
+                     (fn [i [a b]]
+                       [:text {:x (+ x 16) :y (+ y 54 (* i 20)) :font-size 13 :fill "#222"}
+                        [:tspan {:font-family "monospace" :font-weight 600 :fill "#2c6fbb"} a]
+                        (str "  " b)])
+                     lines)))
+        arrow (fn [x1 y1 x2 y2 label lx ly anchor]
+                [:g [:line {:x1 x1 :y1 y1 :x2 x2 :y2 y2 :stroke "#555" :stroke-width 1.6
+                            :marker-end "url(#arrowhead)"}]
+                 [:text {:x lx :y ly :font-size 12.5 :font-style "italic" :fill "#555"
+                         :text-anchor anchor} label]])]
+    (kind/hiccup
+     [:svg {:viewBox "0 0 780 380" :style {:width "100%" :max-width "780px"
+                                           :font-family "system-ui, sans-serif"}}
+      [:defs [:marker {:id "arrowhead" :markerWidth 10 :markerHeight 8 :refX 9 :refY 4
+                       :orient "auto"} [:path {:d "M0,0 L10,4 L0,8 z" :fill "#555"}]]]
+      (box 20 16 "state s: one vector"
+           [["C" "what to evaluate now"] ["E" "variables → values"]
+            ["K" "to-do list (9 kinds of frame)"]])
+      (box 440 16 "key(s): the state's shape"
+           [["fetch" "12 instructions read s"] ["Σ" "mode + kind + head"]
+            ["+" "identity + next frame"]])
+      (box 440 234 "rule memory R"
+           [["35" "rules, each with a key"] ["nearest" "key wins"]
+            ["⇒" "the most specific rule"]])
+      (box 20 234 "the rule's microprogram"
+           [["list" "of instruction vectors"] ["9 ops" "FIELD CLEAN BIND UNBIND"]
+            ["" "REC MOV JMPEQ PRIM DEF"]])
+      (arrow 340 80 440 80 "read its shape" 390 70 "middle")
+      (arrow 600 144 600 234 "nearest key" 611 194 "start")
+      (arrow 440 298 340 298 "run it" 390 288 "middle")
+      (arrow 180 234 180 144 "new state" 169 194 "end")
+      [:rect {:x 262 :y 172 :width 256 :height 36 :rx 18 :fill "#fff4e0"
+              :stroke "#d98a00" :stroke-width 1.5}]
+      [:text {:x 390 :y 195 :font-size 13.5 :font-weight 600 :fill "#7a4b00"
+              :text-anchor "middle"} "host loop · 47 lines · no Lisp"]])))
 
-;; Each step below is decoded from the state vector: the mode, the control,
-;; the rule the nearest-neighbour lookup selected, and the frames on the
-;; continuation.
+^:kindly/hide-code
+(cek-diagram)
 
-(machine/init!)
+;; **Why the most specific rule wins.** A state's key always has all five
+;; features. A rule's key names only the features it cares about: a
+;; default rule names one, the rule for `if` names three. When all of a
+;; rule's features match, its similarity to the state's key is √(k/5) for k
+;; features. So when several rules match, the one that names the most
+;; features is nearest, and a rule that names fewer acts as a default.
 
-(kind/code (with-out-str (machine/print-trace '((fn [x] (if (zero? x) :zero (inc x))) 1))))
+(kind/table
+ {:column-names ["features the rule names" "example" "similarity to the state's key"]
+  :row-vectors (for [[k ex] [[1 "any value evaluates to itself"]
+                             [2 "a list is a function call"]
+                             [3 "a list headed by if is an if"]]]
+                 [k ex (format "%.3f" (Math/sqrt (/ k 5.0)))])})
+
+;; A run, step by step. Each row is decoded from the state vector: the mode,
+;; what is being evaluated, the rule that nearest-neighbour lookup chose,
+;; and the to-do list. At step 14 the `if` frame is already gone: the branch
+;; runs as a tail call, so the to-do list does not grow.
+
+^:kindly/hide-code
+(kind/hidden (machine/init!))
+
+^:kindly/hide-code
+(let [{:keys [value steps]} (machine/trace '((fn [x] (if (zero? x) :zero (inc x))) 1))
+      badge {"EVAL" ["#e3eefb" "#1b4f8a"] "RET" ["#e5f5e8" "#1d6b34"]
+             "APPLY" ["#fdf0dc" "#8a5300"] "HALT" ["#eee" "#333"]}
+      cell {:padding "3px 10px" :border-bottom "1px solid #e5e5e5" :white-space "nowrap"}]
+  (kind/hiccup
+   [:div {:style {:overflow-x "auto" :font-size "0.85em"}}
+    [:table {:style {:border-collapse "collapse" :margin "0.5em 0"}}
+     [:thead
+      (into [:tr]
+            (for [h ["step" "mode" "evaluating" "rule chosen" "to-do list"]]
+              [:th {:style (merge cell {:text-align "left" :border-bottom "2px solid #999"})} h]))]
+     (into [:tbody]
+           (for [{:keys [step mode control rule frames]} steps
+                 :let [[bg fg] (get badge (str mode) ["#eee" "#333"])]]
+             [:tr
+              [:td {:style (merge cell {:text-align "right" :color "#888"})} step]
+              [:td {:style cell}
+               [:span {:style {:background bg :color fg :border-radius "4px"
+                               :padding "1px 6px" :font-weight 600 :font-size "0.9em"}}
+                (str mode)]]
+              [:td {:style (merge cell {:font-family "monospace"})} (pr-str control)]
+              [:td {:style cell} (str rule)]
+              [:td {:style (merge cell {:color "#555"})}
+               (str/join " → " (map #(str/replace (str %) "-fr" "") frames))]]))]
+    [:p {:style {:margin-top "0.4em"}} "Result: " [:code (pr-str value)]]]))
 
 ;; ## Superposition programming
 ;;
