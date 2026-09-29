@@ -22,6 +22,24 @@
 ;; then run until it broke. Every result below is computed live when the
 ;; page renders.
 ;;
+;; **Why care.** Brains, and the neuromorphic chips modelled on them, do not
+;; store bits in addresses. They store patterns spread over many noisy
+;; units. Vector-symbolic architectures are a mathematical model of how
+;; symbols and structure could live in such patterns. A language whose
+;; values are all such vectors asks the question concretely: can you
+;; *program* on that kind of substrate, and what goes wrong when you try?
+;; It also puts data and code in one format, and it allows a new way of
+;; programming, on superpositions of values.
+;;
+;; **Three findings.**
+;;
+;; - It works, but only after fixing five failure modes that the algebra
+;;   hides (below).
+;; - Stored data survives heavy damage. Computation is far more fragile.
+;; - A value can be a weighted mix of several values, and the program
+;;   computes on all of them at once. Getting this to work needed a new kind
+;;   of memory.
+;;
 ;; Code, tests, experiments and the paper draft:
 ;; [github.com/benjamin-asdf/vector-symbolic-clj](https://github.com/benjamin-asdf/vector-symbolic-clj).
 
@@ -61,16 +79,20 @@
 
 ;; ## Hyperdimensional computing in four operations
 ;;
-;; Pick random vectors in 2048 dimensions and any two of them are almost
-;; orthogonal: their cosine is about ±0.02. So there is room for far more
-;; symbols than dimensions. Four operations build everything else.
+;; A symbol is a random vector of D = 2048 numbers. Two random vectors in
+;; that many dimensions are almost unrelated: their similarity (the cosine
+;; of the angle between them, 1 for equal, 0 for unrelated) is about ±0.02.
+;; So there is room for far more symbols than dimensions. Four operations
+;; build everything else.
 ;;
-;; - **Binding** a⊗b (circular convolution) makes a vector unlike both a
-;;   and b, from which either can be recovered given the other.
-;; - **Unbinding** a⊘c recovers b from c = a⊗b. It is exact for the random
-;;   "unitary" vectors used here.
-;; - **Bundling** a + b makes a vector similar to both. That is a set.
-;; - **Cleanup** replaces a noisy vector with the nearest stored one.
+;; - **Binding** a⊗b glues two vectors together, like a name tag onto a
+;;   value. The result looks like neither, but given one you can get the
+;;   other back. (Technically: circular convolution.)
+;; - **Unbinding** a⊘c peels the tag a off c = a⊗b and gives back b.
+;; - **Bundling** a + b throws vectors into one bag. The bag is similar to
+;;   each thing in it. That is a set.
+;; - **Cleanup** snaps a noisy vector to the nearest vector the memory
+;;   knows, like autocorrect snapping a typo to a real word.
 ;;
 ;; These are holographic reduced representations (Plate, 1995).
 
@@ -83,7 +105,13 @@
 
 (kind/code (str (vsc/eval-form '{:name "Ada" :lang :clojure})))
 
-;; The encoding:
+;; How a list becomes one vector: a list cell says "first is a, rest is b".
+;; Bind a to a fixed role label L and b to a role label R, and bundle the
+;; two: L⊗a + R⊗b. To read the first element, unbind L and clean up. Every
+;; such cell also gets its own random ID (a *pointer*), for a reason
+;; explained under "What breaks". The rest of the encoding follows the same
+;; pattern. In the table, ν means "rescale to length 1", and ⟨v⟩ is v behind
+;; its own pointer.
 ;;
 ;; | value | vector |
 ;; |---|---|
@@ -136,12 +164,15 @@
 ;; Running real programs turned up five failure modes that the algebra
 ;; hides.
 ;;
-;; **1. Superposed cells are fragile.** Encoded as a plain sum, as in the
-;; original paper, the cells ((a . 5) . ()) and ((a . 4) . ()) have cosine
-;; 0.89 to each other. A `rest` then beats the sibling by a margin of only
-;; 0.05, and tolerates 2.5× less noise than a cell behind its own random
-;; pointer. Equal contents are hash-consed onto one pointer, so equality is
-;; still one comparison.
+;; **1. Similar lists get confused.** In the original paper, a list cell is
+;; just the bundle of its parts. Recursion creates many nearly equal cells,
+;; such as ((a . 5) . ()) and ((a . 4) . ()), and as bundles they are 89%
+;; similar. Reading one of them beats its look-alike by a margin of only
+;; 0.05, so a little noise returns the wrong cell. The fix: every cell gets
+;; its own random ID, and cells with equal contents share one ID, so
+;; checking equality is still one comparison. The right cell now wins by
+;; 0.66, and reading survives 2.5× more noise. (Noise σ here means noise of
+;; σ times the vector's own size.)
 
 ^:kindly/hide-code
 (figure "paper-f2-cell-confusion.png"
@@ -151,29 +182,40 @@
 ;; 1⊗2 = 2⊗1, so `(get {1 2 2 3} 2)` returned 1. Each value now gets its
 ;; own pointer, which no key can equal.
 ;;
-;; **3. Residue integers form chimeras.** Integers use a residue number
-;; system: one frequency band per prime 5, 7, …, 19. That makes cleanup
-;; algorithmic (72 checks instead of a table scan), following Kymn et al.
-;; (2025) and Hanley et al. (2025). But in the sum B¹¹ + B¹², every integer
-;; whose residues each match 11 or 12 matches on every band. There are 62
-;; such chimeras, and each scores exactly like a true member.
+;; **3. Numbers can blend into fake numbers.** We store an integer by its
+;; remainders, like reading six clocks at once: 11 is "1 on a 5-hour clock,
+;; 4 on a 7-hour clock, 0 on an 11-hour clock", and so on up to a 19-hour
+;; clock. Each clock lives in its own share of the vector. That makes
+;; numbers cheap to recognise: read each clock, then combine (Kymn et al.,
+;; 2025; Hanley et al., 2025).
+;;
+;; Now put 11 and 12 into one set. The set shows both numbers' readings on
+;; every clock. A number that shows 11's reading on some clocks and 12's on
+;; the others, 13102 for example, matches the set exactly as well as 11 or
+;; 12 do. It is a *chimera*: a fake member stitched together from pieces of
+;; real ones. With six clocks there are 2⁶ − 2 = 62 of them.
 
 ^:kindly/hide-code
 (figure "paper-f3-chimeras.png"
-        "Every chimera has cosine 0.665 to ν(B¹¹ + B¹²), the same as 11 and 12.")
+        "Left: all 62 fakes score exactly like the real members 11 and 12; random numbers score near 0. Right: each clock of the fake 13102 matches either 11 or 12.")
 
-;; Integers inside maps and sets are therefore boxed behind pointers.
+;; The fix: inside sets and maps, each number is stored behind its own
+;; random ID, and IDs cannot be stitched together.
 ;;
-;; **4. Zero was one dimension.** B⁰ is the identity of convolution, a
-;; spike at index 0. Killing that one dimension broke all arithmetic, so 0
-;; is now the dense vector Z. The same residue structure makes sim(B⁰, Bⁿ)
-;; the number of moduli dividing n, over 6. A threshold-based test would
-;; call 5005 = 5·7·11·13 zero:
+;; **4. Zero lived in a single dimension.** The number 0 was a vector with
+;; all its weight in one of the 2048 dimensions. When that one dimension
+;; was damaged, all arithmetic broke. Zero is now spread over all
+;; dimensions like every other value. The clocks cause a second trap: 5005
+;; = 5·7·11·13 reads 0 on four of the six clocks, so it is 4/6 similar to
+;; zero, and a test "similar enough to zero" would accept it. `zero?` now
+;; asks for equality:
 
 (examples vsc/run '[(zero? 5005) (zero? 0)])
 
-;; **5. Fixed thresholds cap robustness.** The first interpreter recognised
-;; a value's kind when its cosine exceeded 0.5. A clean vector's cosine to
+;; **5. Fixed thresholds throw robustness away.** Bigger vectors should
+;; tolerate more noise, but a fixed "similar enough" cutoff does not grow
+;; with them. The first interpreter recognised a value's kind when its
+;; cosine exceeded 0.5. A clean vector's cosine to
 ;; its own noisy probe is 1/√(1 + σ²), which crosses 0.5 at σ = √3 for
 ;; *every* dimension. So every structure failed at σ ≈ 1.7, while the
 ;; cleanup underneath survives σ ≈ 14. Deciding by argmax, or relative to
@@ -183,11 +225,13 @@
 
 ;; ## How robust it is
 ;;
-;; Primitive cleanup matches its textbook model within 0.007 on average,
-;; and its noise tolerance grows as √D.
+;; Here D is the number of dimensions and σ the noise, relative to the
+;; signal. A single cleanup matches its textbook model within 0.007 on
+;; average, and the noise it tolerates grows as √D: four times the
+;; dimensions, twice the noise.
 
 ^:kindly/hide-code
-(figure "e1.png" "Cleanup accuracy against probe noise: measured, and theory dashed.")
+(figure "e1.png" "How often cleanup finds the right item, against noise, for D from 512 to 8192 and memories of 100 to 100,000 items. Dashed: theory.")
 
 ;; Capacity is linear in D: about D/64 map entries and D/36 set members at
 ;; 90% reliability. Overloaded structures forget; they do not hallucinate
@@ -205,20 +249,27 @@
 
 ;; ## Hopfield networks do not help
 ;;
-;; The paper suggests a modern Hopfield network as the cleanup memory. It
-;; never beats a plain lookup table. At high β it *is* the table, only
-;; slower. At lower β, and whenever it iterates, it is worse. The reason:
-;; when a probe is one stored item plus noise, argmax is already the best
-;; possible decision.
+;; The paper suggests a modern Hopfield network as the cleanup memory. Instead
+;; of returning the one best match, it returns a weighted mix of the stored
+;; items, and can repeat that step. A parameter β sets how hard it favours
+;; the best match: at large β the mix is almost only the winner.
+;;
+;; It never beats a plain lookup table. At large β it *is* the table, only
+;; slower. At smaller β, and whenever it repeats the step, it is worse. The
+;; reason: when a probe is one stored item plus noise, picking the single
+;; best match is already the best possible decision.
 
 ^:kindly/hide-code
-(figure "p2-e1.png" "Noise tolerance for the lookup table, Hopfield settings and a linear memory.")
+(figure "p2-e1-summary.png" "The noise each memory tolerates (higher is better): the lookup table against Hopfield settings and a linear memory.")
 
 ;; ## The interpreter as vectors
 ;;
-;; The evaluator above is host code. The next step moves it into vectors: a
-;; CEK machine whose whole state is one vector,
-;; s ↦ ν(C⊗control + E⊗env + K⊗continuation + M⊗mode).
+;; The evaluator above is host code. The next step moves it into vectors. A
+;; classic design for interpreters, the CEK machine, keeps three things:
+;; **C**, what to evaluate now; **E**, which variable has which value; and
+;; **K**, a to-do list of what comes after. Here all three, plus a mode, are
+;; bundled into one vector:
+;; s ↦ ν(C⊗control + E⊗env + K⊗to-do + M⊗mode).
 ;; Its 35 transition rules sit in a memory and are picked by similarity.
 ;; Rule keys are *sums* of features, so the most specific matching rule
 ;; wins by nearest neighbour, and shorter keys act as defaults. The host
@@ -252,8 +303,10 @@
 
 ;; Look at the last two rows. A vector carries no labels saying which
 ;; world a value belongs to, so the two uses of `x` are independent draws.
-;; That is *run-time choice*. Call-time choice is explicit, with
-;; `for-worlds`.
+;; That is *run-time choice*. The name comes from nondeterministic
+;; programming, where Hussmann (1993) distinguished it from *call-time
+;; choice*, in which a variable picks one value and keeps it. Languages
+;; like Curry use call-time choice. Here it is explicit, with `for-worlds`.
 ;;
 ;; This needed a new kind of memory. A lookup table and a softmax (Hopfield)
 ;; memory both collapse a sum of worlds to one world. A linear memory keeps
@@ -270,17 +323,21 @@
 
 (examples worlds '[(dbl (superpose {2 5 3 3 5 2}))])
 
-;; A small Bayesian network. Rain makes the sprinkler less likely, and
-;; either makes the grass wet. What is P(rain | wet)? The exact answer is
-;; 0.36255.
+;; The weights behave like probabilities, so a textbook Bayesian network
+;; works. Rain makes the sprinkler less likely, and either makes the grass
+;; wet. What is P(rain | wet)? The exact answer is 0.36255. Probability with
+;; such vectors is not new: Furlong and Eliasmith (2024) and the
+;; "hyperdimensional transform" (Dewulf et al., 2023) do inference this way.
+;; What is new here is that it runs inside an ordinary programming language.
 
 (w/run-string (slurp "examples/worlds/sprinkler.clj"))
 
 (examples worlds '[rain-given-wet rain-given-wet-naive])
 
 ;; The naive version uses `let` instead of `for-worlds`, so run-time choice
-;; loses the correlation between rain and wet grass, and it returns the
-;; prior, 0.2.
+;; loses the link between rain and wet grass, and it returns the prior, 0.2.
+;; This query still enumerates the worlds one by one, so it is no faster
+;; than ordinary code.
 
 ^:kindly/hide-code
 (figure "w-readout.png" "Worlds read back exactly, against the number of worlds and D.")
@@ -307,6 +364,14 @@
 ;;   high-dimensional representation. *Neural Computation*, 37(1).
 ;; - Meier, C. (2023). Vector symbolic architectures in Clojure.
 ;;   Clojure/Conj 2023. https://github.com/gigasquid/vsa-clj
+;; - Dewulf, P., De Baets, B., & Stock, M. (2023). The hyperdimensional
+;;   transform for distributional modelling, regression and classification.
+;;   arXiv:2311.08150.
+;; - Furlong, P. M., & Eliasmith, C. (2024). Modelling neural probabilistic
+;;   computation using vector symbolic architectures. *Cognitive
+;;   Neurodynamics*, 18(6).
+;; - Hussmann, H. (1993). *Nondeterminism in Algebraic Specifications and
+;;   Algebraic Programs*. Birkhäuser.
 ;; - Plate, T. A. (1995). Holographic reduced representations. *IEEE
 ;;   Transactions on Neural Networks*, 6(3), 623–641.
 ;; - Ramsauer, H., et al. (2021). Hopfield networks is all you need. ICLR

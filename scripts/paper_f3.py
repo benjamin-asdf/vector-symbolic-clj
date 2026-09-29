@@ -72,15 +72,15 @@ for row, (vals, c, name) in enumerate(((s_rand, "#999999", "200 random integers"
                                        (s_chim, "#c0392b", f"{len(chimeras)} chimeras"),
                                        (s_true, "#2471a3", "members 11, 12"))):
     a1.scatter(vals, row + jit.uniform(-0.18, 0.18, len(vals)), s=10, color=c)
-a1.set_yticks([0, 1, 2], ["200 random\nintegers", f"{len(chimeras)}\nchimeras",
+a1.set_yticks([0, 1, 2], ["200 random\nintegers", f"{len(chimeras)}\nfakes",
                           "members\n11, 12"])
-a1.set_xlabel("cos(ν(B¹¹ + B¹²), Bᵐ)")
-a1.set_title("every chimera scores exactly like a member")
+a1.set_xlabel("similarity to the set {11, 12}")
+a1.set_title("every fake scores exactly like a member")
 a2.bar(range(len(moduli)), band_cos,
        color=["#2471a3" if w == "11" else "#27ae60" for w in which])
-a2.set_xticks(range(len(moduli)), [f"p={p}\n≡{w}" for p, w in zip(moduli, which)])
-a2.set_ylabel("per-band cos with x")
-a2.set_title(f"chimera {ex}: each band matches 11 or 12")
+a2.set_xticks(range(len(moduli)), [f"{p} h\nlike {w}" for p, w in zip(moduli, which)])
+a2.set_ylabel("match with the set, per clock")
+a2.set_title(f"fake {ex}: every clock matches 11 or 12")
 fig.tight_layout()
 fig.savefig("figures/paper-f3-chimeras.png", dpi=150)
 print("wrote figures/paper-f3-chimeras.png", file=sys.stderr)

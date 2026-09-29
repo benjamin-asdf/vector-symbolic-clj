@@ -25,11 +25,12 @@ modes that the algebra hides, and we fix each one.
 
 **Superposition programming.** A value may be a weighted sum of *worlds*,
 and the program computes on all of them at once. Destructors act on every
-world in one memory read, integer arithmetic lifts exactly, and a
-Bayesian-network query comes out at 0.3625 against an exact 0.36255. This
-works only with a memory outside the softmax family (thresholded
-projection). The native semantics are run-time choice, and capacity is
-about D/100 worlds.
+world in one memory read, integer arithmetic lifts exactly, and function
+bodies run once for all worlds. Probabilistic inference with such vectors is
+known; what is new is a general-purpose language whose values may be
+superpositions. It works only with a memory outside the softmax family
+(thresholded projection). The native semantics are Hussmann's run-time
+choice, and capacity is about D/100 worlds.
 
 ## 1. Introduction
 
@@ -360,9 +361,11 @@ superposition has to survive dereferencing: M(Σ wᵢpᵢ) should be
   {4: .5, 6: .3, 10: .2}.
 - **Run-time choice.** A vector carries no world labels, so two occurrences
   of a variable are independent draws. `(let [x (amb 1 2)] (+ x x))` gives
-  {2: ¼, 3: ½, 4: ¼}. Call-time choice would need a tag on every world
-  (√k signal cost, k fixed in advance), so it is explicit, via
-  `for-worlds`.
+  {2: ¼, 3: ½, 4: ¼}. This is *run-time choice* in the sense of Hussmann
+  (1993), as opposed to the *call-time choice* of functional logic
+  languages such as Curry, where a variable keeps one value. Call-time
+  choice would need a tag on every world (√k signal cost, k fixed in
+  advance), so it is explicit, via `for-worlds`.
 
 | demo | result | correct at |
 |---|---|---|
@@ -373,6 +376,13 @@ superposition has to survive dereferencing: M(Σ wᵢpᵢ) should be
 
 *Table 4. Superposition demos, 5 of 5 seeds per point
 (`figures/w-demos.png`, `figures/w-bfs.png`).*
+
+The Bayesian query is a check of the semantics, not a contribution.
+Representing distributions as superposed vectors and conditioning on them
+is established (Furlong & Eliasmith, 2022, 2024; Dewulf et al., 2023), and
+this query enumerates its worlds with `for-worlds`, so it is no faster than
+ordinary code. The contribution is the language: superpositions as ordinary
+values, with destructors, lookup and function bodies lifted over all worlds.
 
 - **Failures throw** a capacity error instead of returning a wrong
   distribution. The measured exceptions: wide-range integers at D = 8192 (3
@@ -438,6 +448,9 @@ non-softmax memory to keep the worlds apart.
 
 ## References
 
+- Dewulf, P., De Baets, B., & Stock, M. (2023). The hyperdimensional
+  transform for distributional modelling, regression and classification.
+  arXiv:2311.08150.
 - Frady, E. P., Kent, S. J., Olshausen, B. A., & Sommer, F. T. (2020).
   Resonator networks, 1: An efficient solution for factoring
   high-dimensional, distributed representations of data structures. *Neural
@@ -445,6 +458,11 @@ non-softmax memory to keep the worlds apart.
 - Furlong, P. M., & Eliasmith, C. (2022). Fractional binding in vector
   symbolic architectures as quasi-probability statements. *Proc. CogSci
   2022*, 259–266.
+- Furlong, P. M., & Eliasmith, C. (2024). Modelling neural probabilistic
+  computation using vector symbolic architectures. *Cognitive
+  Neurodynamics*, 18(6). doi:10.1007/s11571-023-10031-7
+- Hussmann, H. (1993). *Nondeterminism in Algebraic Specifications and
+  Algebraic Programs*. Birkhäuser.
 - Hanley, C., Tomkins-Flanagan, E., & Kelly, M. A. (2025). Hey Pentti, we
   did (more of) it!: A vector-symbolic Lisp with residue arithmetic. *IJCNN
   2025*. arXiv:2511.08767.
