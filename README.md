@@ -144,10 +144,26 @@ vector. `vsc.worlds` runs the dialect on a threshold + least-squares memory
 (w/run '(for-worlds [x (amb 1 2)] (+ x x)))      ;; => #worlds {2 0.5, 4 0.5}
 ```
 
-Primitives: `amb`, `superpose`, `worlds`, `weight`, `collapse`, `sample`,
-`assert` (post-selection), `support`/`without`/`union`, `relation`/`follow`,
-and the special form `for-worlds`. Destructors, `let`/`fn` and `+`/`inc` lift
-linearly. Other primitives and constructors enumerate the worlds. `if` on a
+Weights are integers going in (relative) and per mille coming out, because
+the dialect has no floats.
+
+| primitive | what it does |
+|---|---|
+| `(amb a b …)` | the uniform superposition of its arguments |
+| `(superpose {v w, …})` | Σ (w/Σw)·v; equal worlds merge and their weights add |
+| `(worlds x)` | `{world weight‰}`; throws past capacity or when the worlds found leave most of x unexplained |
+| `(weight x v)` | the weight of world v in x, in ‰; 0 if absent |
+| `(collapse x)` | the heaviest world (a measurement) |
+| `(collapse x β)` | a partial collapse, weights ∝ exp(β·wᵢ); distorts the weights |
+| `(sample x)` | one world, drawn with probability ∝ weight (seeded) |
+| `(assert p x)` | post-selection: keep the worlds where `(p v)` holds, renormalise; throws if none survive |
+| `(for-worlds [v x …] body)` | special form: enumerate each binding in turn, so later expressions see the *same* world (call-time choice); returns Σ w·body |
+| `(support x)` | the uniform superposition over x's worlds (the set of them) |
+| `(without x y)`, `(union x y)` | set difference and union of uniform superpositions |
+| `(relation spec)`, `(follow r x)` | a stored relation (key ↦ the set of its values), and one lookup that finds the successors of every world of x at once |
+
+Destructors (`first`, `rest`, `get`), variable lookup, `let`/`fn` and
+`+`/`inc` lift linearly: one memory read for all worlds. Other primitives and constructors enumerate the worlds. `if` on a
 superposed test runs both branches π : 1−π and splits the tested variable
 between them, so recursion whose depth differs between worlds terminates.
 Choice is **run-time** (each occurrence is its own draw, as the second line
