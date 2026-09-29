@@ -17,7 +17,7 @@ Cleanup memories are pluggable backends behind one interface (`Memory`):
 
   codebook   hardmax(M p) M: the lookup table (default)
   linear     β = 0: Mᵀ M p and Vᵀ K p, the linear readout, never snapped
-  mhn        softmax(β K p): modern Hopfield network (P2, a slot for now)
+  mhn        softmax(β K p): modern Hopfield network, iterated, snap or soft
 """
 
 import gc
@@ -280,7 +280,15 @@ class Space:
 
 
 class Numbers:
-    """Integers as powers of one unitary base: n = B^n, so n + m = B^n ⊗ B^m.
+    """Integers as powers of one unitary base, offset by a random unitary Z:
+    n = B^n ⊗ Z. Then n + 1 = B ⊗ n, n + m = (n ⊗ m) ⊘ Z, n − m = Z ⊗ (m ⊘ n)
+    (see `step`, `offset`).
+
+    Z is there because B^0 alone is the identity of binding, a delta at
+    index 0: a lesion that kills dimension 0 made 0 the zero vector and broke
+    all arithmetic (P1, E4). With Z every integer, 0 included, is a dense
+    unitary vector. Z comes from its own random stream, so the atom stream
+    (and every other vector of the space) is unchanged.
 
     B is a residue-number-system base (cf. Tomkins-Flanagan & Kelly, "Hey
     Pentti, We Did (More of) It!"): the Fourier bins are split at random into
@@ -309,12 +317,27 @@ class Numbers:
             r = np.arange(p)[:, None]
             self.cands.append(np.exp(-2j * np.pi * r * a[None, :] / p))
         self.spec = np.exp(2j * np.pi * self.expo)
+        # the offset Z: unitary (real ±1 at DC and Nyquist), own stream
+        zr = np.random.default_rng([space.seed, 3])
+        self.zspec = np.exp(1j * zr.uniform(-np.pi, np.pi, d // 2 + 1))
+        self.zspec[0] = zr.choice([-1.0, 1.0])
+        if d % 2 == 0:
+            self.zspec[-1] = zr.choice([-1.0, 1.0])
+        self.zconj = np.conj(self.zspec)
 
     def base(self):
         return self.vec(1)
 
+    def step(self):
+        """B itself: inc is B ⊗ n, dec is B ⊘ n."""
+        return self.space._made("num_vec", np.fft.irfft(self.spec, n=self.space.dim))
+
+    def offset(self):
+        """Z, the vector of 0 (= B^0 ⊗ Z)."""
+        return self.space._made("num_vec", np.fft.irfft(self.zspec, n=self.space.dim))
+
     def vec(self, n):
-        spec = np.exp(2j * np.pi * ((self.expo * int(n)) % 1.0))
+        spec = np.exp(2j * np.pi * ((self.expo * int(n)) % 1.0)) * self.zspec
         return self.space._made("num_vec", np.fft.irfft(spec, n=self.space.dim))
 
     def _crt(self, residues):
@@ -331,7 +354,7 @@ class Numbers:
 
     def _read(self, v):
         self.space.tick("num_read")
-        X = np.fft.rfft(v)
+        X = np.fft.rfft(v) * self.zconj
         residues = [int(np.argmax((c @ X[band]).real))
                     for band, c in zip(self.bands, self.cands)]
         n = self._crt(residues)
@@ -593,19 +616,94 @@ class Linear(Memory):
 
 
 class Hopfield(Memory):
-    """Modern Hopfield network (Ramsauer et al. 2020): M(p) = softmax(β M p) M
-    iterated, deref(p) = Vᵀ softmax(β K p). A slot for P2, not implemented.
+    """Modern Hopfield network (Ramsauer et al. 2020), retrieval only: the
+    stored rows are the patterns (the dense associative memory form), so
+    nothing is trained.
 
-    Intended options: beta (float, ∞ = codebook), iters (int), mode "snap"
-    (return the argmax row after iterating) or "soft" (return the blend).
-    Override `_select` (the winner after iterating, for nearest/recall and
-    snap), `_clean` and `_deref`; keep the Memory constructor signature and
-    take the options as keywords."""
+      autoassociative    p ← Mᵀ softmax(β M p̂), `iters` times
+      heteroassociative  Vᵀ softmax(β K p̂), with the weights of the last step
+
+    That is one attention head per lookup, keys K = M (pointers), values V
+    (traces). p̂ is the state at unit length before every step, so the scores
+    are cosines and β means the same on every step (as in W0, §4; Ramsauer
+    et al. do not normalise, their β is set against the pattern norms).
+    `iters` counts softmax evaluations, so iters = 1 is a single lookup and
+    deref with iters = k first runs k − 1 autoassociative steps on the key.
+
+    mode "snap": the winner is the argmax of the final weights, and clean /
+    deref return that stored row (key or trace). β → ∞ is the codebook, and
+    β = inf is the codebook exactly (same code path).
+    mode "soft": clean / deref return the blend Mᵀw / Vᵀw itself.
+    Either way nearest/recall report the argmax of the final weights, with
+    the probe's own similarity to that row, and peel/intern/add use the raw
+    scores as for every backend."""
 
     backend = "mhn"
 
     def __init__(self, space, capacity=4096, name=None, beta=16.0, iters=1, mode="snap"):
-        raise NotImplementedError("the mhn backend is P2 and not implemented yet")
+        super().__init__(space, capacity, name)
+        self.beta = float(beta)          # "inf" (from :inf or ##Inf) works too
+        self.iters = int(iters)
+        self.mode = str(mode)
+        if self.beta < 0 or self.iters < 1 or self.mode not in ("snap", "soft"):
+            raise ValueError("mhn needs beta >= 0, iters >= 1, mode snap|soft; got %r %r %r"
+                             % (beta, iters, mode))
+        self.hard = np.isinf(self.beta)
+        self._last = None                # (scores, final weights) of the last _select
+
+    def _softmax(self, a):
+        z = self.beta * (a - a.max())
+        w = np.exp(z)
+        return w / w.sum()
+
+    def _iterate(self, a):
+        """Final weights, after `iters` softmax steps from the scores a."""
+        w = self._softmax(a.astype(np.float64))
+        K = self.M[: self.n]
+        for _ in range(self.iters - 1):
+            self.space.tick("rows", self.n)
+            p = K.T @ w.astype(np.float32)
+            nrm = np.linalg.norm(p)
+            if nrm == 0:
+                break
+            w = self._softmax(self.scores(p / nrm).astype(np.float64))
+        return w
+
+    def _weights(self, a):
+        last = self._last
+        if last is not None and last[0] is a:
+            return last[1]
+        return self._iterate(a)
+
+    def _select(self, u, kind):
+        if self.hard:
+            return Memory._select(self, u, kind)
+        if self.n == 0:
+            return -1, 0.0, None
+        a = self.scores(u)
+        w = self._iterate(a)
+        i = int(np.argmax(w))
+        self.space.record(kind, a, i)
+        self._last = (a, w)
+        return i, float(a[i]), a
+
+    def _blend(self, X, a):
+        self.space.tick("rows", self.n)
+        return (X[: self.n].T @ self._weights(a).astype(np.float32)).astype(np.float64)
+
+    def _clean(self, u, a, i):
+        if a is None:
+            return np.zeros(self.dim)
+        if self.hard or self.mode == "snap":
+            return self.M[i].astype(np.float64)
+        return self._blend(self.M, a)
+
+    def _deref(self, u, a, i):
+        if a is None:
+            return np.zeros(self.dim)
+        if self.hard or self.mode == "snap":
+            return self.V[i].astype(np.float64)
+        return self._blend(self.V, a)
 
 
 BACKENDS = {"codebook": Memory, "linear": Linear, "mhn": Hopfield}
@@ -624,19 +722,30 @@ class Cleanup:
     into one call keeps the host/substrate chatter down."""
 
     NUM = 4
+    # Chance level of the integer readout, in units of 1/√D: on a random
+    # probe the band-wise argmax still reaches sim ≈ (4.0 ± 0.5)/√D at every
+    # D (measured, D = 1024…4096), because it maximises over the candidates
+    # of each band. The table's chance level is the expected maximum of n
+    # unrelated similarities, ≈ √(2 ln n)/√D.
+    NUM_NULL = 4.0
 
     def __init__(self, space, mem, nums, theta=0.9):
         self.space, self.mem, self.nums, self.theta = space, mem, nums, theta
 
     def _recognize(self, v):
-        """v is already perturbed; returns ([label, index, sim], u, scores)."""
+        """v is already perturbed; returns ([label, index, sim], u, scores).
+        An integer wins if the readout's similarity exceeds its chance level
+        by more than the table's best match exceeds the table's (a raw
+        comparison let the biased readout win once noise brought an atom's
+        similarity down to ≈ 5/√D)."""
         mem = self.mem
         u = mem._unit(v)
         i, s, a = mem._select(u, "recognize")
         if s > self.theta:
             return [int(mem.labels[i]), i, s], u, a
         n, sn = self.nums._read(v)
-        if sn > s:
+        rd = np.sqrt(self.space.dim)
+        if sn - self.NUM_NULL / rd > s - np.sqrt(2 * np.log(max(mem.n, 2))) / rd:
             self.space.relabel("num", n, sn)
             return [self.NUM, n, sn], u, a
         return [int(mem.labels[i]) if i >= 0 else -1, i, s], u, a

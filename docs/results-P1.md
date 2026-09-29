@@ -17,7 +17,7 @@ explaining-away steps, integer readout, kind checks). In E2–E5 structures
 and programs are set up noise-free, then the knob is switched on for the
 evaluation *and* the decoding (the printer is part of the round trip).
 
-**Summary.** The codebook itself behaves exactly as the textbook model
+**Summary** (P1 as measured; for the rerun after P2 step 0 see "After calibration" below). The codebook itself behaves exactly as the textbook model
 predicts (E1: theory inside the 95% band at 207 of 216 points, σ₅₀ ∝ √D, a
 weak log|M| dependence). But the *interpreter* does not fail where the
 codebook fails. It fails 7–15× earlier, at D-independent cliffs set by its
@@ -337,6 +337,79 @@ interpreter and host bridge, 5 seeds.
   (A single `(+ 1 2)` does run on it; see `test/vsc/substrate_test.clj`.)
 
 ---
+
+## After calibration (P2 step 0)
+
+![calibration](../figures/p2-calibration.png)
+![E2 after calibration](../figures/e2c.png)
+![E2 op noise after calibration](../figures/e2opc.png)
+![E4 after calibration](../figures/e4c.png)
+
+The numbers above are kept as measured. Commit `434b4f8` then changed the
+interpreter along the lines the findings suggested, and E2, E2op and E4
+were rerun as the new baseline (`specs/e2c.edn`, `e2opc.edn`, `e4c.edn`;
+same seeds and structures, with the σ ranges widened to 0 … 12 (probe) and
+0 … 6 (op) because the old ones ended before the new cliffs). E1 is
+untouched: it measures `nearest` alone, and no threshold is involved there.
+
+What changed:
+- **No decision compares a noisy similarity with a fixed number any more.**
+  Every decision is an argmax (a cleanup) or a comparison with the chance
+  floor z/√D. `kind` and primitive recall use 4.5/√D instead of 0.5.
+  `eq?` keeps θ = 0.995 only as a fast path for exact copies and says
+  "different" below 3/√D. Anything in between is decided by cleaning up both
+  sides and comparing identities. `vnil?`, `truthy?`, `zero?`, the global
+  lookup (instead of θ_def = 0.4) and special-form recognition all go
+  through `eq?`. The integer readout beats the table only by its excess over
+  its own chance level (4/√D, measured).
+- **Dense 0:** n = Bⁿ ⊗ Z with a random unitary Z, and `+ - inc dec` are
+  arranged so that no intermediate is B⁰.
+
+Effect (σ₅₀ / f₅₀ before → after; "> x" = never below 0.5 up to x):
+
+| | D=1024 | 2048 | 4096 |
+|---|---|---|---|
+| list4, probe | 1.60 → 4.40 | 1.69 → 6.20 | 1.70 → 8.56 |
+| list64, probe | 1.50 → 3.60 | 1.51 → 5.17 | 1.68 → 7.42 |
+| set8, probe | 1.54 → 2.56 | 1.68 → 3.84 | 1.70 → 5.00 |
+| map3, probe | 1.62 → 2.11 | 1.68 → 3.40 | 1.70 → 4.80 |
+| map8, probe | 1.26 → 1.09 | 1.58 → 1.83 | 1.70 → 3.04 |
+| nested3, probe | 1.51 → 1.98 | 1.66 → 2.96 | 1.70 → 4.36 |
+| list16, op | 1.52 → 3.95 | 1.46 → 5.68 | 1.48 → > 6 |
+| map8, op | 1.11 → 1.13 | 1.40 → 1.85 | 1.48 → 2.69 |
+| list16, lesion | 0.41 → 0.60 | 0.40 → 0.63 | 0.40 → 0.80 |
+| set8, lesion | 0.41 → 0.57 | 0.40 → 0.60 | 0.40 → 0.70 |
+| `(+ 17 25)`, lesion | 0.38 → 0.40 | 0.37 → 0.47 | 0.36 → 0.58 |
+| `(fact 4)`, lesion | 0.037 → 0.033 | 0.037 → 0.035 | 0.040 → 0.037 |
+
+- **The cliffs now move with √D.** Before, every structure failed at
+  σ ≈ 1.5–1.7 at every D. Now a 4-list goes 4.4 → 6.2 → 8.6 (× 1.41 and
+  × 1.38 per doubling of D, √2 = 1.41), and so does everything else. Lists
+  and sets gain 2.5–5× at D = 4096. Under op noise, lists and 8-sets at
+  D = 4096 no longer reach P = 0.5 anywhere in range.
+- **The gain is smallest where the threshold was not the bottleneck.**
+  8-entry maps (and the 8-map of integers) gain little at D = 1024
+  (1.26 → 1.09, which is inside the new grid's 0.8 step). Their pre-cliff
+  losses were already value misrecalls (an unthresholded argmax, E2 above),
+  and those still fail first: `{… :k0 #prim +, …}` at σ = 0.8.
+- **The interpreter is still 2–8× below its own cleanup.** At D = 2048 the
+  underlying argmax survives σ ≈ 14 (E1, |M| ≈ 150). A 4-list now reaches
+  6.2, an 8-map 1.8. The rest is no longer a threshold effect but
+  compounding: a round trip is a chain of dozens of cleanups, and the weakest
+  (a value slot at share 1/√(3n), a count field read back as an integer)
+  decides. The failure modes after the cliff reflect this: "unreadable
+  collection size" (1 453 probe / 1 771 op-noise runs: the count field),
+  "cannot evaluate an unrecognised vector" (1 517), "unable to resolve
+  symbol: x" (1 251 / 500), and 1 005 / 849 silently wrong values.
+- **Dense 0 fixes the single-dimension fragility.** `(+ 17 25)` at
+  f = 0.005–0.1: 300 of 300 correct over all D (before: 285, with
+  seeds 10 and 19 failing from f = 0.01 on at D = 2048). f₅₀ of arithmetic
+  now grows with D (0.40 → 0.47 → 0.58).
+- **`(fact 4)` is unchanged at f₅₀ ≈ 0.035.** Its failure was never the
+  zero: it is the (1 − f)^k signal loss along a chain of k binds (E4
+  above), and calibration does not touch that. Lesioned computation still
+  needs a cleanup of intermediate integers. The integer readout is a
+  cleanup, but it runs after the damage has compounded.
 
 ## Things that did not work, or changed on the way
 

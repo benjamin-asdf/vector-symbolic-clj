@@ -1,0 +1,17 @@
+;; P2 E3: capacity (as e3.edn, no noise) per cleanup backend, trimmed
+;; to D ≤ 2048, five values of n and 5 seeds.
+{:name "p2-e3"
+ :workers 2
+ :init {:prelude? false :enforce-capacity? false}
+ :budget {:max-ops 5000000 :max-rows 60000 :seconds 60}
+ :grid [[:dim [1024 2048]]
+        [:n [8 16 32 64 128]]
+        [:seed {:range [0 5]}]
+        [:task [:map-get :set-get]]
+        [:backend [{:memory :codebook} {:memory :linear}
+                   {:memory :mhn :beta 4 :iters 3} {:memory :mhn :beta 16 :iters 3}
+                   {:memory :mhn :beta 16 :iters 10}
+                   {:memory :mhn :beta 16 :mode :soft} {:memory :mhn :beta 64 :mode :soft}
+                   {:memory :mhn :beta 64 :iters 3 :mode :soft}]]]
+ :tasks {:map-get {:gen vsc.experiments.tasks/capacity :struct :map :probe :get}
+         :set-get {:gen vsc.experiments.tasks/capacity :struct :set :probe :get}}}

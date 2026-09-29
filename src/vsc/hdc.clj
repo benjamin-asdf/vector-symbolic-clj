@@ -64,6 +64,10 @@
 
 (defn num-vec [nums n] (py/call-attr nums "vec" n))
 
+(defn num-step "B: inc is B ⊗ n." [nums] (py/call-attr nums "step"))
+
+(defn num-offset "Z, the vector of 0: n = B^n ⊗ Z." [nums] (py/call-attr nums "offset"))
+
 (defn read-num
   "[n similarity] for the integer vector nearest to `v`."
   [nums v]

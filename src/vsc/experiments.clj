@@ -21,6 +21,9 @@
 
   Grid keys :dim :seed :memory :memory-opts :op-noise :probe-noise :lesion
   :memory-damage configure the machine; every other key is a task parameter.
+  A :backend axis names memory and options in one value,
+  {:memory :mhn :beta 16 :iters 3 :mode :soft}, and overrides :memory and
+  :memory-opts; the CSV gets a short label for it (mhn-soft-b16-i3).
   A task is {:form f :expect v} (or {:file path :expect v}, value = last
   form), with optional :setup forms (and a :prepare thunk) run before the
   knobs are switched on, or
@@ -45,6 +48,22 @@
 ;; the grid
 
 (def machine-keys [:dim :seed :memory :memory-opts :op-noise :probe-noise :lesion :memory-damage])
+
+(defn backend-label
+  "codebook, linear, mhn-snap-b16-i3, … for a :backend value."
+  [{:keys [memory beta iters mode] :or {memory :codebook}}]
+  (if (= :mhn memory)
+    (let [b (double (or beta 16.0))]
+      (str "mhn-" (name (or mode :snap)) "-b" (if (Double/isInfinite b) "inf" (long b))
+           "-i" (or iters 1)))
+    (name memory)))
+
+(defn- backend-opts
+  "{:memory :memory-opts} of the run: from :backend if given."
+  [params]
+  (if-let [b (:backend params)]
+    {:memory (:memory b :codebook) :memory-opts (dissoc b :memory)}
+    (select-keys params [:memory :memory-opts])))
 
 (defn- axis-values [v]
   (cond
@@ -101,7 +120,7 @@
 (defn- knobs [params] (select-keys params [:op-noise :probe-noise :lesion :noise-seed]))
 
 (defn- init-opts [spec params]
-  (merge {:prelude? true} (:init spec) (select-keys params [:dim :seed :memory :memory-opts])))
+  (merge {:prelude? true} (:init spec) (select-keys params [:dim :seed]) (backend-opts params)))
 
 (defn- err-msg
   "A one-line error: a Python traceback shrinks to its last line."
@@ -189,9 +208,10 @@
 
 (defn- row [spec params r]
   (let [{:keys [counts margins]} r
-        task-keys (sort (remove (set (conj machine-keys :run :task :seed)) (keys params)))]
+        task-keys (sort (remove (set (conj machine-keys :run :task :seed :backend)) (keys params)))]
     (merge
      {:exp (:name spec) :run (:run params) :task (some-> (:task params) name)}
+     (when-let [b (:backend params)] {:backend (backend-label b)})
      (select-keys params machine-keys)
      (into {} (for [k task-keys] [k (get params k)]))
      {:correct (and (pos? (:trials r 1)) (= (:successes r) (:trials r 1)))

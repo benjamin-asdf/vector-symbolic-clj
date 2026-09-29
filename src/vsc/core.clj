@@ -18,9 +18,10 @@
     {k v, ...}   = p  with  M: p ↦ ν(ν(Σ k⊗⟨v⟩) + ν(K⊗Σ k) + C⊗n)
     #{x, ...}    = p  with  M: p ↦ ν(ν(Σ x) + C⊗n)
     (fn ...)     = p  with  M: p ↦ ν(L⊗form + R⊗env)   ;; a closure
-    n            = B^n, B unitary; + is ⊗, - is ⊘, zero? is sim(x, B^0);
-                   B has one frequency band per prime modulus (residue
-                   number system), so integers clean up by readout, not lookup
+    n            = B^n⊗Z, B and Z unitary; inc is B⊗n, + is (m⊗n)⊘Z, zero?
+                   is n = Z; B has one frequency band per prime modulus
+                   (residue number system), so integers clean up by readout,
+                   not lookup
     ()  []  {}  #{}  = dedicated atoms
 
   Every value is one near-orthogonal unit vector. Symbols, keywords and
@@ -41,10 +42,16 @@
 
 (def ^:const default-dim 2048)
 
-;; similarity thresholds
-(def ^:const theta-eq 0.995)     ;; two vectors are the same value
-(def ^:const theta-atom 0.5)     ;; a probe is recognised by a memory
-(def ^:const theta-def 0.4)      ;; a global binding matches a symbol
+;; Decisions. Every decision is either an argmax (a cleanup) or a
+;; comparison with the chance floor z/√D, the similarity that unrelated
+;; vectors reach only at z standard deviations. Nothing compares a noisy
+;; similarity with a fixed number: P1 (E2) found such thresholds failing
+;; 7–15× below what the cleanup itself survives, at the same noise for
+;; every D. With chance floors, robustness scales with √D like cleanup does.
+(def ^:const theta-eq 0.995)     ;; exact copies: the fast path of eq?
+(def ^:const theta-atom 0.5)     ;; no longer used here; vsc.machine's own datapath
+(def ^:const z-recognise 4.5)    ;; a probe is recognised by a memory at all
+(def ^:const z-differ 3.0)       ;; below it, eq? says "different" without cleanup
 
 ;; memory labels = kinds
 (def ^:private label->kind
@@ -97,14 +104,38 @@
 
 (defn- deref-ptr [p] (h/deref-ptr (m :M) p))
 
-(defn eq? [a b] (> (sim a b) theta-eq))
+(defn- chance
+  "The chance floor z/√D: unrelated unit vectors have similarity N(0, 1/D)."
+  ^double [z]
+  (/ (double z) (Math/sqrt (m :dim))))
+
+(defn- identity-of
+  "[label index] of what the cleanup recognises `v` as (index is n for an
+  integer), or nil if nothing clears the chance floor."
+  [v]
+  (let [[label i s] (h/recognize (m :C) v)]
+    (when (> s (chance z-recognise)) [label i])))
+
+(defn eq?
+  "Are `a` and `b` the same value? Exact copies (similarity > θ_eq) and
+  unrelated vectors (similarity at chance level) are told apart by one
+  similarity. Everything in between, noisy or blended vectors and integers
+  that share residue bands (sim(0, 5005) ≈ 2/3), is decided by cleaning up
+  both sides and comparing what they are: an argmax on each side, no
+  threshold on the similarity itself."
+  [a b]
+  (let [s (sim a b)]
+    (cond
+      (> s theta-eq) true
+      (< s (chance z-differ)) false
+      :else (let [x (identity-of a)] (and (some? x) (= x (identity-of b)))))))
 
 (defn kind
   "[kind empty?] of vector `v`: what M or the number readout recognises it as."
   [v]
   (let [[label i s] (h/recognize (m :C) v)
         k (label->kind label)]
-    (if (> s theta-atom)
+    (if (> s (chance z-recognise))
       [k (and (not= k :num) (contains? (m :empty-idx) i))]
       [:unknown false])))
 
@@ -130,8 +161,8 @@
 (defn- empty-coll? [v] (second (kind v)))
 
 (defn- nil-vec [] (m :nil))
-(defn- vnil? [v] (> (sim v (nil-vec)) theta-atom))
-(defn- truthy? [v] (not (or (vnil? v) (> (sim v (m :false)) theta-atom))))
+(defn- vnil? [v] (eq? v (nil-vec)))
+(defn- truthy? [v] (not (or (vnil? v) (eq? v (m :false)))))
 (defn- bool [x] (if x (m :true) (m :false)))
 
 (defn- mk-seq [tag-kind xs]
@@ -281,10 +312,14 @@
       (h/num-vec (m :nums) n)
       (throw (ex-info (str "integer out of range ±" half ": " n) {:n n})))))
 
-(defn- zero-vec [] (num-vec 0))
+(defn- zero-vec [] (m :zero))
 (defn- v-inc [x] (bind (m :base) x))
 (defn- v-dec [x] (unbind (m :base) x))
-;; not theta-atom: n shares a band with 0 for every modulus dividing it
+;; the order matters: y ⊘ x first would pass through B^(x−y), and B^0 is a
+;; delta at index 0 again; every intermediate here carries Z²
+(defn- v-add [x y] (unbind (m :zero) (bind x y)))    ;; (B^x Z ⊗ B^y Z) ⊘ Z
+(defn- v-sub [x y] (unbind y (bind (m :zero) x)))    ;; (Z ⊗ B^x Z) ⊘ B^y Z
+;; eq?, not a similarity: n shares a band with 0 for every modulus dividing it
 (defn- v-zero? [x] (eq? x (zero-vec)))
 
 ;; ---------------------------------------------------------------------------
@@ -336,11 +371,16 @@
 
 (defn- env-extend [env sym val] (cell :list (cell :list sym val) env))
 
+;; A slot binds sym iff its L field cleans up to sym itself (eq?): the slot
+;; ν(L⊗x + R⊗v) gives L⊘slot ≈ 0.71·x, and a slot of another symbol gives
+;; chance similarity. No threshold on the 0.71 (P1: θ = 0.4 failed at
+;; op noise 1.46 for every D).
+
 (defn- global-slot [sym]
   (when (pos? (h/mem-size (m :F)))
     (let [[i _] (h/nearest (m :F) (bind (role :L) sym))
           slot (h/mem-get (m :F) i)]
-      (when (> (sim (unbind (role :L) slot) sym) theta-def)
+      (when (eq? (unbind (role :L) slot) sym)
         [i slot]))))
 
 (defn- global-value
@@ -348,7 +388,7 @@
   [sym]
   (when (pos? (h/mem-size (m :F)))
     (let [slot (h/clean (m :F) (bind (role :L) sym))]
-      (when (> (sim (unbind (role :L) slot) sym) theta-def)
+      (when (eq? (unbind (role :L) slot) sym)
         (cleanup (unbind (role :R) slot))))))
 
 (defn define!
@@ -375,10 +415,17 @@
 
 (declare veval apply-fn)
 
-(defn- special-form [head]
-  (when (= :sym (kind-of head))
-    (let [[_ label s] (h/recall (m :SF) head)]
-      (when (> s theta-atom) (nth special-forms label)))))
+(defn- special-form
+  "The special form `head` names, if any: SF's best match for the head must
+  be the head itself (eq?), so the decision is two argmaxes, not a
+  threshold on a noisy similarity."
+  [head]
+  (let [[label i s] (h/recognize (m :C) head)]
+    (when (and (= :sym (label->kind label)) (> s (chance z-recognise)))
+      (let [atom (h/mem-get (m :M) i)
+            [j sf] (h/recall (m :SF) atom)]
+        (when (and (>= j 0) (eq? atom (h/mem-get (m :SF) j)))
+          (nth special-forms sf))))))
 
 (defn- eval-body [body env]
   (reduce (fn [_ form] (veval form env)) (nil-vec) (cells body)))
@@ -444,7 +491,7 @@
 (defn apply-fn [f args]
   (case (kind-of f)
     :prim (let [[i _ s] (h/recall (m :P) f)]
-            (when (< s theta-atom) (fail "unknown primitive " f))
+            (when (< s (chance z-recognise)) (fail "unknown primitive " f))
             ((:f (nth (m :prims) i)) args))
     :fn (apply-closure f args)
     :kw (let [[coll default] args]
@@ -543,8 +590,8 @@
    ['not (fn [[x]] (bool (not (truthy? x))))]
    ['inc (fn [[x]] (v-inc x))]
    ['dec (fn [[x]] (v-dec x))]
-   ['+ (fn [xs] (reduce bind (zero-vec) xs))]
-   ['- (fn [[x & ys]] (if ys (reduce #(unbind %2 %1) x ys) (h/inverse (sp) x)))]
+   ['+ (fn [xs] (reduce v-add (zero-vec) xs))]
+   ['- (fn [[x & ys]] (if ys (reduce v-sub x ys) (v-sub (zero-vec) x)))]
    ['zero? (fn [[x]] (bool (v-zero? x)))]
    ['nil? (fn [[x]] (bool (vnil? x)))]
    ['some? (fn [[x]] (bool (not (vnil? x))))]
@@ -627,7 +674,8 @@
      (let [nums (h/numbers s)]
        (swap! machine assoc
               :nums nums
-              :base (h/num-vec nums 1)
+              :base (h/num-step nums)
+              :zero (h/num-offset nums)
               :C (h/cleanup-machine s M nums)))
      (swap! machine assoc :fn-sym (encode 'fn) :amp (encode '&))
      (doseq [[i sf] (map-indexed vector special-forms)]

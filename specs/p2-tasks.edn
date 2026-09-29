@@ -1,0 +1,16 @@
+;; P2: bench tasks (bench/*.clj, via vsc.bench/run-task) per cleanup
+;; backend, under probe noise switched on from boot (prelude and reader
+;; included). Five small tasks, D = 2048, 4 seeds (a run takes 2-30 s).
+{:name "p2-tasks"
+ :workers 2
+ :grid [[:dim [2048]]
+        [:probe-noise [0 2 4]]
+        [:seed {:range [0 4]}]
+        [:bench [:fact :fib :map-filter-reduce :map-update-5 :graph-reach-8]]
+        [:backend [{:memory :codebook} {:memory :linear}
+                   {:memory :mhn :beta 4 :iters 3} {:memory :mhn :beta 16 :iters 3}
+                   {:memory :mhn :beta 16 :iters 10}
+                   {:memory :mhn :beta 16 :mode :soft} {:memory :mhn :beta 64 :mode :soft}
+                   {:memory :mhn :beta 64 :iters 3 :mode :soft}]]]
+ :task {:gen vsc.experiments.tasks/bench-task
+        :bench-budget {:max-ops 2000000 :max-rows 60000 :seconds 30}}}

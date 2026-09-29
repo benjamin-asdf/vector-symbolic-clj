@@ -2,6 +2,7 @@
   "Task generators for the experiment specs: each takes the run's params and
   returns a task map (see vsc.experiments)."
   (:require
+   [libpython-clj2.python :as py]
    [vsc.core :as vsc]
    [vsc.hdc :as h]))
 
@@ -153,3 +154,64 @@
   {:setup programs
    :prepare #(h/add-random! (vsc/item-memory) (long load) 1)
    :form '(fact 4) :expect 24})
+
+;; ---------------------------------------------------------------------------
+;; P2: backends compared (resources/vsc/p2.py holds the substrate kernels)
+
+(defn- p2 []
+  (h/versions)                          ;; initialises Python and sys.path
+  (py/import-module "p2"))
+
+(defn- py-opts [opts]
+  (py/->py-dict (into {} (for [[k v] opts] [(name k) (if (keyword? v) (name v) v)]))))
+
+(defn p2-probe
+  "E1 per backend: probe a memory of `load` atoms with one of them under
+  probe noise; correct if the readout's nearest row is that atom."
+  [{:keys [dim load seed probe-noise trials backend] :or {trials 20}}]
+  {:trials trials
+   :native
+   (fn []
+     (let [{:keys [memory] :or {memory :codebook}} backend
+           r (py/->jvm (py/call-attr (p2) "probe_trials" dim load seed probe-noise trials
+                                     (name memory) (py-opts (dissoc backend :memory))))]
+       {:successes (get r "successes") :trials (get r "trials") :m-size load
+        :metrics {:cos (get r "cos")}}))})
+
+(defn p2-classical
+  "E1 baseline: a classical Hebbian Hopfield network on bipolar patterns."
+  [{:keys [dim load seed probe-noise trials steps] :or {trials 20 steps 10}}]
+  {:trials trials
+   :native
+   (fn []
+     (let [r (py/->jvm (py/call-attr (p2) "classical_trials" dim load seed probe-noise trials steps))]
+       {:successes (get r "successes") :trials (get r "trials") :m-size load
+        :metrics {:exact (get r "exact")}}))})
+
+(defn p2-collapse
+  "The β collapse curve: a k-item superposition through a soft mhn memory
+  of `load` atoms; success = it keeps ≥ 0.8k items and cleans (noise < 0.1)."
+  [{:keys [dim load seed k sigma beta iters weights] :or {weights "equal" sigma 0.0}}]
+  {:native
+   (fn []
+     (let [r (py/->jvm (py/call-attr (p2) "collapse" dim load k seed sigma beta iters (name weights)))
+           ok (and (>= (get r "pr") (* 0.8 k)) (< (get r "noise") 0.1))]
+       {:successes (if ok 1 0) :trials 1 :m-size load
+        :metrics (into {} (for [[mk v] r] [(keyword mk) v]))}))})
+
+(defn bench-task
+  "A P3 bench task (bench/*.clj) on a fresh machine through vsc.bench/run-task,
+  with the knobs on from boot (the prelude and the reader run noisy too)."
+  [{:keys [bench] :as params}]
+  (let [t (symbol (name bench))]
+    {:native
+     (fn []
+       (let [{:keys [memory] :or {memory :codebook} :as b} (:backend params)
+             opts (merge (select-keys params [:dim :seed :op-noise :probe-noise :lesion :noise-seed])
+                         {:memory memory :memory-opts (dissoc b :memory)
+                          :budget (:bench-budget params {:max-ops 3000000 :max-rows 60000 :seconds 90})})
+             r ((requiring-resolve 'vsc.bench/run-task) t opts)
+             err (when (map? (:value r)) (:vsc.bench/error (:value r)))]
+         {:successes (if (:ok? r) 1 0) :trials 1
+          :value (when-not err (:value r)) :error err :m-size (:traces r)
+          :metrics {:calls (:calls r) :ms (:ms r)}}))}))

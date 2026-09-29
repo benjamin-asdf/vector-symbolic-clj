@@ -1,0 +1,21 @@
+;; E2op after calibration (P2 step 0): σ range widened past the new cliffs.
+;; E2, op-noise variant: as e2.edn, but the noise σ is added to the output
+;; of every bind/unbind/bundle (a noisy neural substrate) instead of to the
+;; cleanup probes.
+{:name "e2opc"
+ :workers 2
+ :init {:prelude? false}
+ :budget {:max-ops 300000 :max-rows 60000 :seconds 15}
+ :grid [[:dim [1024 2048 4096]]
+        [:op-noise {:linspace [0 6 16]}]
+        [:seed {:range [0 20]}]
+        [:task [:list4 :list16 :list64 :map3 :map8 :intmap8 :set3 :set8 :nested3]]]
+ :tasks {:list4 {:gen vsc.experiments.tasks/structure :struct :list :n 4}
+         :list16 {:gen vsc.experiments.tasks/structure :struct :list :n 16}
+         :list64 {:gen vsc.experiments.tasks/structure :struct :list :n 64}
+         :map3 {:gen vsc.experiments.tasks/structure :struct :map :n 3}
+         :map8 {:gen vsc.experiments.tasks/structure :struct :map :n 8}
+         :intmap8 {:gen vsc.experiments.tasks/structure :struct :intmap :n 8}
+         :set3 {:gen vsc.experiments.tasks/structure :struct :set :n 3}
+         :set8 {:gen vsc.experiments.tasks/structure :struct :set :n 8}
+         :nested3 {:gen vsc.experiments.tasks/structure :struct :nested :n 3}}}
