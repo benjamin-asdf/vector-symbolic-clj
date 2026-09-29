@@ -139,6 +139,10 @@
 (defn kind
   "[kind empty?] of vector `v`: what M or the number readout recognises it as."
   [v]
+  ;; a misread cdr can end a form early, so destructuring its operands
+  ;; yields nil; say so here rather than let numpy fail on None
+  (when (nil? v)
+    (throw (ex-info "missing operand: a noisy read truncated a form" {})))
   (let [[label i s] (h/recognize (m :C) v)
         k (label->kind label)]
     (if (> s (chance z-recognise))

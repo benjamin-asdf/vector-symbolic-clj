@@ -135,6 +135,15 @@
 (deftest metacircular-interpreter
   (is (= 10 (vsc/run-string (slurp "examples/metacircular.clj")))))
 
+(deftest truncated-forms-fail-as-interpreter-errors
+  ;; linear memory, half the dimensions dead, seed 5: a misread cdr ends a
+  ;; special form early; this used to reach numpy as None (a TypeError)
+  (try
+    (vsc/init! {:memory :linear :lesion 0.5 :seed 5})
+    (is (thrown-with-msg? clojure.lang.ExceptionInfo #"missing operand"
+                          (vsc/run '(let [xs (list 1 2 3)] (first (rest xs))))))
+    (finally (vsc/init!))))
+
 (deftest robustness
   (testing "structures survive noise as large as the signal, via cleanup"
     (is (= 'a (vsc/run '(first (degrade (quote (a b c)) 100)))))
