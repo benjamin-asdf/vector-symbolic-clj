@@ -34,7 +34,7 @@
 ;;
 ;; **Three findings.**
 ;;
-;; - It works, but only after fixing five failure modes that the algebra
+;; - It works, but only after fixing seven failure modes that the algebra
 ;;   hides (below).
 ;; - Stored data survives heavy damage. Computation is far more fragile.
 ;; - A value can be a weighted mix of several values, and the program
@@ -120,16 +120,33 @@
 ;; | value | vector |
 ;; |---|---|
 ;; | symbol, keyword, string | a random atom, stored in the memory M with its kind |
-;; | `(a . b)`, `[a b]` | a pointer p, with M: p ↦ ν(L⊗a + R⊗b) |
+;; | `(a . b)` | a pointer p, with M: p ↦ ν(L⊗a + R⊗b) |
 ;; | `first`, `rest` | unbind L or R from what p points to, then clean up |
+;; | `[x₀ … xₙ₋₁]` | ν(Σᵢ Πⁱ(V⊗xᵢ)), stored as itself, pointing to its size |
 ;; | `{k v …}` | p ↦ ν(Σ k⊗⟨v⟩) plus the set of keys and the size |
 ;; | `#{x …}` | p ↦ ν(Σ x) plus the size |
 ;; | integer n | Bⁿ⊗Z, so `+` is binding |
 ;; | closure | p ↦ ν(L⊗form + R⊗env) |
 ;;
-;; L, R, B and Z are fixed random vectors, and ν normalises to length 1.
-;; A map is a *record*: `get` is one unbind and one cleanup. Map equality
-;; ignores key order for free, because addition commutes.
+;; L, R, V, B and Z are fixed random vectors, Π shuffles the dimensions in
+;; a fixed random order, and ν normalises to length 1. A map is a *record*:
+;; `get` is one unbind and one cleanup. Map equality ignores key order for
+;; free, because addition commutes.
+;;
+;; Lists and vectors are encoded differently on purpose. A list is a chain
+;; of pointers: robust and unbounded, but two lists that differ in one
+;; element are unrelated vectors. A vector puts element i at position Πⁱ
+;; and has no pointer, so vectors with the same elements in the same places
+;; are similar vectors, and `nth` is one readout. The price: a vector holds
+;; about D/48 elements, and it tolerates less noise than a list, the less
+;; the longer it is, because each element gets a smaller share of the
+;; vector. The program picks, as it would pick between a list and a vector
+;; in Clojure.
+
+(examples vsc/run
+          '[(similarity [:a :b :c :d] [:a :b :c :e])
+            (similarity (list :a :b :c :d) (list :a :b :c :e))
+            (nth [:a :b :c :d] 3)])
 
 (examples vsc/run
           '[(cons 'a '(b c))
@@ -165,7 +182,7 @@
 
 ;; ## What breaks
 ;;
-;; Running real programs turned up five failure modes that the algebra
+;; Running real programs turned up seven failure modes that the algebra
 ;; hides.
 ;;
 ;; **1. Similar lists get confused.** In the original paper, a list cell is
@@ -177,6 +194,11 @@
 ;; checking equality is still one comparison. The right cell now wins by
 ;; 0.66, and reading survives 2.5× more noise. (Noise σ here means noise of
 ;; σ times the vector's own size.)
+;;
+;; The lesson is not "never let things be similar". A cleanup's margin is
+;; 1 minus the similarity to the nearest wrong item, so similarity and
+;; confusability are the same number. Lists and the interpreter's own
+;; structures take the margin, and vectors take the similarity.
 
 ^:kindly/hide-code
 (figure "paper-f2-cell-confusion.png"
@@ -226,6 +248,19 @@
 ;; the chance level 1/√D, makes robustness grow with √D again. Fixed
 ;; thresholds are common practice: Nengo's associative memory defaults to
 ;; 0.3 in every dimension.
+;;
+;; **6. A shared field makes strangers similar.** A vector first stored
+;; its length inside itself. Then any two vectors of the same length shared
+;; that part and looked 20% alike, even with no element in common. That is
+;; far above chance, and the superposition memory below treats anything
+;; above chance as present, so unrelated vectors crept into results. The
+;; length now lives next to the vector in the memory, not inside it.
+;;
+;; **7. A sum of tuples forgets which values went together.** A vector is
+;; a sum over its positions, so [1 1] + [2 2] is exactly [1 2] + [2 1]. A
+;; superposition of vectors remembers how likely each value is at each
+;; position, but not which values occurred together. Tuples whose
+;; correlations matter are therefore built as lists.
 
 ;; ## How robust it is
 ;;
@@ -428,6 +463,10 @@
 
 ;; The naive version uses `let` instead of `for-worlds`, so run-time choice
 ;; loses the link between rain and wet grass, and it returns the prior, 0.2.
+;; The joint worlds are lists, not vectors. A vector is linear in its
+;; elements, so [1 1] + [2 2] is exactly [1 2] + [2 1]: a sum of vectors
+;; remembers each position's distribution, but not which values went
+;; together.
 ;; This query still enumerates the worlds one by one, so it is no faster
 ;; than ordinary code.
 
@@ -443,7 +482,8 @@
 ;; - Seconds per small program. Every cleanup scans a memory that only
 ;;   grows.
 ;; - No macros, `loop`/`recur`, floats or strings.
-;; - Records hold about D/64 entries; superpositions about D/100 worlds.
+;; - Records hold about D/64 entries, vectors about D/48; superpositions
+;;   about D/100 worlds.
 
 ;; ## References
 ;;

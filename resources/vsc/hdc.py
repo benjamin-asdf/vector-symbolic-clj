@@ -57,6 +57,7 @@ class Space:
         self.max_rows = None
         self.deadline = None
         self.ops = 0
+        self._perms = None
         self.configure()
 
     # -- knobs --------------------------------------------------------------
@@ -228,6 +229,17 @@ class Space:
         exactly as k calls of `unitary` would make)."""
         return np.stack([self.unitary() for _ in range(int(k))])
 
+    def aux_unitary(self, tag):
+        """A random unitary vector from its own stream [seed, 100 + tag], so
+        that adding one never shifts the atoms the main stream hands out."""
+        rng = np.random.default_rng([self.seed, 100 + int(tag)])
+        d = self.dim
+        spec = np.exp(1j * rng.uniform(-np.pi, np.pi, d // 2 + 1))
+        spec[0] = rng.choice([-1.0, 1.0])
+        if d % 2 == 0:
+            spec[-1] = rng.choice([-1.0, 1.0])
+        return self._made("unitary", np.fft.irfft(spec, n=d))
+
     def identity(self):
         """The unit of binding (a delta at index 0)."""
         v = np.zeros(self.dim)
@@ -253,6 +265,30 @@ class Space:
     def power(self, a, k):
         """Integer power under binding: a ⊗ a ⊗ ... (k times)."""
         return self._made("power", np.fft.irfft(np.fft.rfft(self._in(a)) ** int(k), n=self.dim))
+
+    def _perm_power(self, k):
+        """Index array P_k with Π^k(v) = v[P_k]. Π is a fixed random
+        permutation from its own stream [seed, 3]. It is not a cyclic shift:
+        a shift commutes with binding, so Π^i(V⊗n) would alias integers
+        with positions as soon as integers are shifts themselves."""
+        k = int(k)
+        cache = self._perms
+        if cache is None:
+            perm = np.random.default_rng([self.seed, 3]).permutation(self.dim)
+            cache = self._perms = {0: np.arange(self.dim), 1: perm, -1: np.argsort(perm)}
+        if k not in cache:
+            step = 1 if k > 0 else -1
+            j = max((i for i in cache if i * step > 0 and abs(i) < abs(k)), key=abs)
+            p = cache[j]
+            for i in range(j + step, k + step, step):
+                p = p[cache[step]]
+                cache[i] = p
+        return cache[k]
+
+    def permute(self, v, k):
+        """Π^k(v), k any integer (negative: the inverse). Exact and norm
+        preserving, so it counts as an op like bind (op noise, lesion)."""
+        return self._op("permute", self._in(v)[self._perm_power(k)])
 
     def bundle(self, *vs):
         if self.mask is not None:
@@ -1312,6 +1348,23 @@ def associate(mem, key, trace, label):
         m = mem.space.mask
         t = trace * m if m is not None else trace
         mem.gain[i] = float(np.linalg.norm(t))
+    return i
+
+
+def store_valued(mem, key, value, label, dedupe):
+    """Store `key` as a row of its own (autoassociative: it cleans up to
+    itself) whose V row is `value`, unless a row more similar than `dedupe`
+    is already stored: then return that row. A vector is stored this way,
+    its count as the value, so the count is read through the memory and
+    stays out of the vector's content."""
+    n0 = mem.n
+    i = mem.add(key, label, dedupe)
+    if mem.n > n0:
+        mem.V[i] = mem._store(value)
+        if hasattr(mem, "gain"):
+            m = mem.space.mask
+            t = value * m if m is not None else value
+            mem.gain[i] = float(np.linalg.norm(t))
     return i
 
 

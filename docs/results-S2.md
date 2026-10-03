@@ -371,6 +371,11 @@ What a blend would *mean*:
 - **The PRIM calling convention knows cons cells.** Moving argument
   marshalling into microcode is possible (a W-list → host-seq primitive is
   still needed at the boundary).
+- **Update, October 2026: vectors are no longer cell chains**
+  (`docs/DECISION-sequences.md`). The rules `vector-literal`, `let` and
+  `closure` now turn a vector into the list `(seq v)` with one `PRIM`
+  before walking it, as the map and set literals already did. The numbers
+  above were measured before that change.
 - **Soft dispatch** needs specificity-aware keys (§8) before superposed
   machine states (W) can build on it.
 - **S3** (the tower): run S1's evaluator on this machine; rules are data, so

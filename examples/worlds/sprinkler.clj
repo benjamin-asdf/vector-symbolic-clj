@@ -9,7 +9,9 @@
 (defn flip [p] (superpose {true p false (- 100 p)}))
 
 ;; The joint distribution, by call-time choice: for-worlds enumerates each
-;; variable, so the later ones see one world of the earlier ones.
+;; variable, so the later ones see one world of the earlier ones. Each world
+;; is a list: a superposition of vectors would keep only the marginal of
+;; each position, not the joint (docs/DECISION-sequences.md).
 (def joint
   (for-worlds [rain (flip 20)
                sprinkler (if rain (flip 10) (flip 40))
@@ -17,7 +19,7 @@
                          rain (flip 80)
                          sprinkler (flip 90)
                          :else false)]
-              [rain sprinkler wet]))
+              (list rain sprinkler wet)))
 
 ;; P(rain | wet): keep the wet worlds, look at rain. first lifts linearly.
 (def rain-given-wet (first (assert (fn [w] (nth w 2)) joint)))

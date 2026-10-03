@@ -14,8 +14,11 @@
 ;; {2 1/16, 3 2/16, 4 3/16, 5 4/16, 6 3/16, 7 2/16, 8 1/16}
 (def two (+ (die) (die)))
 
-;; the joint worlds [first-die sum], 16 of them
-(def rolls (for-worlds [a (die) b (die)] [a (+ a b)]))
+;; the joint worlds (first-die sum), 16 of them. A list, not a vector: a
+;; vector is linear in its elements, so a superposition of vectors keeps
+;; only each position's marginal ([1 1] + [2 2] = [1 2] + [2 1]), and the
+;; pairing of die and sum would be lost (docs/DECISION-sequences.md)
+(def rolls (for-worlds [a (die) b (die)] (list a (+ a b))))
 
 ;; P(first die | sum ≥ 6) = {2 1/6, 3 2/6, 4 3/6}
 (def first-given-high

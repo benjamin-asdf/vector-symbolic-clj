@@ -225,16 +225,17 @@
      amb superpose worlds weight collapse sample assert support without
      union relation follow})
 
-(defn- cells-of-one-kind?
-  "Are all worlds non-empty cells of one sequence kind (so first/rest lift
-  linearly through the memory)?"
+(defn- seq-kind-of-worlds
+  "The sequence kind (:list or :vec) shared by all worlds, if every world is
+  a non-empty one of it: then first (and, for lists, rest) lifts linearly."
   [ws]
   (let [labels (map first ws)
         kinds (set (map label->kind labels))
         empties (m :empty-idx)]
-    (and (= 1 (count kinds))
-         (#{:list :vec} (first kinds))
-         (not-any? (fn [[l i]] (and (not= l NUM) (contains? empties i))) ws))))
+    (when (and (= 1 (count kinds))
+               (#{:list :vec} (first kinds))
+               (not-any? (fn [[l i]] (and (not= l NUM) (contains? empties i))) ws))
+      (first kinds))))
 
 (defn- apply-prim [f args]
   (let [nm (core/prim-name f)
@@ -244,10 +245,13 @@
       (every? single? args) (plain args)
       (#{'first 'rest} nm)
       (let [ws (readout (first args))]
-        (if (and (> (count ws) 1) (cells-of-one-kind? ws))
+        (case (when (> (count ws) 1) (seq-kind-of-worlds ws))
           ;; straight through the memory: the kind checks of the plain
           ;; primitive see only the heaviest world
-          ((if (= 'first nm) core/car core/cdr) (first args))
+          :list ((if (= 'first nm) core/car core/cdr) (first args))
+          ;; a vector's element 0 is one unbind away, linear in the worlds;
+          ;; its rest is a new list per world
+          :vec (if (= 'first nm) (#'core/vec-nth (first args) 0) (enumerate plain args))
           (enumerate plain args)))
       :else (enumerate plain args))))
 

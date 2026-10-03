@@ -132,16 +132,44 @@
   (same-as-clojure '(eval (list (quote +) 1 2)))
   (same-as-clojure '(eval (quote ((fn [x] [x x]) :y)))))
 
+(deftest lists-and-vectors-trade-off
+  ;; docs/DECISION-sequences.md
+  (testing "vectors behave as Clojure's"
+    (doseq [form '[(nth [:a :b :c] 2)
+                   (count [1 2 3 4])
+                   (rest [5 6 7])
+                   (conj [1 2] 3)
+                   (get [1 2] 5)
+                   (= [1 2] (vec (list 1 2)))
+                   [[1 2] [3 [4 5]]]
+                   #{[1 2] [1 3]}
+                   {[1] 2 :a [3 4]}]]
+      (same-as-clojure form)))
+  (testing "similar vectors are similar vectors, similar lists are not"
+    ;; 3 of 4 elements shared: similarity 3/4; nothing shared: chance
+    (is (< 68 (vsc/run '(similarity [:a :b :c :d] [:a :b :c :e])) 82))
+    (is (< (vsc/run '(similarity [:a :b] [:c :d])) 10))
+    (is (< (vsc/run '(similarity (list :a :b :c :d) (list :a :b :c :e))) 10))
+    ;; integers are boxed, but per value, so shared integers still count
+    (is (< 68 (vsc/run '(similarity [1 2 3 4] [1 2 3 5])) 82)))
+  (testing "a vector beyond about D/48 elements is an error, a list is not"
+    (is (thrown-with-msg? clojure.lang.ExceptionInfo #"capacity"
+                          (vsc/run '(vec (range 50)))))
+    (is (= 50 (vsc/run '(count (range 50)))))))
+
 (deftest metacircular-interpreter
   (is (= 10 (vsc/run-string (slurp "examples/metacircular.clj")))))
 
 (deftest truncated-forms-fail-as-interpreter-errors
-  ;; linear memory, half the dimensions dead, seed 5: a misread cdr ends a
-  ;; special form early; this used to reach numpy as None (a TypeError)
+  ;; linear memory, half the dimensions dead, seed 5: a misread ends a
+  ;; special form early; this used to reach numpy as None (a TypeError,
+  ;; which surfaces as a plain Exception). Which interpreter error it
+  ;; becomes ("missing operand", an unresolved symbol, ...) depends on the
+  ;; draw, so only its class is checked.
   (try
     (vsc/init! {:memory :linear :lesion 0.5 :seed 5})
-    (is (thrown-with-msg? clojure.lang.ExceptionInfo #"missing operand"
-                          (vsc/run '(let [xs (list 1 2 3)] (first (rest xs))))))
+    (is (thrown? clojure.lang.ExceptionInfo
+                 (vsc/run '(let [xs (list 1 2 3)] (first (rest xs))))))
     (finally (vsc/init!))))
 
 (deftest robustness

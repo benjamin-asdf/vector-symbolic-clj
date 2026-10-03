@@ -1,0 +1,22 @@
+;; E2v: lists against vectors (docs/DECISION-sequences.md). As e2c.edn:
+;; each structure is stored noise-free as a global, then `x` is evaluated
+;; and decoded with probe noise σ on every cleanup. Lists are pointer
+;; chains (n car/cdr steps); vectors are positional superpositions (one
+;; count readout, then one readout per element). vec32 exceeds the vector
+;; capacity at D = 1024 (21 elements), so it is excluded there.
+{:name "e2v"
+ :workers 2
+ :init {:prelude? false}
+ :budget {:max-ops 2000000 :max-rows 60000 :seconds 60}
+ :grid [[:dim [1024 2048 4096]]
+        [:probe-noise {:linspace [0 12 16]}]
+        [:seed {:range [0 12]}]
+        [:task [:list4 :list16 :list32 :vec4 :vec16 :vec32 :nested3]]]
+ :tasks {:list4 {:gen vsc.experiments.tasks/structure :struct :list :n 4}
+         :list16 {:gen vsc.experiments.tasks/structure :struct :list :n 16}
+         :list32 {:gen vsc.experiments.tasks/structure :struct :list :n 32}
+         :vec4 {:gen vsc.experiments.tasks/structure :struct :vec :n 4}
+         :vec16 {:gen vsc.experiments.tasks/structure :struct :vec :n 16}
+         :vec32 {:gen vsc.experiments.tasks/structure :struct :vec :n 32}
+         :nested3 {:gen vsc.experiments.tasks/structure :struct :nested :n 3}}
+ :exclude [{:dim 1024 :task :vec32}]}

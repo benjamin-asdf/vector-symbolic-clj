@@ -64,15 +64,16 @@ or the interpreter named in `$VSC_PYTHON`.
 
 ## Encoding
 
-L, R, K, C are unitary role vectors, ⊗ is circular convolution, ⊘ its
-inverse, ν normalisation, and M the cleanup memory.
+L, R, K, C, V, N are unitary role vectors, ⊗ is circular convolution, ⊘
+its inverse, ν normalisation, Π a fixed random permutation of the
+dimensions, and M the cleanup memory.
 
 | value | vector |
 |---|---|
 | symbol, keyword, string, `nil`, `true` | random unitary atom |
 | `(a . b)` | pointer *p*, with M: *p* ↦ ν(L⊗a + R⊗b) |
 | `first` / `rest` | M(L ⊘ M(p)) / M(R ⊘ M(p)), the paper's eqs. 3–4 |
-| `[a b]` | the same, labelled as a vector cell |
+| `[x₀ … xₙ₋₁]` | v = ν(Σᵢ Πⁱ(V⊗xᵢ)), stored in M as itself, M: v ↦ N⊗n; `nth` is M(V ⊘ Π⁻ⁱ v) |
 | `{k v …}` | *p* ↦ ν(ν(Σ k⊗⟨v⟩) + ν(K⊗Σ k) + C⊗n), ⟨v⟩ a pointer to v |
 | `#{x …}` | *p* ↦ ν(ν(Σ x) + C⊗n) |
 | `(fn …)` closure | *p* ↦ ν(L⊗form + R⊗env) |
@@ -129,6 +130,22 @@ implementation.
    `(get {1 2 2 3} 2)` returned 1. Each value is stored as ⟨v⟩, a
    hash-consed pointer to v that no key ever equals. The P3 `map-update`
    task found this.
+5. **Lists and vectors make opposite trade-offs, and the program picks.**
+   Pointers (change 1) give up what makes HDC attractive for structured
+   data: similar structures as similar vectors. So only lists are pointer
+   chains (robust, unbounded, opaque). A vector is a positional
+   superposition, stored as itself:
+   - vectors that share elements at the same positions are similar;
+   - `nth` and `count` are one readout each;
+   - a vector holds about D/48 elements (43 at D = 2048);
+   - a vector tolerates less noise than a list, and less the longer it is
+     (σ₅₀ 5.0 for 4 elements and 2.0 for 16, against 5–6 for any list, at
+     D = 2048);
+   - a superposition of vectors keeps only each position's marginal.
+
+   Use lists for recursion, code and tuples of correlated worlds, and
+   vectors for records and indexed data. The decision, its reasons and its
+   measurements are in `docs/DECISION-sequences.md`.
 
 ## Superposition programming ("many worlds")
 
@@ -169,7 +186,9 @@ branches π : 1−π and splits the tested variable between them, so recursion
 whose depth differs between worlds terminates.
 Choice is **run-time** (each occurrence is its own draw, as the second line
 shows), because a single vector carries no world identity. `for-worlds` gives
-call-time choice by explicit enumeration.
+call-time choice by explicit enumeration. Build joint worlds as lists, not
+vectors: a vector is linear in its elements, so [1 1] + [2 2] = [1 2] + [2 1],
+and a superposition of vectors keeps only each position's marginal.
 
 Capacity is about D/100 worlds per memory step and 5 integer worlds at any D.
 Beyond that, `worlds` throws. It is not faster than enumeration. The API,
@@ -205,20 +224,19 @@ Results of P1 (codebook robustness curves): `docs/results-P1.md`, figures in
 - **Capacity grows linearly with D.** Measured, and enforced with an error
   rather than silently returning garbage:
 
-  | D | map entries | set members |
-  |---|---|---|
-  | 2048 (default) | 21 | 32 |
-  | 4096 | 43 | 64 |
+  | D | map entries | set members | vector elements |
+  |---|---|---|---|
+  | 2048 (default) | 21 | 32 | 43 |
+  | 4096 | 43 | 64 | 86 |
 
   These are single-lookup margins. A workload that reads a map hundreds of
   times fails sooner: the `map-update` bench task is exact up to 12 entries at
   D=2048, but not at 16 or 20 (`bench/README.md`).
   Change it with `(vsc/init! {:dim 4096})`. Lists have no capacity limit,
-  because every cell is its own pointer: a 200-element vector round-trips.
+  because every cell is its own pointer: a 200-element list round-trips.
 - **Speed.** `(fib 10)` takes about 9 s. The evaluator re-reads the program
   from vector space on every step, and each cleanup is a scan over M.
 - **M only grows.** Every environment cell a call creates is stored, and
   nothing is collected.
 - **Not supported yet:** macros, `loop`/`recur` (and no TCO), floats,
-  `<`/`>`, string functions, destructuring. `rest` of a vector returns a
-  vector tail.
+  `<`/`>`, string functions, destructuring.

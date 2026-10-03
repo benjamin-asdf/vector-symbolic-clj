@@ -14,7 +14,9 @@
     cons(a, b)   = p  with  M: p ↦ ν(L⊗a + R⊗b)   ;; paper eq. 2
     first(c)     = M(L⊘M(c))                       ;; paper eq. 3
     rest(c)      = M(R⊘M(c))                       ;; paper eq. 4
-    [a b]        = same, labelled as a vector cell
+    [x₀ … xₙ₋₁]  = v = ν(Σᵢ Πⁱ(V⊗xᵢ)), stored in M as itself (no pointer),
+                   with M: v ↦ N⊗n; nth i = M(V⊘Π⁻ⁱ(v)), Π a random
+                   permutation; count = M(N⊘M(v))
     {k v, ...}   = p  with  M: p ↦ ν(ν(Σ k⊗⟨v⟩) + ν(K⊗Σ k) + C⊗n)
     #{x, ...}    = p  with  M: p ↦ ν(ν(Σ x) + C⊗n)
     (fn ...)     = p  with  M: p ↦ ν(L⊗form + R⊗env)   ;; a closure
@@ -24,14 +26,24 @@
                    not lookup
     ()  []  {}  #{}  = dedicated atoms
 
-  Every value is one near-orthogonal unit vector. Symbols, keywords and
-  strings are random unitary atoms. A composite is a random pointer p that M
+  Every value is one unit vector. Symbols, keywords and strings are random
+  unitary atoms. A list, map, set or closure is a random pointer p that M
   associates with its trace (heteroassociative cleanup, as in the authors'
   own implementation: plain superposed tuples are similar to each other when
   they share parts, and cleanup then confuses them). Equal traces are
   hash-consed onto one pointer, so structural equality is still vector
   similarity. M labels every key with its kind, so the kind of any value is
-  whatever M recognises it as."
+  whatever M recognises it as.
+
+  Lists and vectors make opposite trade-offs, and the program picks one per
+  value (docs/DECISION-sequences.md). A list is a chain of pointers: robust,
+  unbounded, opaque (two lists that differ in one element are unrelated
+  vectors). A vector is its own content: vectors that share elements at the
+  same positions are similar, nth is one readout instead of a walk down the
+  chain, and equal vectors are equal without hash-consing; but it holds
+  about D/48 elements, it tolerates less noise than a list (each element
+  has share 1/√n), and a superposition of vectors keeps only each
+  position's marginal."
   (:require
    [clojure.java.io :as io]
    [clojure.string :as str]
@@ -132,7 +144,7 @@
   [a b]
   (let [s (sim a b)]
     (cond
-      (> s theta-eq) true
+      (> s (or (m :theta-eq) theta-eq)) true
       (< s (chance z-differ)) false
       :else (let [x (identity-of a)] (and (some? x) (= x (identity-of b)))))))
 
@@ -187,18 +199,34 @@
 (defn- construct [k f xs] (if-let [h (hook :construct)] (h k f xs) (f xs)))
 
 (defn mk-list [xs] (construct :list #(mk-seq :list %) xs))
-(defn mk-vec [xs] (construct :vec #(mk-seq :vec %) xs))
+
+(declare mk-vec-plain)
+
+(defn mk-vec
+  "Vector of the elements `xs`: ν(Σᵢ Πⁱ(V⊗xᵢ)), stored in M as itself,
+  labelled :vec, with its count N⊗n as the trace it points to. Position i is the permutation power Πⁱ; V keeps a
+  nested vector's positions apart from its parent's, because a random
+  permutation does not commute with binding: Πⁱ(V⊗Πʲ(V⊗y)) ≠ Πⁱ⁺ʲ(V⊗y)."
+  [xs]
+  (construct :vec mk-vec-plain xs))
+
+(declare vec-elems)
 
 (defn- cells
-  "Host seq of the elements of a list/vector cell chain. Every cell is a row
-  of M, so a chain longer than M is a cycle (a misread cdr), not a list."
+  "Host seq of the elements of a list cell chain, or of a vector. Every cell
+  is a row of M, so a chain longer than M is a cycle (a misread cdr), not a
+  list."
   ([c] (cells c (h/mem-size (m :M))))
   ([c budget]
    (lazy-seq
-    (when-not (or (vnil? c) (empty-coll? c))
-      (when (neg? budget)
-        (throw (ex-info "cyclic cell chain" {})))
-      (cons (car c) (cells (cdr c) (dec budget)))))))
+    (when-not (vnil? c)
+      (let [[k e?] (kind c)]
+        (cond
+          e? nil
+          (= k :vec) (vec-elems c)
+          :else (do (when (neg? budget)
+                      (throw (ex-info "cyclic cell chain" {})))
+                    (cons (car c) (cells (cdr c) (dec budget))))))))))
 
 (defn- distinct-by-eq [xs]
   (reduce (fn [acc x] (if (some #(eq? x %) acc) acc (conj acc x))) [] xs))
@@ -206,10 +234,11 @@
 (declare num-vec)
 
 ;; Superpositions need near-orthogonal constituents. Integers are not (in the
-;; residue encoding, n and n+p agree on p's band), so an integer is boxed
-;; behind a hash-consed pointer wherever it enters a map or set.
+;; residue encoding, n and n+p agree on p's band), and neither are vectors
+;; (they are similar by design), so both are boxed behind a hash-consed
+;; pointer wherever they enter a map or set.
 
-(defn- slot [x] (if (= :num (kind-of x)) (pointer :box x) x))
+(defn- slot [x] (if (#{:num :vec} (kind-of x)) (pointer :box x) x))
 (defn- unslot [y] (if (#{:box :vbox} (kind-of y)) (cleanup (deref-ptr y)) y))
 
 ;; Binding commutes, so if a map value were the same vector as a key, the
@@ -249,7 +278,8 @@
 
 (defn capacity
   "Most constituents a map (parts 3) or set (parts 2) holds reliably: each
-  one's share 1/√(parts·n) of the trace must stay 1.25× above the noise floor."
+  one's share 1/√(parts·n) of the trace must stay 1.25× above the noise
+  floor. A vector counts as 1.5 parts (calibrated, see vec-parts)."
   [parts]
   (long (/ 1.0 (* parts (Math/pow (* 1.25 (noise-floor)) 2)))))
 
@@ -327,6 +357,72 @@
 (defn- set-contains? [sv x]
   (let [n (coll-size sv)]
     (and (pos? n) (member? (deref-ptr sv) (slot x) 2 n))))
+
+;; vectors: positional superpositions, stored as themselves
+;;
+;; The count N⊗n is not part of the vector: it is the trace the vector's
+;; row points to, read through the memory. In the content, a count term
+;; made every two vectors of the same length similar (0.2 even at weight
+;; ½), and the :proj memory, which keeps every row above chance, then read
+;; unrelated vectors into superpositions as spurious worlds. Under the
+;; role C it also correlated vectors with maps and sets of that size.
+;; Without it, unrelated vectors are orthogonal, and each element's share
+;; is 1/√n.
+;;
+;; Capacity is calibrated, not derived: every element is one cleanup with
+;; no explaining away. Keyword and integer elements read back exactly up to
+;; 48 of them at D = 2048 and start failing at 56 (5 seeds). A vector counts
+;; as 1.5 parts: about D/48, 43 at D = 2048.
+;;
+;; Integer elements are boxed, as in maps and sets: the residue readout
+;; failed from 16 elements at D = 2048, where the codebook is still exact.
+;; A box is hash-consed per value, so vectors sharing integers at the same
+;; positions stay similar. Nested vectors are not boxed, so similarity
+;; reaches into them.
+
+(def ^:private vec-parts 1.5)
+
+(defn- vec-slot [x] (if (= :num (kind-of x)) (pointer :box x) x))
+
+(defn- permute [v k] (h/permute (sp) v k))
+
+(defn- mk-vec-plain [xs]
+  (let [xs (vec xs)
+        n (count xs)
+        ;; as in `cell`: under vsc.worlds every element is unit length
+        f (if (hook :construct) nu identity)]
+    (if (zero? n)
+      (tag :vec)
+      (do
+        (check-capacity "vector" vec-parts n)
+        (let [v (nu (apply bundle (map-indexed (fn [i x] (permute (bind (role :V) (f (vec-slot x))) i)) xs)))]
+          ;; equal vectors are the same vector already; the dedupe only
+          ;; keeps M from storing a second copy
+          (h/mem-get (m :M) (h/store-valued! (m :M) v (bind (role :N) (num-vec n))
+                                             (kind->label :vec) (m :vec-dedupe))))))))
+
+(defn- vec-size
+  "Host count of a non-empty vector: M(N ⊘ M(v))."
+  ^long [v]
+  (let [[_ n] (h/recognize (m :C) (unbind (role :N) (deref-ptr v)))
+        most (if (m :enforce-capacity?) (capacity vec-parts) (m :dim))]
+    (if (<= 1 n most)
+      n
+      (throw (ex-info (str "unreadable vector size " n) {:n n})))))
+
+(defn- vec-nth
+  "Element i of vector v: M(V ⊘ Π⁻ⁱ(v)), unboxed. Linear up to the cleanup,
+  so on a superposition of vectors it reads the superposition of their
+  elements."
+  [v i]
+  (unslot (cleanup (unbind (role :V) (permute v (- i))))))
+
+(defn- vec-elems
+  "Host seq of the elements of a non-empty vector, read one by one (not
+  chunked: `first` reads one element)."
+  [v]
+  (let [n (vec-size v)]
+    ((fn step [i] (lazy-seq (when (< i n) (cons (vec-nth v i) (step (inc i)))))) 0)))
 
 (defn- closure [form env] (cell :fn form env))
 
@@ -412,7 +508,7 @@
       (:sym :kw :str) (atom-value)
       :prim (tagged-literal 'prim (atom-value))
       :list (if e? () (apply list (map decode (cells v))))
-      :vec (if e? [] (mapv decode (cells v)))
+      :vec (if e? [] (mapv decode (vec-elems v)))
       :map (into {} (map (fn [[k x]] [(decode k) (decode x)])) (map-entries v))
       :set (into #{} (map decode) (set-elems v))
       :fn (tagged-literal 'fn (decode (car v)))
@@ -563,7 +659,7 @@
                 (if-let [sf (special-form head)]
                   (eval-special sf args env)
                   (apply-fn (veval head env) (mapv #(veval % env) (cells args))))))
-      :vec (if e? e (mk-vec (mapv #(veval % env) (cells e))))
+      :vec (if e? e (mk-vec (mapv #(veval % env) (vec-elems e))))
       :map (mk-map (mapv (fn [[k x]] [(veval k env) (veval x env)]) (map-entries e)))
       :set (mk-set (mapv #(veval % env) (set-elems e)))
       :unknown (throw (ex-info "cannot evaluate an unrecognised vector" {}))
@@ -616,16 +712,31 @@
     (fail "not a collection: " coll)))
 
 (defn- v-count [coll]
-  (if (and (#{:map :set} (kind-of coll)) (not (empty-coll? coll)))
-    (cleanup (unbind (role :C) (deref-ptr coll)))
-    (reduce (fn [n _] (v-inc n)) (zero-vec) (as-cells coll))))
+  (let [[k e?] (kind coll)]
+    (cond
+      (and (not e?) (#{:map :set} k)) (cleanup (unbind (role :C) (deref-ptr coll)))
+      (and (not e?) (= :vec k)) (cleanup (unbind (role :N) (deref-ptr coll)))
+      :else (reduce (fn [n _] (v-inc n)) (zero-vec) (as-cells coll)))))
+
+(declare int-of)
+
+(defn- vec-get
+  "Element i of vector `coll`, or nil out of range. The index is read once
+  (an integer cleanup) to choose the permutation power Π⁻ⁱ: a position is
+  not a vector the machine could bind with."
+  [coll i]
+  (when (and (not (empty-coll? coll)) (= :num (kind-of i)))
+    (let [j (int-of i)]
+      (when (< -1 j (vec-size coll)) (vec-nth coll j)))))
 
 (defn- v-nth [coll i]
-  (loop [c coll i i]
-    (cond
-      (or (vnil? c) (empty-coll? c)) (fail "index out of bounds")
-      (v-zero? i) (car c)
-      :else (recur (cdr c) (v-dec i)))))
+  (if (= :vec (kind-of coll))
+    (or (vec-get coll i) (fail "index out of bounds"))
+    (loop [c coll i i]
+      (cond
+        (or (vnil? c) (empty-coll? c)) (fail "index out of bounds")
+        (v-zero? i) (car c)
+        :else (recur (cdr c) (v-dec i))))))
 
 (defn- v= [a b]
   (if (and (seq-kind? a) (seq-kind? b))
@@ -643,7 +754,7 @@
                             (if (vnil? coll) (tag :list) coll)
                             (mk-list (as-cells coll)))))]
    ['first (fn [[c]] (or (first (as-cells c)) (nil-vec)))]
-   ['rest (fn [[c]] (if (and (seq-kind? c) (not (empty-coll? c)))
+   ['rest (fn [[c]] (if (and (= :list (kind-of c)) (not (empty-coll? c)))
                       (cdr c)
                       (mk-list (rest (as-cells c)))))]
    ['next (fn [[c]] (let [r (rest (as-cells c))] (if (seq r) (mk-list r) (nil-vec))))]
@@ -662,7 +773,7 @@
            (or (case (kind-of coll)
                  :map (map-get coll k)
                  :set (when (set-contains? coll k) (cleanup k))
-                 :vec (v-nth coll k)
+                 :vec (vec-get coll k)
                  nil)
                default (nil-vec)))]
    ['contains? (fn [[coll k]]
@@ -765,7 +876,11 @@
                       :knobs (select-keys opts knob-keys)
                       :memory-damage memory-damage
                       :enforce-capacity? enforce-capacity?
-                      :roles (zipmap [:L :R :K :C] (repeatedly #(h/unitary s)))
+                      :roles (assoc (zipmap [:L :R :K :C] (repeatedly #(h/unitary s)))
+                                    ;; drawn aside, so the main stream (and
+                                    ;; every atom after it) is unchanged
+                                    :V (h/aux-unitary s 1)
+                                    :N (h/aux-unitary s 2))
                       :atoms (atom {}) :lexicon (atom {})})
      ;; the empty collections are atoms of their collection's kind
      (let [tags (into {} (for [k coll-kinds] [k (intern-atom! k (symbol (str "empty-" (name k))))]))]
@@ -782,6 +897,13 @@
               :base (h/num-step nums)
               :zero (h/num-offset nums)
               :C (h/cleanup-machine s M nums)))
+     ;; Two vectors of n elements that differ in one have similarity
+     ;; 1 − 1/n: above n = 200 (D ≳ 12800) that passes θ_eq, so the exact
+     ;; copy thresholds follow the vector capacity
+     (let [cap (capacity vec-parts)]
+       (swap! machine assoc
+              :theta-eq (max theta-eq (- 1.0 (/ 0.25 cap)))
+              :vec-dedupe (max 0.999 (- 1.0 (/ 0.125 cap)))))
      (swap! machine assoc :fn-sym (encode 'fn) :amp (encode '&))
      (doseq [[i sf] (map-indexed vector special-forms)]
        (h/mem-add! (m :SF) (encode sf) i))

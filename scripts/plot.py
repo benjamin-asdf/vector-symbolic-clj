@@ -223,6 +223,10 @@ TASK_TITLES = {
     "map3": "map, 3 kw→kw", "map8": "map, 8 kw→kw", "intmap8": "map, 8 kw→int",
     "set3": "set, 3", "set8": "set, 8", "nested3": "vector of 3 maps",
     "arith": "(+ 17 25)", "program": "(fact 4)",
+    "list32": "list, 32", "vec4": "vector, 4 atoms", "vec16": "vector, 16",
+    "vec32": "vector, 32",
+    "list-k1": "list of 8, alone", "list-k16": "list of 8, 15 look-alikes",
+    "vec-k1": "vector of 8, alone", "vec-k16": "vector of 8, 15 look-alikes",
 }
 
 
@@ -280,6 +284,18 @@ def plot_e4():
     s = small_multiples("e4", "lesion", "fraction of dimensions lesioned",
                         "E4  lesion after storage (Wilson 95%, 20 seeds)", xscale="symlog")
     print_x50(s, "E4 f50")
+
+
+def plot_e2v():
+    s = small_multiples("e2v", "probe-noise", "probe noise σ",
+                        "E2v  lists against vectors under probe noise (Wilson 95%, 12 seeds)")
+    print_x50(s, "E2v σ50")
+
+
+def plot_e2l():
+    s = small_multiples("e2l", "probe-noise", "probe noise σ",
+                        "E2l  reading a sequence out of a list of look-alikes (Wilson 95%, 12 seeds)")
+    print_x50(s, "E2l σ50")
 
 
 # ---------------------------------------------------------------------------
@@ -490,8 +506,8 @@ def plot_e6():
     finish(fig, "e6task", blas_note(header))
 
 
-PLOTS = {"e1": plot_e1, "e2": plot_e2, "e2op": plot_e2op, "e3": plot_e3, "e4": plot_e4,
-         "e5": plot_e5, "e5b": plot_e5b, "e6": plot_e6}
+PLOTS = {"e1": plot_e1, "e2": plot_e2, "e2op": plot_e2op, "e2v": plot_e2v, "e2l": plot_e2l,
+         "e3": plot_e3, "e4": plot_e4, "e5": plot_e5, "e5b": plot_e5b, "e6": plot_e6}
 
 
 def main(argv):

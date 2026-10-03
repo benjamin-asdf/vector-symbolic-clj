@@ -128,6 +128,19 @@
   (is (close? {'(2 3) 0.5 '(11 21) 0.5}
               (worlds '(for-worlds [xs (amb [1 2] [10 20])] (map inc xs))) 1e-6)))
 
+(deftest vectors-keep-marginals-lists-keep-joints
+  ;; docs/DECISION-sequences.md
+  (testing "first of superposed vectors is one linear read"
+    ;; crosstalk from the other elements, no exact field gain as for cells
+    (is (close? {:a 0.5 :c 0.5} (worlds '(first (amb [:a :b] [:c :d]))) 0.02)))
+  (testing "a vector is linear in its elements: [x p] + [y q] = [x q] + [y p]"
+    (is (<= 99 (w/run '(similarity (amb [:x :p] [:y :q]) (amb [:x :q] [:y :p]))))))
+  (testing "lists keep the joint: given the first is :x, the second is :p"
+    (is (close? {:p 1.0}
+                (worlds '(first (rest (assert (fn [w] (= (first w) :x))
+                                              (amb (list :x :p) (list :y :q))))))
+                1e-6))))
+
 (deftest worlds-throws-beyond-capacity
   (testing "integers: the residue encoding's world capacity"
     (is (thrown-with-msg? Exception #"capacity"

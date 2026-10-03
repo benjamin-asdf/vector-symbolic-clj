@@ -77,11 +77,17 @@
 ;; algebra, parameterised by a space `s`
 
 (defn unitary [s] (py/call-attr s "unitary"))
+(defn aux-unitary
+  "A unitary vector from its own random stream: drawing it shifts no atom."
+  [s tag]
+  (py/call-attr s "aux_unitary" tag))
 (defn identity-vec [s] (py/call-attr s "identity"))
 (defn bind [s a b] (py/call-attr s "bind" a b))
 (defn unbind [s a c] (py/call-attr s "unbind" a c))
 (defn inverse [s a] (py/call-attr s "inverse" a))
 (defn power [s a k] (py/call-attr s "power" a k))
+(defn permute "Π^k(v) for the space's fixed random permutation Π." [s v k]
+  (py/call-attr s "permute" v k))
 (defn bundle [s & vs] (apply py/call-attr s "bundle" vs))
 (defn normalize [s v] (py/call-attr s "normalize" v))
 (defn sim ^double [s a b] (py/call-attr s "sim" a b))
@@ -194,6 +200,12 @@
   "Store row key -> trace in memory `m` as it is (no hash-consing)."
   [m key trace label]
   (py/call-attr @module "associate" m key trace label))
+
+(defn store-valued!
+  "Index of row `key` (stored as itself, or an existing row more similar
+  than `dedupe`), whose associated trace is `value`."
+  [m key value label dedupe]
+  (py/call-attr @module "store_valued" m key value label dedupe))
 
 (defn follow
   "cleanup(deref(p)) in one lookup over every world of p; nil when p hits

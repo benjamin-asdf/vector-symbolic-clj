@@ -1,0 +1,16 @@
+;; E2l: the price of similarity (docs/DECISION-sequences.md). k sequences of
+;; 8 symbols that differ only in the last one are stored noise-free in one
+;; list; (first xs) is evaluated and decoded with probe noise σ on every
+;; cleanup. k = 1 is the control: nothing to confuse.
+{:name "e2l"
+ :workers 2
+ :init {:prelude? false}
+ :budget {:max-ops 2000000 :max-rows 60000 :seconds 60}
+ :grid [[:dim [1024 2048 4096]]
+        [:probe-noise {:linspace [0 12 16]}]
+        [:seed {:range [0 12]}]
+        [:task [:list-k1 :list-k16 :vec-k1 :vec-k16]]]
+ :tasks {:list-k1 {:gen vsc.experiments.tasks/lookalikes :struct :list :n 8 :k 1}
+         :list-k16 {:gen vsc.experiments.tasks/lookalikes :struct :list :n 8 :k 16}
+         :vec-k1 {:gen vsc.experiments.tasks/lookalikes :struct :vec :n 8 :k 1}
+         :vec-k16 {:gen vsc.experiments.tasks/lookalikes :struct :vec :n 8 :k 16}}}

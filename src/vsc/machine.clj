@@ -96,7 +96,7 @@
      [CLEAN A B KIND] [JMPEQ A k-empty-list :eval]
      [REC K W T do-fr A B E E N K] [JMP :eval]]
     ;; let: remaining bindings A, body B, env E
-    [:let-next [CLEAN X A KIND] [JMPEQ X k-empty-vec :let-body] [JMPEQ X k-empty-list :let-body]
+    [:let-next [CLEAN X A KIND] [JMPEQ X k-empty-list :let-body] [JMPEQ X k-nil :let-body]
      [FIELD Y A R VAL] [FIELD C Y L VAL]
      [REC K W T let-fr A A B B E E N K] [JMP :eval]
      :let-body [MOV X B] [JMP :body]]
@@ -128,8 +128,11 @@
     {:name call :key {:mode EVAL :kind k-list}
      :code [[FIELD B C R VAL] [REC K W T args-fr A EMPTY B B E E N K]
             [FIELD C C L VAL] [JMP :eval]]}
+    ;; a vector is a positional superposition, not a cell chain: the
+    ;; microcode walks it as the list (seq v), made by one PRIM
     {:name vector-literal :key {:mode EVAL :kind k-vec}
-     :code [[REC K W T args-fr A EMPTY B C E E N K] [MOV C %vector] [JMP :ret]]}
+     :code [[REC X W L C R EMPTY] [PRIM B %seq X]
+            [REC K W T args-fr A EMPTY B B E E N K] [MOV C %vector] [JMP :ret]]}
     {:name map-literal :key {:mode EVAL :kind k-map}
      :code [[REC X W L C R EMPTY] [PRIM B %seq X] [REC B W L EMPTY-MAP R B]
             [REC K W T args-fr A EMPTY B B E E N K] [MOV C %conj] [JMP :ret]]}
@@ -153,7 +156,8 @@
     {:name fn :key {:mode EVAL :kind k-list :head fn}
      :code [[REC C FN L C R E] [JMP :ret]]}
     {:name let :key {:mode EVAL :kind k-list :head let}
-     :code [[FIELD X C R VAL] [FIELD A X L VAL] [FIELD B X R VAL] [JMP :let-next]]}
+     :code [[FIELD X C R VAL] [FIELD A X L VAL] [FIELD B X R VAL]
+            [REC X W L A R EMPTY] [PRIM A %seq X] [JMP :let-next]]}
     {:name cond :key {:mode EVAL :kind k-list :head cond}
      :code [[FIELD X C R VAL] [JMP :cond-next]]}
     {:name and :key {:mode EVAL :kind k-list :head and}
@@ -223,12 +227,13 @@
      :code [[FIELD X C L VAL] [FIELD Y C R VAL]        ;; form (fn …), captured env
             [FIELD X X R VAL] [FIELD Z X L VAL]        ;; (name? params body…)
             [CLEAN A Z KIND] [JMPEQ A k-sym :fn-named]
-            [FIELD X X R VAL] [JMP :fn-bind]
+            [FIELD X X R VAL] [JMP :fn-params]
             ;; (fn name [..] ..) sees itself under its name
             :fn-named [REC A LIST L Z R C] [REC Y LIST L A R Y]
             [FIELD X X R VAL] [FIELD Z X L VAL] [FIELD X X R VAL]
-            ;; bind params Z to args E onto env Y
-            :fn-bind [CLEAN A Z KIND] [JMPEQ A k-empty-vec :fn-body] [JMPEQ A k-empty-list :fn-body]
+            ;; bind params Z (as a list: (seq [..]), nil if none) to args E onto env Y
+            :fn-params [REC A W L Z R EMPTY] [PRIM Z %seq A]
+            :fn-bind [CLEAN A Z KIND] [JMPEQ A k-nil :fn-body] [JMPEQ A k-empty-list :fn-body]
             [FIELD A Z L VAL] [JMPEQ A AMP :fn-rest]
             [FIELD B E L VAL] [REC B LIST L A R B] [REC Y LIST L B R Y]
             [FIELD Z Z R VAL] [FIELD E E R VAL] [JMP :fn-bind]
@@ -360,7 +365,7 @@
                     (py/->py-list (map #(named (kind-names %)) (vals label->kind)))
                     (py/->py-list (map first empties)) (py/->py-list (map second empties))
                     (named 'k-unknown) (named 'k-wcell) (named 'none))
-      (py/call-attr w "set_list_labels" (py/->py-list [10 11])))
+      (py/call-attr w "set_list_labels" (py/->py-list [10])))
     (doseq [x (class-members)] (py/call-attr (py/get-attr w "cls") "add" x nil 0))
     (swap! vm assoc :end (py/call-attr w "asm_end")
            :internal [[(named '%spread) spread]])

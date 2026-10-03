@@ -75,6 +75,20 @@
     (let [v (structure-value struct n)]
       {:setup [(list 'def 'x (list 'quote v))] :form 'x :expect v})))
 
+(defn lookalikes
+  "E2l: `k` sequences of `n` symbols (vectors or lists, :struct) that differ
+  only in their last element, held in one list; the first is read back out
+  of its field. A vector is cleaned up against its stored look-alikes
+  (similarity 1 − 1/n to each); a list is a pointer, unrelated to the
+  others, so k should not matter for it."
+  [{:keys [struct n k]}]
+  (let [base (syms (dec n))
+        mk (fn [i] (let [xs (conj base (symbol (str "z" i)))]
+                     (if (= struct :vec) xs (apply list xs))))]
+    {:setup [(list 'def 'xs (list 'quote (apply list (map mk (range k)))))]
+     :form '(first xs)
+     :expect (mk 0)}))
+
 ;; ---------------------------------------------------------------------------
 ;; E3: capacity of maps and sets, enforcement off
 

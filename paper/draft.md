@@ -10,7 +10,7 @@ Lisp 1.5 in a vector-symbolic architecture (VSA). We build a working
 language on the idea: a Clojure dialect in which every value is one
 holographic reduced representation (HRR) vector. That covers lists, maps,
 sets, integers, closures and the environment. It passes 371 differential
-assertions against real Clojure. Running programs exposed five failure
+assertions against real Clojure. Running programs exposed seven failure
 modes that the algebra hides, and we fix each one.
 
 - Cleanup follows its textbook model, and capacity is linear in the
@@ -52,7 +52,7 @@ inside a VSA, and none does so for Clojure.
 
 **Contributions.**
 1. A working vector-symbolic Clojure (§3).
-2. Five failure modes of the straightforward encoding, each with cause and
+2. Seven failure modes of the straightforward encoding, each with cause and
    fix (§4).
 3. Robustness and capacity measured at three levels (primitive cleanup,
    stored structures, whole programs) under three kinds of noise (§5).
@@ -94,20 +94,38 @@ because "tuples turn out to degrade rather quickly". §4.1 quantifies why.
 | value | vector |
 |---|---|
 | symbol, keyword, string, `nil`, booleans | random unitary atom, stored in M with its kind as a label |
-| `(a . b)`, `[a b]` | pointer p, with M: p ↦ ν(L⊗a + R⊗b) |
+| `(a . b)` | pointer p, with M: p ↦ ν(L⊗a + R⊗b) |
 | `first` / `rest` | M(L ⊘ M(p)) / M(R ⊘ M(p)) |
+| `[x₀ … xₙ₋₁]` | v = ν(Σᵢ Πⁱ(V⊗xᵢ)), stored in M as itself, with M: v ↦ N⊗n |
+| `nth` of a vector | M(V ⊘ Π⁻ⁱ(v)) |
 | `{k v …}` | p ↦ ν(ν(Σ k⊗⟨v⟩) + ν(K⊗Σ k) + C⊗n) |
 | `#{x …}` | p ↦ ν(ν(Σ x) + C⊗n) |
 | closure | p ↦ ν(L⊗form + R⊗env) |
 | integer n | Bⁿ⊗Z (residue number system, §4.3) |
 | environment / globals | an association list of cells / a memory F probed with L⊗sym |
 
-*Table 1. The encoding. L, R, K, C are unitary roles, and ⟨v⟩ is a
-hash-consed pointer to v.*
+*Table 1. The encoding. L, R, K, C, V, N are unitary roles, Π is a fixed
+random permutation of the dimensions, and ⟨v⟩ is a hash-consed pointer to
+v.*
 
-- **Pointers.** Every composite is a random pointer that M associates with
-  its trace. Equal traces are hash-consed onto one pointer, so structural
-  equality is one similarity test.
+- **Pointers.** Every list, map, set and closure is a random pointer that M
+  associates with its trace. Equal traces are hash-consed onto one pointer,
+  so structural equality is one similarity test.
+- **Vectors are not pointers.** A vector is a positional superposition,
+  stored in M as itself. Lists and vectors thus make opposite trade-offs,
+  and the program picks one per value (§4.1, §5):
+  - vectors that share elements at the same positions are similar;
+  - `nth` and `count` are one readout each, not a walk down a chain;
+  - a vector holds about D/48 elements;
+  - a vector tolerates less noise than a list, and less the longer it is.
+
+  Position i is the permutation power Πⁱ, not binding with a role: binding
+  commutes, so with shift-encoded integers Rⁱ⊗n would alias position and
+  value. V keeps a nested vector's positions apart from its parent's,
+  because Π does not commute with V⊗. The count is the trace the vector's
+  row points to, not part of its content: a count term made all vectors of
+  one length similar, and the *proj* memory of §8 then read unrelated
+  vectors into superpositions. Integer elements are boxed, as in maps.
 - **Arithmetic** is binding: `+` is ⊗, and `inc` binds with B.
 - **Kinds.** A value's kind is the label of the memory row it cleans up to.
 - **Maps and sets** store their size (C⊗n), so `count` is O(1), and
@@ -136,8 +154,13 @@ hash-consed pointer to v.*
   chained lookups.
 - **Caveat.** We did not isolate which lookup failed in the first version
   before replacing it.
-- **Fix.** Pointers with hash-consing.
-- **Lesson.** Similarity of content is not identity.
+- **Fix.** Pointers with hash-consing, for lists and everything the
+  interpreter builds (environments, closures, code).
+- **Lesson.** Similarity of content is not identity. The margin of a
+  cleanup is 1 minus the similarity to the nearest wrong entry, so an
+  encoding that makes look-alikes similar makes them confusable by exactly
+  as much. We do not resolve this by rule. Vectors keep the similarity and
+  pay for it, and lists keep the margin (§5, E2l).
 
 **4.2 Binding commutes.**
 - **Symptom.** `(get {1 2 2 3} 2)` returned 1.
@@ -184,6 +207,41 @@ hash-consed pointer to v.*
   decisions has not been stated in the systems we surveyed: a fixed cutoff
   caps noise tolerance at a D-independent level.
 
+**4.6 A shared field makes unrelated records similar.**
+- **Symptom.** With vectors as positional superpositions (§3), a set of two
+  vectors, `#{[1 2] [1 3]}`, printed as `#{[1 3] [5 6]}`. Later, under the
+  *proj* memory of §8, a nested `[:y :z]` decoded with spurious worlds such
+  as `[acc x]` at small weights, and a relation built from vectors lost a
+  key once enough vectors were stored.
+- **Cause.** The vector's trace carried its length as a field. Under the
+  role C, every vector of length n shared the term C⊗n with every map and
+  set of size n, so peeling a set found stored vectors as its members.
+  Under its own role at weight ½, any two vectors of one length still had
+  similarity 0.2. That is far above chance (4.5/√D ≈ 0.10 at D = 2048), and
+  *proj* keeps every row above chance, so it read unrelated vectors into
+  superpositions.
+- **Fix.** The length is not part of the content: the vector's row points
+  to N⊗n, read through the memory. Unrelated vectors are then orthogonal
+  (similarity 0.02), and each element's share rises from 1/√(1.25 n) to
+  1/√n.
+- **Lesson.** In a superposition every term is content. A field that two
+  values share for structural reasons makes them similar, and similarity is
+  what cleanup acts on.
+
+**4.7 A sum of tuples forgets which values went together.**
+- **Symptom.** With vectors as tuples of joint worlds, the dice and
+  sprinkler demos of §8 read back at total variation 0.21 and 0.79 from the
+  exact distributions.
+- **Cause.** A positional vector is linear in its elements, so
+  [1 1] + [2 2] = [1 2] + [2 1] exactly. A superposition of vectors over
+  the same positions keeps each position's marginal, not the joint, and no
+  readout can recover what the sum did not keep.
+- **Fix.** Joint worlds are built as lists, whose pointers are
+  near-orthogonal, so each tuple stays its own direction.
+- **Lesson.** Linearity is what lets constructors lift over worlds, and it
+  is also what loses their correlations. A representation cannot be both
+  linear in its parts and a faithful carrier of joint distributions.
+
 ## 5. Robustness and capacity
 
 **Protocol.**
@@ -216,6 +274,17 @@ Maps gain least. A map value is recalled at share 1/√(3n), and a lost value
 returns *silently* as another stored atom. Overall the interpreter stays
 2–8× below its own cleanup, because a round trip chains dozens of cleanups
 and the weakest decides.
+
+**Lists against vectors** (`figures/e2v.png`, `figures/e2l.png`; 12 seeds).
+- At D = 2048 a list's σ₅₀ hardly depends on its length: 6.3, 5.6 and 5.3
+  for 4, 16 and 32 elements. Every step is a cell field at share 1/√2.
+- A vector's σ₅₀ is 5.0, 2.0 and 1.2, because each element is read at
+  share 1/√n. A vector of 3 maps matches the pointer-cell baseline.
+- Similarity itself costs little. A vector of 8 read out of a list next to
+  15 stored look-alikes (similarity 7/8) has σ₅₀ 2.9, against 3.1 alone. Only noise along the difference of two vectors can
+  swap them, and that difference has norm √(2(1−s)), so the margin per unit
+  of noise is √((1−s)/2) times the probe's share, not 1−s. That is below an
+  element's share until n approaches capacity.
 
 **Capacity is linear in D** (`figures/e3.png`).
 - n₉₀ ≈ D/64 map entries and D/36 set members. The enforced caps give
@@ -305,7 +374,9 @@ the dialect and run by the host evaluator.
   collect working memory. That is 47 lines with no Lisp in them.
 - **Host knowledge left**, listed explicitly: argument marshalling for host
   primitives walks cons cells; two memory labels; the four empty-collection
-  atoms; one `apply` helper.
+  atoms; one `apply` helper. Vectors are not cell chains (§3), so the
+  microcode walks a vector literal, `let` bindings and parameters as
+  `(seq v)`, made by one `PRIM` each.
 - **Results.**
   - Every test form gives the host evaluator's result.
   - Tail calls run in constant space: `(countdown 10000)` completes on a
@@ -326,7 +397,8 @@ A weighted sum of values is a vector too. §8 asks whether a program can
 compute on all of its worlds at once.
 
 **Memory.** Pointers break linearity: `cons` of a superposed element gets a
-fresh pointer, not the sum of the pointers of the individual cells. So
+fresh pointer, not the sum of the pointers of the individual cells.
+(Vectors are linear, but §8's semantics shows why that does not help.) So
 superposition has to survive dereferencing: M(Σ wᵢpᵢ) should be
 Σ wᵢ·traceᵢ.
 - **A linear memory** also returns every other stored trace. Its fidelity
@@ -345,7 +417,7 @@ superposition has to survive dereferencing: M(Σ wᵢpᵢ) should be
   complete the set.
 - **Destructors lift linearly.** `first`, `rest`, environment and global
   lookup, and `get` with a superposed key are each one memory read for
-  every world. Integer arithmetic lifts exactly, because ⊗ distributes over
+  every world. `first` of a superposed vector is one unbind. Integer arithmetic lifts exactly, because ⊗ distributes over
   +: `(+ (amb 1 2) 10)` equals `(amb 11 12)` to 10⁻¹⁵.
 - **Function bodies run once** for all worlds. Constructors, and primitives
   with no linear form, enumerate.
@@ -366,6 +438,12 @@ superposition has to survive dereferencing: M(Σ wᵢpᵢ) should be
   languages such as Curry, where a variable keeps one value. Call-time
   choice would need a tag on every world (√k signal cost, k fixed in
   advance), so it is explicit, via `for-worlds`.
+- **Vectors keep marginals, lists keep joints.** A vector is linear in its
+  elements, so [1 1] + [2 2] = [1 2] + [2 1]. A superposition of vectors
+  over the same positions cannot be decomposed back into its joint worlds.
+  Built as vectors, the dice and sprinkler joints read back at total
+  variation 0.21 and 0.79 from the truth. Joint worlds are therefore built
+  as lists, whose pointers are near-orthogonal.
 
 | demo | result | correct at |
 |---|---|---|
@@ -411,7 +489,9 @@ values, with destructors, lookup and function bodies lifted over all worlds.
 - **Pointers versus linearity** is the central tension. Pointers buy
   identity and lose superposition; a linear memory keeps superposition and
   crosstalks with everything stored. *proj* is linear on the detected
-  worlds and snaps everywhere else.
+  worlds and snaps everywhere else. The same tension decides the sequence
+  types: a list is a pointer chain, and a vector is a linear, similar,
+  bounded superposition that cannot hold joint worlds.
 - **Cartesian closure is necessary, not sufficient.** We quantify TK24's
   "great demands of memory":
   - a record holds about D/64 entries;
@@ -425,8 +505,8 @@ values, with destructors, lookup and function bodies lifted over all worlds.
 ## 10. Limitations
 
 - **Speed:** seconds per small program, against microseconds natively.
-- **Scale:** records hold about D/64 entries, superpositions about D/100
-  worlds, integer superpositions about 5.
+- **Scale:** records hold about D/64 entries, vectors about D/48,
+  superpositions about D/100 worlds, integer superpositions about 5.
 - **Language coverage:** no macros, `loop`/`recur`, floats, ordering
   comparisons or strings. The CEK machine does not detect arity errors.
 - **No garbage collection** for M.
