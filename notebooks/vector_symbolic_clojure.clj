@@ -293,10 +293,13 @@
 ;; items, and can repeat that step. A parameter β sets how hard it favours
 ;; the best match: at large β the mix is almost only the winner.
 ;;
-;; It never beats a plain lookup table. At large β it *is* the table, only
-;; slower. At smaller β, and whenever it repeats the step, it is worse. The
-;; reason: when a probe is one stored item plus noise, picking the single
-;; best match is already the best possible decision.
+;; It never beats a plain lookup table. At large β (64 here) it *is* the
+;; table, only slower, and repeating the step changes nothing. At smaller
+;; β it is worse, and repeating makes it worse still, but those β are below
+;; the range where the Hopfield network's own theory says retrieval works.
+;; The reason it cannot win: when a probe is one stored item plus noise,
+;; picking the single best match is already the best possible decision. We
+;; tested no condition where that is false.
 
 ^:kindly/hide-code
 (figure "p2-e1-summary.png" "The noise each memory tolerates (higher is better): the lookup table against Hopfield settings and a linear memory.")

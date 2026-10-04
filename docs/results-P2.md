@@ -29,8 +29,9 @@ clojure -M:jvm:exp specs/p2-XX.edn && .venv/bin/python scripts/plot_p2.py p2-XX 
   already favour the right row, iterating changes nothing; when they do
   not, it converges to a wrong row or to the mean of all rows. No setting
   in any experiment here was better than the codebook.
-- **Iteration hurts.** At |M| = 10³ and β = 16, 3 or 10 steps lower σ₅₀
-  from 14.1 (codebook, D = 2048) to 10.8. At β = 4, 10 steps lower it to 0:
+- **Iteration hurts, at β ≤ 16** (at β = 64 it changes nothing). At
+  |M| = 10³ and β = 16, 3 or 10 steps lower σ₅₀ from 14.1 (codebook,
+  D = 2048) to 10.8. At β = 4, 10 steps lower it to 0:
   even a clean probe falls into the global-mean attractor. β has to grow
   with ln|M|, which is the known metastable-state regime of Ramsauer et al.
   with cosine scores.
@@ -40,14 +41,23 @@ clojure -M:jvm:exp specs/p2-XX.edn && .venv/bin/python scripts/plot_p2.py p2-XX 
   step at β = 16 fails every bench task at σ = 2), and β = 4 breaks maps
   already at σ = 0. Soft at β = 64 works as well as snap, because the
   calibrated `eq?` cleans both sides before comparing. Every extra step is
-  one more D·|M| scan, so the mhn settings that tie the codebook are 1.5–3×
-  slower.
+  one more D·|M| scan, so the mhn settings that tie the codebook are
+  1.3–3.5× slower (median wall time; soft β=64, 3 steps: `fib` 15.6 s
+  against 4.4 s).
+- **β ≤ 16 is below the MHN's own retrieval regime** (added on review,
+  2026-10-04). Ramsauer et al.'s one-step condition needs a separation of
+  (1/β)·ln(2N²β): 1.08 at β = 16 and 0.29 at β = 64 for N = 10³, against
+  a clean gap of ≈ 0.9. So the losses below at β ≤ 16 show what a too-small
+  β costs. At a well-set β the MHN is the codebook, and no condition here
+  (isotropic probe noise, lesions of probe and rows alike) is one where it
+  could beat the maximum-likelihood argmax.
 - **β as a collapse knob reproduces W0's negative result on the real
   backend, closely.** One softmax step has a β window that keeps
   k items and removes the noise, but only for equal weights (N = 1000,
   k = 4: β ∈ [12, 32]; W0 had [12.9, 35.9]). With unequal weights there is
-  no window. With 3 or 10 steps there is no window in any of 54
-  configurations: every β that cleans collapses to one item.
+  no window. With 3 or 10 steps there is no window in any of the 36
+  configurations (3 N × 3 k × 2 weightings × 2 step counts; 54 with the
+  one-step runs): every β that cleans collapses to one item.
 - **Capacity (E3) and lesion (E4) do not move either.** β ≥ 16 matches the
   codebook's n90 (maps D/62, sets D/36) and f₅₀ to within 5%, and no
   setting beats it. Iterated retrieval should restore a damaged cue, but
@@ -116,9 +126,12 @@ probes (26 400 runs). Classical baseline: `specs/p2-e1c.edn`.
 | mhn any, β=1, ≥ 3 steps | 0 | 0 | 0 | 0 | 0 | 0 |
 | classical Hopfield | 5.4 | 2.5 | 8.1 | 3.9 | 14.4 | 6.6 |
 
-- **β ≥ 64 is the codebook** (within 1%, every D and load). With cosine
-  scores in [−1, 1], e^{64·(1 − 0.2)} already separates the target from
-  every distractor by more than any |M| here.
+- **β ≥ 64 is the codebook** (within 1%, every D and load; 3 and 10 steps,
+  soft or snap, give the same σ₅₀ as 1 step). Not because the softmax is
+  already a hardmax: near σ₅₀ the target's cosine is ≈ 0.07, and the
+  largest softmax weight at β = 64, σ = 12 is only ≈ 0.15. The blend is
+  wide, but its argmax still follows the argmax of the scores, and success
+  is judged by that argmax.
 - **β = 16 is the codebook at |M| = 10², and loses at 10³**, the more the
   more steps: σ₅₀ 14.1 → 11.8 (1 step) → 10.8 (10 steps) at D = 2048, and
   19.9 → 11.6 at D = 4096. So at β = 16 the tolerance no longer grows with
@@ -144,8 +157,10 @@ probes (26 400 runs). Classical baseline: `specs/p2-e1c.edn`.
 - **Classical Hopfield.** At |M| = 10² (below 0.14·D for every D) it
   settles exactly (exact recall 0.99–1.0 at D ≥ 2048 up to σ = 2) and
   reaches σ₅₀ = 5.4 / 8.1 / 14.4, 2–2.3× below the codebook at D ≤ 2048.
-  At |M| = 10³, above capacity at every D here, exact recall is 0 at every
-  σ (spurious mixtures). The final state still lies nearest the right
+  At |M| = 10³, above capacity at every D here (3.5× at D = 2048), exact
+  recall is 0 at every σ (spurious mixtures). Part of the gap is the
+  binarised probe: argmax on the sign of the probe alone reaches σ₅₀ ≈ 11
+  at D = 2048, |M| = 10³ (a review check), against 14.1 on the real probe. The final state still lies nearest the right
   pattern at low noise, so σ₅₀ is 2.5–6.6. It also needs bipolar vectors
   and a D × D weight matrix, which the HRR substrate does not have.
 
@@ -177,7 +192,7 @@ Unequal weights: no window in any of the 27 configurations.
   (W0, N = 10³, k = 4: β ∈ [12.9, 35.9]; here [12, 32] on a coarser grid).
   Its left edge is W0's cleanup condition β ≳ √k·ln(N/k): 6.4 / 11 / 15.6
   for k = 4. Measured: 8 / 12 / 16.
-- **With 3 or 10 steps, the window is empty in all 54 configurations.**
+- **With 3 or 10 steps, the window is empty in all 36 configurations.**
   Every β that cleans (noise < 0.1 from β ≈ 8–16 on) collapses to one item
   (PR = 1.00–1.19 at β = 16, 3 steps). Every β that keeps the items
   (β ≤ 4) leaves 67–100% noise (β = 4).
