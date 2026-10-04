@@ -10,7 +10,9 @@
 
 ;; # A Vector-Symbolic Clojure
 ;;
-;; *Every value is one high-dimensional vector. September 2026.*
+;; *Every value is one high-dimensional vector. September 2026, updated
+;; October 2026: vectors are now positional superpositions, not pointer
+;; chains.*
 ;;
 ;; This notebook runs a small Clojure in which every value is a single
 ;; vector of 2048 numbers. That covers lists, maps, sets, integers,
@@ -279,9 +281,11 @@
 ^:kindly/hide-code
 (figure "e3.png" "Lookups against the number of entries.")
 
-;; Storage survives the loss of 60–80% of dimensions. Computation survives
-;; about 4%, because every bind re-loses the dead dimensions until the next
-;; cleanup.
+;; Stored structures survive heavy damage: lists still read back with 60–80%
+;; of the dimensions dead, sets with 57–70%, maps with 23–52%. A long
+;; computation such as `(fact 4)` survives about 4%, because every bind
+;; re-loses the dead dimensions until the next cleanup. A short one,
+;; `(+ 17 25)`, survives about half.
 
 ^:kindly/hide-code
 (figure "e4c.png" "Lesions: stored structures against programs.")
@@ -484,7 +488,7 @@
 ;;
 ;; - Seconds per small program. Every cleanup scans a memory that only
 ;;   grows.
-;; - No macros, `loop`/`recur`, floats or strings.
+;; - No macros, `loop`/`recur`, floats or string operations.
 ;; - Records hold about D/64 entries, vectors about D/48; superpositions
 ;;   about D/100 worlds.
 

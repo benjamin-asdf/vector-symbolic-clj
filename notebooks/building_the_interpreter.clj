@@ -7,7 +7,7 @@
 ;; # Building a Vector-Symbolic Interpreter
 ;;
 ;; *The code behind [A Vector-Symbolic Clojure](../), step by step.
-;; September 2026.*
+;; September 2026, updated October 2026.*
 ;;
 ;; This notebook builds a small interpreter from nothing but vector
 ;; operations. At the end it runs `(fact 5)`, and every value along the way
@@ -233,6 +233,8 @@
     (false? x) FALSE
     (symbol? x) (sym x)
     (seq? x) (reduce (fn [acc e] (kons (encode e) acc)) EMPTY (reverse x))
+    ;; a vector is just a list here; the real interpreter encodes it as a
+    ;; positional superposition (see the last section)
     (vector? x) (encode (apply list x))
     :else (throw (ex-info (str "cannot encode " (pr-str x)) {}))))
 
@@ -393,6 +395,12 @@
 ;;   by *explaining away*: clean up, subtract what was found, repeat.
 ;; - **A global memory** F instead of a global list. It is probed with L⊗name,
 ;;   as in the original paper.
+;; - **Vectors as positional superpositions.** Here a vector is a list. In
+;;   the real interpreter `[x₀ … xₙ₋₁]` is ν(Σᵢ Πⁱ(V⊗xᵢ)), with Π a fixed
+;;   random permutation: no pointers, so vectors that share elements at the
+;;   same positions are similar vectors, and `nth` is one readout. Lists
+;;   stay pointer chains. The program picks the trade-off: similarity and
+;;   indexing, or robustness and unbounded length.
 ;; - **The residue integers in full**
 ;;   ([`resources/vsc/hdc.py`](https://github.com/benjamin-asdf/vector-symbolic-clj/blob/main/resources/vsc/hdc.py),
 ;;   class `Numbers`), and integers boxed behind pointers inside maps and
@@ -405,5 +413,6 @@
 ;; - **Superposition programming**
 ;;   ([`src/vsc/worlds.clj`](https://github.com/benjamin-asdf/vector-symbolic-clj/blob/main/src/vsc/worlds.clj)).
 ;;
-;; The tests compare each of them with real Clojure
+;; The tests compare the interpreter, the CEK machine and a benchmark suite
+;; with real Clojure
 ;; ([`test/`](https://github.com/benjamin-asdf/vector-symbolic-clj/tree/main/test)).
