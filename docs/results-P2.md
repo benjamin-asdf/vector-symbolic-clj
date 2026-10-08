@@ -377,3 +377,67 @@ P(exact result), σ = 0 / 2 (σ = 4: 0 for every task and backend):
   to that normalisation. With raw dot products of unit rows it is the same,
   but a network that stores unnormalised patterns needs β scaled to
   their norms.
+
+
+## Look-alikes and memory damage (added 2026-10-08)
+
+The original P2 runs tested only random stored rows under probe noise and
+lesions, conditions in which the table is provably optimal and the MHN could
+at best tie it. Three runs add the two conditions the paper had named as
+untested. In all of them the probe is a stored item plus isotropic noise, so
+the argmax stays the maximum-likelihood decision and no MHN can beat the
+table; they measure where it loses.
+
+```sh
+clojure -M:jvm:exp specs/p2-e1h.edn && .venv/bin/python scripts/plot_p2.py p2-e1h --figures
+clojure -M:jvm:exp specs/p2-e2l.edn && .venv/bin/python scripts/plot_p2.py p2-e2l --figures
+clojure -M:jvm:exp specs/p2-damage.edn && .venv/bin/python scripts/plot_p2.py p2-damage --figures
+```
+
+**E1h, primitive cleanup** (`p2.py`, `probe_trials_hard`; D = 2048,
+|M| = 1000, 20 seeds × 20 probes). σ₅₀:
+
+| rows | table | snap β16 i3 | snap β64 i3 | snap β64 i10 | snap β256 i3 | soft β16 i1 | soft β64 i1 | soft β64 i3 | linear |
+|---|---|---|---|---|---|---|---|---|---|
+| random | 14.1 | 11.0 | 14.1 | 14.1 | 14.1 | 12.3 | 14.1 | 14.1 | 13.0 |
+| 16 look-alikes, sim 0.5 | 13.7 | 7.2 | 13.6 | 13.6 | 13.8 | 8.0 | 13.6 | 13.6 | 9.1 |
+| 16 look-alikes, sim 7/8 | 9.4 | 1.7 | 9.0 | 5.6 | 9.4 | 4.4 | 9.2 | 8.6 | 2.0 |
+| damaged, δ = 1 | 10.1 | 7.5 | 10.1 | 10.1 | 10.1 | 8.6 | 10.1 | 10.1 | 9.1 |
+| damaged, δ = 2 | 5.9 | 4.9 | 6.0 | 6.0 | 5.9 | 5.2 | 6.0 | 6.0 | 5.5 |
+| look-alikes 7/8, δ = 1 | 2.9 | 2.3 | 2.9 | 2.9 | 2.9 | 2.7 | 2.9 | 2.9 | 0 |
+
+- Differences of ±0.02 against the table are one or two probes.
+- Look-alikes are where iteration hurts: it pulls the state towards the
+  group's centre. At similarity 7/8 the gap to a look-alike is 1/8, so
+  Ramsauer's condition (1/β)·ln(2N²β) < 1/8 needs β ≳ 160; β = 256
+  is the table, β = 64 holds for 3 steps but not for 10.
+- Damage alone moves every backend by the same amount, the table included.
+
+**E2l per backend** (`specs/p2-e2l.edn`; D = 2048, 12 seeds). σ₅₀ of a
+vector of 8 read out of a list:
+
+| | table | snap β16 i3 | snap β64 i3 | snap β256 i3 | soft β64 i1 | soft β64 i3 |
+|---|---|---|---|---|---|---|
+| alone | 3.14 | 3.14 | 3.14 | 3.14 | 3.14 | 3.14 |
+| 15 look-alikes | 3.00 | 1.07 | 3.00 | 3.00 | 1.78 | 2.58 |
+
+A list of 8 next to 15 look-alikes survived the whole range (σ ≤ 5) with
+every backend. The soft step at β = 64, which matched the table on random
+rows (E2 above), loses 40% here: its blend of look-alikes is what the
+interpreter reads the elements from.
+
+**Memory damage** (`specs/p2-damage.edn`; D = 2048, 12 seeds; noise of
+norm δ added once to every stored key and trace, probes clean). δ₅₀:
+
+| | every backend |
+|---|---|
+| list of 16 | 2.23 |
+| set of 8 | 1.42 |
+| map of 8 | 0.86 (β = 16: 0.83) |
+
+The outcomes agree seed for seed in 286 of 288 (task, δ, seed) cells; the
+two exceptions are β = 16 losing a map at δ = 0.75. A first run with a
+coarser grid (δ up to 6, 30 s budget) was stopped half way, after damaged
+maps and sets ran away into the row budget and the memory cap. In its
+completed half the backends agreed in every cell as well.
+

@@ -1,0 +1,27 @@
+;; P2 E1h: primitive cleanup per backend where iterating could matter
+;; (resources/vsc/p2.py, probe_trials_hard). The rows come in groups of 16
+;; look-alikes (pairwise similarity 0.5 or 7/8), and/or every stored row is
+;; damaged once with noise of norm δ. The probe is the clean atom plus probe
+;; noise σ; correct if the readout's nearest stored row is the probed one's.
+;; For isotropic noise and equal-norm rows the argmax stays the
+;; maximum-likelihood decision, so this measures what iterating and
+;; blending lose, and whether any β ties the table. β = 256 is added
+;; because a look-alike gap of 1/8 needs β·(1/8) ≫ ln N.
+{:name "p2-e1h"
+ :workers 2
+ :grid [[:dim [2048]]
+        [:load [1000]]
+        [:seed {:range [0 20]}]
+        [:probe-noise [0 1 2 3 4 6 8 12 16]]
+        [:task [:plain :look50 :look88 :dmg1 :dmg2 :look88-dmg1]]
+        [:backend [{:memory :codebook} {:memory :linear}
+                   {:memory :mhn :beta 16 :iters 3} {:memory :mhn :beta 64 :iters 3}
+                   {:memory :mhn :beta 64 :iters 10} {:memory :mhn :beta 256 :iters 3}
+                   {:memory :mhn :beta 16 :mode :soft} {:memory :mhn :beta 64 :mode :soft}
+                   {:memory :mhn :beta 64 :iters 3 :mode :soft} {:memory :mhn :beta 256 :iters 3 :mode :soft}]]]
+ :tasks {:plain {:gen vsc.experiments.tasks/p2-probe-hard :trials 20}
+         :look50 {:gen vsc.experiments.tasks/p2-probe-hard :trials 20 :cluster 16 :csim 0.5}
+         :look88 {:gen vsc.experiments.tasks/p2-probe-hard :trials 20 :cluster 16 :csim 0.875}
+         :dmg1 {:gen vsc.experiments.tasks/p2-probe-hard :trials 20 :damage 1.0}
+         :dmg2 {:gen vsc.experiments.tasks/p2-probe-hard :trials 20 :damage 2.0}
+         :look88-dmg1 {:gen vsc.experiments.tasks/p2-probe-hard :trials 20 :cluster 16 :csim 0.875 :damage 1.0}}}

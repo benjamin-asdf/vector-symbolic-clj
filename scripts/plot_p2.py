@@ -104,29 +104,46 @@ BETA_RAMP = dict(zip([1, 4, 16, 64], ramp(4)))
 ITER_STYLE = {1: "-", 3: "--", 10: ":"}
 
 
-def backend_style(label):
-    if label in BACKENDS:
-        k = BACKENDS.index(label)
-        return dict(color=CAT[k], marker=MARKERS[k])
+# the hard-condition runs (p2-e1h, p2-e2l, p2-damage) add β = 64 and 256
+# with iterations
+HARD_BACKENDS = ["codebook", "linear", "mhn-snap-b16-i3", "mhn-snap-b64-i3", "mhn-snap-b64-i10",
+                 "mhn-snap-b256-i3", "mhn-soft-b16-i1", "mhn-soft-b64-i1", "mhn-soft-b64-i3",
+                 "mhn-soft-b256-i3"]
+HARD_COLORS = CAT + [INK2, INK]
+
+
+def backend_style(label, order=None):
+    order = order or BACKENDS
+    if label in order:
+        k = order.index(label)
+        colors = CAT if order is BACKENDS else HARD_COLORS
+        return dict(color=colors[k], marker=(MARKERS * 2)[k])
     return dict(color=INK2, marker="x")
 
 
-def by_backend(exp, xkey, xlabel, title, xscale=None):
+def by_backend(exp, xkey, xlabel, title, xscale=None, order=None):
     rows, header = read(exp)
     tasks = list(dict.fromkeys(r["task"] for r in rows))
     dims = sorted({int(num(r["dim"])) for r in rows})
-    fig, axes = plt.subplots(len(tasks), len(dims), figsize=(3.3 * len(dims), 2.5 * len(tasks)),
+    # one D: wrap the tasks into rows of three instead of one tall column
+    wrap = len(dims) == 1 and len(tasks) > 1
+    nr, nc = ((len(tasks) + 2) // 3, min(3, len(tasks))) if wrap else (len(tasks), len(dims))
+    fig, axes = plt.subplots(nr, nc, figsize=(3.3 * nc, 2.5 * nr),
                              sharex=True, sharey=True, squeeze=False)
-    backends = [b for b in BACKENDS if any(r["backend"] == b for r in rows)]
+    cell = (lambda i, j: axes[i // nc, i % nc]) if wrap else (lambda i, j: axes[i, j])
+    for k in range(len(tasks), nr * nc):
+        axes.flat[k].set_visible(False)
+    order = order or BACKENDS
+    backends = [b for b in order if any(r["backend"] == b for r in rows)]
     print(f"{exp}: x50 (task, D, backend), P at the first x")
     for i, t in enumerate(tasks):
         for j, d in enumerate(dims):
-            ax = axes[i, j]
+            ax = cell(i, j)
             sub = [r for r in rows if r["task"] == t and int(num(r["dim"])) == d]
             data = pooled(sub, lambda r: r["backend"], lambda r: num(r[xkey]))
             for b in backends:
                 if b in data:
-                    st = backend_style(b)
+                    st = backend_style(b, order)
                     draw(ax, data[b], st["color"], b, marker=st["marker"])
                     print(f"  {t:>9} {d:>5} {b:>18}  x50 {x50(data[b]):7.3f}  P0 {data[b][0][1]:5.2f}")
             ax.set_title(f"{TASK_TITLES.get(t, t)}, D={d}")
@@ -136,8 +153,14 @@ def by_backend(exp, xkey, xlabel, title, xscale=None):
         ax.set_xlabel(xlabel)
     for ax in axes[:, 0]:
         ax.set_ylabel("P(correct)")
+    if wrap:
+        for k in range(max(0, len(tasks) - nc), len(tasks)):
+            axes.flat[k].xaxis.set_tick_params(labelbottom=True)
+            axes.flat[k].set_xlabel(xlabel)
     h, l = axes[0, 0].get_legend_handles_labels()
     fig.legend(h, l, loc="center left", bbox_to_anchor=(1.0, 0.5), fontsize=8)
+    if wrap:
+        fig.tight_layout(rect=(0, 0.02, 1, 0.93))
     fig.suptitle(title, x=0.01, y=1.0, ha="left")
     finish(fig, exp, blas_note(header))
 
@@ -225,6 +248,26 @@ def plot_p2_e2():
 def plot_p2_e4():
     by_backend("p2-e4", "lesion", "fraction of dimensions lesioned",
                "P2 E4  lesion per backend (Wilson 95%, 20 seeds)", xscale="symlog")
+
+
+def plot_p2_e1h():
+    by_backend("p2-e1h", "probe-noise", "probe noise σ",
+               "P2 E1h  cleanup with look-alike or damaged rows, D=2048, |M|=1000; "
+               "the table lies under β = 256 (Wilson 95%, 20 seeds)",
+               order=HARD_BACKENDS)
+
+
+def plot_p2_e2l():
+    by_backend("p2-e2l", "probe-noise", "probe noise σ",
+               "P2 E2l  a vector read next to 15 look-alikes, per backend (Wilson 95%, 12 seeds)",
+               order=HARD_BACKENDS)
+
+
+def plot_p2_damage():
+    by_backend("p2-damage", "memory-damage", "memory damage δ",
+               "P2  round trip with every stored row damaged by noise δ, per backend; "
+               "the curves coincide (Wilson 95%, 12 seeds)",
+               order=HARD_BACKENDS)
 
 
 def plot_p2_e3():
@@ -346,7 +389,8 @@ def plot_p2_collapse():
 
 PLOTS = {"e2c": plot_e2c, "e2opc": plot_e2opc, "e4c": plot_e4c, "p2-calibration": plot_calibration,
          "p2-e1": plot_p2_e1, "p2-e2": plot_p2_e2, "p2-e3": plot_p2_e3, "p2-e4": plot_p2_e4,
-         "p2-tasks": plot_p2_tasks, "p2-collapse": plot_p2_collapse}
+         "p2-tasks": plot_p2_tasks, "p2-collapse": plot_p2_collapse,
+         "p2-e1h": plot_p2_e1h, "p2-e2l": plot_p2_e2l, "p2-damage": plot_p2_damage}
 
 
 def main(argv):

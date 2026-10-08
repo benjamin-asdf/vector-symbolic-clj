@@ -56,6 +56,66 @@ def probe_trials(dim, load, seed, sigma, trials, backend, opts):
     return {"successes": hits, "trials": int(trials), "cos": cos / int(trials)}
 
 
+_hard = {}
+
+
+def _hard_rows(dim, load, seed, cluster, csim, damage):
+    """A codebook for the conditions where iterating could matter.
+
+    cluster > 1: rows come in groups of `cluster` look-alikes with pairwise
+    similarity `csim` (row = √csim·c + √(1−csim)·r, c shared by the group).
+    damage > 0: every stored row then gets noise of norm `damage` once and
+    is renormalised (as Memory.damage), so the probe's clean atom is no
+    longer stored. Returns (space, memory of the stored rows, clean rows)."""
+    space = hdc.Space(int(dim), int(seed))
+    rng = np.random.default_rng([int(seed), int(cluster), int(round(float(csim) * 1000)), 19])
+    d, n, g = int(dim), int(load), max(1, int(cluster))
+
+    def unit(X):
+        return X / np.linalg.norm(X, axis=1, keepdims=True)
+
+    R = unit(rng.standard_normal((n, d)))
+    if g > 1:
+        C = unit(rng.standard_normal(((n + g - 1) // g, d)))
+        R = unit(np.sqrt(csim) * C[np.arange(n) // g] + np.sqrt(1 - csim) * R)
+    S = R
+    if damage > 0:
+        S = unit(R + (float(damage) / np.sqrt(d)) * rng.standard_normal((n, d)))
+    mem = hdc.make_memory(space, "codebook", capacity=n)
+    mem.M[:n] = S.astype(np.float32)
+    mem.labels[:n] = 1
+    mem.n = n
+    return space, mem, R
+
+
+def probe_trials_hard(dim, load, seed, sigma, trials, backend, opts,
+                      cluster=1, csim=0.0, damage=0.0):
+    """probe_trials on look-alike rows and/or damaged rows. The probe is the
+    clean atom plus probe noise; correct if the readout's nearest *stored*
+    row is the probed one's (identity is what the interpreter needs). For
+    isotropic noise and equal-norm rows the argmax is still the
+    maximum-likelihood decision here, so the table remains optimal; what
+    this measures is whether iteration or blending lose more when rows are
+    correlated or damaged."""
+    key = (int(dim), int(load), int(seed), int(cluster), float(csim), float(damage))
+    if key not in _hard:
+        _hard.clear()
+        hdc.collect()
+        _hard[key] = _hard_rows(dim, load, seed, cluster, csim, damage)
+    space, base, R = _hard[key]
+    space.configure(probe_noise=float(sigma))
+    mem = _like(space, base, str(backend), dict(opts))
+    rng = np.random.default_rng([int(seed), int(round(float(sigma) * 1000)), 23])
+    hits = 0
+    for _ in range(int(trials)):
+        i = int(rng.integers(base.n))
+        y = mem.clean(R[i])
+        a = base.M[: base.n] @ hdc.Memory._unit(y)
+        hits += int(np.argmax(a)) == i
+    space.configure()
+    return {"successes": hits, "trials": int(trials)}
+
+
 _classical = {}
 
 

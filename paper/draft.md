@@ -19,8 +19,10 @@ modes that the algebra hides, and we fix each one.
 - Stored structures survive heavy lesions (lists 60–80% of dimensions,
   sets 57–70%, maps 23–52%); a long computation such as `(fact 4)`
   survives about 4%.
-- A modern Hopfield network, proposed as the natural cleanup memory, never
-  beats a lookup table; at a well-set β it is one, only slower.
+- A modern Hopfield network, proposed as the natural cleanup memory, cannot
+  beat a lookup table on an interpreter's probes, and we show why. At a β
+  set by the closest pair of stored rows it is the table, only slower;
+  below that, stored look-alikes cost it most.
 - We move the interpreter into vector memory: a CEK machine whose state,
   continuation and 35 transition rules are vectors, driven by 47 lines of
   Lisp-free host code, with proper tail calls.
@@ -58,7 +60,8 @@ inside a VSA, and none does so for Clojure.
    fix (§4).
 3. Robustness and capacity measured at three levels (primitive cleanup,
    stored structures, whole programs) under three kinds of noise (§5).
-4. A negative result: Hopfield cleanup never wins, and β is not a collapse
+4. A negative result, argued and measured: Hopfield cleanup cannot win
+   here, look-alikes are where it loses, and β is not a collapse
    knob (§6).
 5. The interpreter in vector memory: a metacircular tower and a vector CEK
    machine (§7).
@@ -358,6 +361,21 @@ winning row (snap) or the blend (soft). We compared it with the lookup
 table and with a linear (β = 0) memory on every experiment of §5 and on the
 benchmark programs (`figures/p2-e1.png`, `figures/p2-tasks.png`).
 
+**The result is mostly forced, so we state the argument first.** The MHN
+stores its patterns as rows, like the table, and scores them the same way.
+- Softmax is monotone, so one snap step picks the table's winner for every
+  β. One snap step *is* the table.
+- Iterating can change the winner only through correlations between stored
+  rows. On near-orthogonal rows the next state Kᵀw re-scores each row at
+  about its own weight, so iteration sharpens whatever was ahead and cannot
+  overturn it.
+- The soft mode returns the blend, which only adds the other rows'
+  crosstalk to what the interpreter computes next.
+- For a probe that is one stored row plus isotropic noise, argmax is the
+  maximum-likelihood decision. This stays true with correlated or damaged
+  rows, so no setting of the MHN can beat the table on our probes. What the
+  experiments measure is what the MHN *loses*, and where.
+
 | σ₅₀, D = 2048, \|M\| = 10³ | |
 |---|---|
 | lookup table | 14.1 |
@@ -367,16 +385,16 @@ benchmark programs (`figures/p2-e1.png`, `figures/p2-tasks.png`).
 | MHN snap, β = 4, 10 steps | 0 |
 | classical Hopfield† | 3.9 |
 
-*Table 3. The 50% noise level for each cleanup memory. β is on cosine
-scores. †3.5× over its capacity of ≈ 0.14·D ≈ 287 patterns, and its probe
-is binarised first, which alone costs the table about a fifth (σ₅₀ ≈ 11
-for argmax on the sign of the probe). At |M| = 10², within capacity, it
-reaches 8.1 against the table's 18.5.*
+*Table 3. The 50% noise level for each cleanup memory on random rows. β is
+on cosine scores. †3.5× over its capacity of ≈ 0.14·D ≈ 287 patterns, and
+its probe is binarised first, which alone costs the table about a fifth
+(σ₅₀ ≈ 11 for argmax on the sign of the probe). At |M| = 10², within
+capacity, it reaches 8.1 against the table's 18.5. It stores D² weights
+rather than rows, so it is not a resource-matched comparison either.*
 
-- **Accuracy rises with β up to the table and never exceeds it.** At
-  β = 64 the MHN is the table in every condition, down to which seeds fail,
-  and iterating changes nothing; it is 1.3–3.5× slower. No β in between
-  does better than either end.
+- **On random rows, accuracy rises with β up to the table and never
+  exceeds it.** At β = 64 the MHN is the table in every condition, down to
+  which seeds fail, and iterating changes nothing; it is 1.3–3.5× slower.
 - **β = 16 and β = 4 are below the MHN's own retrieval regime.** Ramsauer
   et al.'s one-step condition needs a separation of (1/β)·ln(2N²β): for
   N = 10³ that is 1.08 at β = 16 and 0.29 at β = 64, against a gap of
@@ -384,22 +402,35 @@ reaches 8.1 against the table's 18.5.*
   losses appear: at β ≤ 16, iteration lowers the tolerance and stops it
   growing with √D (19.9 → 11.6 at D = 4096), small β falls into the mean
   of all rows, and one soft step at β = 16 fails every benchmark task at
-  σ = 2, where the table passes three of five. These show what a too-small
-  β costs, not a flaw of the MHN at a well-set β.
-- **Why the table cannot be beaten here.** For a probe that is one stored
-  row plus isotropic noise, argmax is the maximum-likelihood decision, and
-  iterating cannot add information. Our lesion runs do not change that:
-  they lesion probe and stored rows alike, and even a lesioned probe alone
-  leaves argmax optimal. So every condition we tested confirms that the
-  MHN *reaches* the optimum; none was one it could have won. We did not
-  run the MHN under memory damage or against stored look-alikes (§5,
-  E2l), and expect neither to change the result, since the stored rows
-  remain the only information.
+  σ = 2, where the table passes three of five.
+- **Look-alikes are where the MHN loses most** (`figures/p2-e1h.png`,
+  `figures/p2-e2l.png`). With rows in groups of 16 at similarity 7/8,
+  the separation from a look-alike is 1/8, and the condition above needs β
+  in the hundreds. The table's σ₅₀ is 9.4. Snap at β = 64 with 3 steps
+  keeps 9.0, but 10 steps fall to 5.6, and β = 16 to 1.7: iteration pulls
+  the state to the group's centre. β = 256 is the table again. In the
+  interpreter, a vector read next to 15 stored look-alikes has σ₅₀ 3.0
+  with the table or snap at β ≥ 64, but 1.8 with one soft step at β = 64,
+  which on random rows had matched the table: the blend of look-alikes is
+  passed on and read as a vector. So "a well-set β" depends on the
+  closest pair of stored rows, not only on N.
+- **Memory damage changes nothing between backends** (`figures/p2-damage.png`).
+  With noise of norm δ added once to every stored row and clean probes, the
+  primitive cleanup loses the same for every β ≥ 64 as for the table
+  (σ₅₀ 10.1 at δ = 1, 5.9 at δ = 2). In the interpreter a 16-list survives
+  to δ₅₀ ≈ 2.2, an 8-set to 1.4 and an 8-map to 0.86, with every backend:
+  the outcomes agree seed for seed in 286 of 288 cells, and the other two
+  are β = 16 losing a map. The information is lost in the stored traces,
+  and no cleanup of a probe recovers it.
 - **β is not a collapse knob.** We hoped small β would keep all k items of
   a superposed probe and large β would collapse to one. One step has a
   window for equal weights only (N = 1000, k = 4: β ∈ [12, 32], left edge
   ≈ √k·ln(N/k)). With 3 or 10 steps no β works in any of the 36
   configurations (`figures/p2-collapse-equal.png`).
+- **What we did not test.** An MHN with learned projections, or a Hopfield
+  network with a fixed weight budget compared with a table of the same
+  size. Both change the question from "a softer argmax over the same rows"
+  to one whose answer is not fixed in advance.
 
 ## 7. The interpreter in vector memory
 

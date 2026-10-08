@@ -227,6 +227,9 @@ TASK_TITLES = {
     "vec32": "vector, 32",
     "list-k1": "list of 8, alone", "list-k16": "list of 8, 15 look-alikes",
     "vec-k1": "vector of 8, alone", "vec-k16": "vector of 8, 15 look-alikes",
+    "plain": "random rows", "look50": "16 look-alikes, sim 0.5",
+    "look88": "16 look-alikes, sim 7/8", "dmg1": "rows damaged, δ = 1",
+    "dmg2": "rows damaged, δ = 2", "look88-dmg1": "look-alikes 7/8, δ = 1",
 }
 
 

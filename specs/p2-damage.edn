@@ -1,0 +1,22 @@
+;; P2 damage: structure round trips per cleanup backend under memory damage.
+;; Every stored row (keys and traces, all memories) gets noise of norm δ
+;; once after setup; probes are clean. Unlike a lesion, the damage is in the
+;; memory only, so the probe carries information the stored rows have lost.
+;; Damaged maps and sets run away; 20000 rows and 8 s (a clean round trip
+;; needs a few hundred rows and milliseconds) keep two workers inside 12 GB.
+;; Every structure has failed for every backend by δ = 3.
+{:name "p2-damage"
+ :workers 2
+ :init {:prelude? false}
+ :budget {:max-ops 2000000 :max-rows 20000 :seconds 8}
+ :grid [[:dim [2048]]
+        [:memory-damage [0 0.5 0.75 1 1.25 1.5 2 2.5]]
+        [:seed {:range [0 12]}]
+        [:task [:list16 :map8 :set8]]
+        [:backend [{:memory :codebook}
+                   {:memory :mhn :beta 16 :iters 3} {:memory :mhn :beta 64 :iters 3}
+                   {:memory :mhn :beta 256 :iters 3}
+                   {:memory :mhn :beta 64 :mode :soft} {:memory :mhn :beta 64 :iters 3 :mode :soft}]]]
+ :tasks {:list16 {:gen vsc.experiments.tasks/structure :struct :list :n 16}
+         :map8 {:gen vsc.experiments.tasks/structure :struct :map :n 8}
+         :set8 {:gen vsc.experiments.tasks/structure :struct :set :n 8}}}

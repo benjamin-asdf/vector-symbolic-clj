@@ -192,6 +192,21 @@
        {:successes (get r "successes") :trials (get r "trials") :m-size load
         :metrics {:cos (get r "cos")}}))})
 
+(defn p2-probe-hard
+  "P2 E1h: as p2-probe, on stored look-alikes (:cluster rows per group at
+  similarity :csim) and/or damaged rows (:damage, noise of that norm on
+  every stored row)."
+  [{:keys [dim load seed probe-noise trials backend cluster csim damage]
+    :or {trials 20 cluster 1 csim 0.0 damage 0.0}}]
+  {:trials trials
+   :native
+   (fn []
+     (let [{:keys [memory] :or {memory :codebook}} backend
+           r (py/->jvm (py/call-attr (p2) "probe_trials_hard" dim load seed probe-noise trials
+                                     (name memory) (py-opts (dissoc backend :memory))
+                                     cluster (double csim) (double damage)))]
+       {:successes (get r "successes") :trials (get r "trials") :m-size load}))})
+
 (defn p2-classical
   "E1 baseline: a classical Hebbian Hopfield network on bipolar patterns."
   [{:keys [dim load seed probe-noise trials steps] :or {trials 20 steps 10}}]
