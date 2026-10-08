@@ -99,7 +99,8 @@ because those are lists.
    elements, so [1 1] + [2 2] = [1 2] + [2 1] exactly. A superposition of
    vectors over the same positions cannot be decomposed back into its joint
    worlds. The dice and sprinkler demos built their joint worlds as vectors
-   and read back wrong distributions (TV 0.21 and 0.79). They now build
+   and read back wrong distributions (TV 0.44–0.50 and 0.43–0.82 over 3
+   seeds at D = 4096, `scripts/failure_modes.clj`). They now build
    them as lists. A few linearly independent vectors, like
    `(amb [1 2] [10 20])`, still read back exactly.
 2. **`first` of a superposed vector lifts linearly**: element 0 is one
@@ -184,8 +185,13 @@ there is nothing to confuse it with.
   difference has norm √(2(1 − s)). Per unit of noise the margin is
   √((1 − s)/2) times the probe's share, not 1 − s. For n = 8 (s = 7/8)
   that is 0.25 × 0.71 ≈ 0.18, against 0.35 for an element; for n = 32
-  (s = 31/32) it is 0.09 against 0.18. Look-alikes become the weaker step
-  only near capacity.
+  (s = 31/32) it is 0.09 against 0.18. That is exactly half an element's
+  share at every n (an earlier version of this note said look-alikes
+  matter only near capacity, which does not follow). So the margin alone
+  does not explain the small measured cost. A likely reason, not
+  isolated: telling the vector from its look-alikes is one decision
+  against 15 rows, while each of the n element reads competes with every
+  stored atom, and the weakest of those already sets σ₅₀.
 - This is not §4.1 of the paper again. There, look-alikes were cleaned up
   at every step of a recursion and the margins of thousands of reads
   compounded. Here a vector is cleaned up once per read out of a field, and

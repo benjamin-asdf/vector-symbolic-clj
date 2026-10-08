@@ -80,8 +80,10 @@ How the rest of the language treats superpositions:
 
 - **Destructors lift linearly.** `first` and `rest` (when every world is a
   non-empty cell of one kind), environment lookup, global lookup,
-  `inc`/`dec`/`+`/`-` (binding distributes over sums), and `get` with a
-  superposed key. These are one memory read regardless of k.
+  `inc`/`dec`/`+`/`-` (binding distributes over sums), and `follow` on a
+  `relation`. These are one memory read regardless of k. (Corrected
+  2026-10-08: `get` with a superposed key enumerates its worlds, as its
+  test says.)
 - **Closures run once.** A `fn` applied to a superposed argument evaluates
   its body once, in an environment that holds the superposition. A
   superposed *function* applies each of its worlds.

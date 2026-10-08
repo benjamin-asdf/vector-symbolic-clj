@@ -13,8 +13,9 @@
   Semantics, in one line each:
     - destructors lift linearly: first, rest, env lookup (so let/fn
       parameters never snap), inc/dec/+/- (binding distributes over sums),
-      get with a superposed keyword key; every cell read multiplies by the
-      trace's stored field gain, so worlds keep their weights at any depth
+      follow on a relation (get with a superposed key enumerates); every
+      cell read multiplies by the trace's stored field gain, so worlds keep
+      their weights at any depth
     - everything else that takes a superposed argument enumerates its worlds:
       f(x) = Σ wᵢ f(xᵢ), and several superposed arguments give the product
       of their distributions (run-time choice, below)
