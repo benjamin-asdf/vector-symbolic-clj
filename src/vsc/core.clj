@@ -61,7 +61,7 @@
 ;; 7–15× below what the cleanup itself survives, at the same noise for
 ;; every D. With chance floors, robustness scales with √D like cleanup does.
 (def ^:const theta-eq 0.995)     ;; exact copies: the fast path of eq?
-(def ^:const theta-atom 0.5)     ;; no longer used here; vsc.machine's own datapath
+(def ^:const theta-atom 0.5)     ;; not used here; only vsc.machine's own datapath
 (def ^:const z-recognise 4.5)    ;; a probe is recognised by a memory at all
 (def ^:const z-differ 3.0)       ;; below it, eq? says "different" without cleanup
 
@@ -935,7 +935,7 @@
   "The symbol of primitive vector `f`, or nil."
   [f]
   (let [[i _ s] (h/recall (m :P) f)]
-    (when (> s theta-atom) (:name (nth (m :prims) i)))))
+    (when (> s (chance z-recognise)) (:name (nth (m :prims) i)))))
 
 (defn add-special!
   "Recognise symbol `sym` as a special form; eval-special hands it to the
