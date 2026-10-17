@@ -150,6 +150,10 @@
             (similarity (list :a :b :c :d) (list :a :b :c :e))
             (nth [:a :b :c :d] 3)])
 
+;; `similarity` answers in percent, since the dialect has no floats. The
+;; two vectors share three of four positions and are about 75% alike; the
+;; two lists are as unrelated as random vectors.
+
 (examples vsc/run
           '[(cons 'a '(b c))
             (:name {:name "Ada" :lang :clojure})
@@ -187,14 +191,15 @@
 ;; Running real programs turned up seven failure modes that the algebra
 ;; hides.
 ;;
-;; **1. Similar lists get confused.** In the original paper, a list cell is
+;; **1. Similar lists get confused.** Our first `(fact 5)` failed with
+;; "unable to resolve symbol: a". In the original paper, a list cell is
 ;; just the bundle of its parts. Recursion creates many nearly equal cells,
 ;; such as ((a . 5) . ()) and ((a . 4) . ()), and as bundles they are 89%
 ;; similar. Reading one of them beats its look-alike by a margin of only
 ;; 0.05, so a little noise returns the wrong cell. The fix: every cell gets
 ;; its own random ID, and cells with equal contents share one ID, so
 ;; checking equality is still one comparison. The right cell now wins by
-;; 0.66, and reading survives 2.5× more noise. (Noise σ here means noise of
+;; 0.66, and reading survives 2.8× more noise (σ ≈ 11 instead of 4). (Noise σ here means noise of
 ;; σ times the vector's own size.)
 ;;
 ;; The lesson is not "never let things be similar". A cleanup's margin is
@@ -221,7 +226,9 @@
 ;; every clock. A number that shows 11's reading on some clocks and 12's on
 ;; the others, 13102 for example, matches the set exactly as well as 11 or
 ;; 12 do. It is a *chimera*: a fake member stitched together from pieces of
-;; real ones. With six clocks there are 2⁶ − 2 = 62 of them.
+;; real ones. With six clocks there are 2⁶ − 2 = 62 of them. (The figure
+;; is a reconstruction: the readout that fell for chimeras was replaced
+;; before the code's first commit.)
 
 ^:kindly/hide-code
 (figure "paper-f3-chimeras.png"
@@ -246,7 +253,7 @@
 ;; cosine exceeded 0.5. A clean vector's cosine to
 ;; its own noisy probe is 1/√(1 + σ²), which crosses 0.5 at σ = √3 for
 ;; *every* dimension. So every structure failed at σ ≈ 1.7, while the
-;; cleanup underneath survives σ ≈ 14. Deciding by argmax, or relative to
+;; cleanup underneath survives σ ≈ 17 at the size of these memories. Deciding by argmax, or relative to
 ;; the chance level 1/√D, makes robustness grow with √D again. Fixed
 ;; thresholds are common practice: Nengo's associative memory defaults to
 ;; 0.3 in every dimension.
@@ -297,16 +304,35 @@
 ;; items, and can repeat that step. A parameter β sets how hard it favours
 ;; the best match: at large β the mix is almost only the winner.
 ;;
-;; It never beats a plain lookup table. At large β (64 here) it *is* the
-;; table, only slower, and repeating the step changes nothing. At smaller
-;; β it is worse, and repeating makes it worse still, but those β are below
-;; the range where the Hopfield network's own theory says retrieval works.
-;; The reason it cannot win: when a probe is one stored item plus noise,
-;; picking the single best match is already the best possible decision. We
-;; tested no condition where that is false.
+;; It cannot beat a plain lookup table here, and the reason comes before
+;; any experiment. Every probe the interpreter makes is one stored item
+;; plus noise, and for such a probe picking the single best match is
+;; already the best possible decision. The Hopfield network scores the same
+;; stored items the same way, so its first step picks the table's winner
+;; at every β, and repeating the step only sharpens whatever was ahead. It
+;; can tie the table or lose to it, and the experiments measure where it
+;; loses.
+;;
+;; With unrelated stored items, β = 64 *is* the table, only slower, and
+;; smaller β is worse:
 
 ^:kindly/hide-code
-(figure "p2-e1-summary.png" "The noise each memory tolerates (higher is better): the lookup table against Hopfield settings and a linear memory.")
+(figure "p2-e1-summary.png" "The noise each memory tolerates on unrelated stored items, relative to the lookup table (1 = as good as the table).")
+
+;; Stored look-alikes are where it loses. In groups of 16 items at
+;; similarity 7/8, β = 64 still holds for three steps, but ten steps pull
+;; the state towards the centre of the group; only β = 256 matches the
+;; table there. Inside the interpreter, one soft step at β = 64, which
+;; matched the table on unrelated items, passes the blend of look-alikes on
+;; as the value. So a well-set β depends on the closest pair of stored
+;; items, not only on how many there are. Damage to the stored items costs
+;; every memory the same.
+;;
+;; | noise tolerated (σ₅₀, higher is better) | table | β = 64, 3 steps | β = 64, 10 steps | β = 64, 1 soft step |
+;; |---|---|---|---|---|
+;; | single cleanup, unrelated items | 14.1 | 14.1 | 14.1 | 14.1 |
+;; | single cleanup, 16 look-alikes | 9.4 | 9.0 | 5.6 | 9.2 |
+;; | reading a vector stored beside 15 look-alikes | 3.0 | 3.0 | | 1.8 |
 
 ;; ## The interpreter as vectors
 ;;
@@ -488,7 +514,8 @@
 ;;
 ;; - Seconds per small program. Every cleanup scans a memory that only
 ;;   grows.
-;; - No macros, `loop`/`recur`, floats or string operations.
+;; - No macros, `loop`/`recur`, floats, ordering comparisons or string
+;;   operations.
 ;; - Records hold about D/64 entries, vectors about D/48; superpositions
 ;;   about D/100 worlds.
 

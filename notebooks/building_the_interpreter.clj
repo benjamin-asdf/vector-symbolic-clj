@@ -374,8 +374,9 @@
 
 (examples '[(* 6 7) (fact 5)])
 
-;; `(fact 5)` makes 120 additions through the recursion of `*`, and every
-;; variable lookup walks an environment of vectors. The memory grew to:
+;; `(fact 5)` makes 34 additions (1 + 1 + 2 + 6 + 24) through the
+;; recursion of `*`, and every variable lookup walks an environment of
+;; vectors. The memory grew to:
 
 (h/mem-size M)
 
@@ -386,8 +387,9 @@
 ;; adds:
 ;;
 ;; - **Decisions without fixed thresholds.** `same?` above says "similar
-;;   enough" at 0.9. That caps how much noise the interpreter survives,
-;;   whatever D is (failure mode 5 in the overview). The real `eq?` cleans
+;;   enough" at 0.9, and `kind` gives up below 0.5. Such cutoffs cap how
+;;   much noise the interpreter survives, whatever D is (failure mode 5 in
+;;   the overview). The real `eq?` cleans
 ;;   up both sides and compares identities, and `kind` compares with the
 ;;   chance level 1/√D.
 ;; - **Maps and sets** as bundles: `{k v}` is ν(Σ k⊗⟨v⟩) plus the set of
