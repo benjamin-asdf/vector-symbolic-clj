@@ -116,19 +116,19 @@
 ;; two: L⊗a + R⊗b. To read the first element, unbind L and clean up. Every
 ;; such cell also gets its own random ID (a *pointer*), for a reason
 ;; explained under "What breaks". The rest of the encoding follows the same
-;; pattern. In the table, L, R, V, B and Z are fixed random vectors, Π
-;; shuffles the dimensions in a fixed random order, ν rescales to length 1,
-;; and ⟨v⟩ is v behind its own pointer.
+;; pattern. In the table, L, R, V, B and Z are fixed random vectors, Bⁿ is
+;; B bound to itself n times, Π shuffles the dimensions in a fixed random
+;; order, ν rescales to length 1, and ⟨v⟩ is v behind its own pointer.
 ;;
 ;; | value | vector |
 ;; |---|---|
 ;; | symbol, keyword, string | a random atom, stored in the memory M with its kind |
 ;; | `(a . b)` | a pointer p, with M: p ↦ ν(L⊗a + R⊗b) |
 ;; | `first`, `rest` | unbind L or R from what p points to, then clean up |
-;; | `[x₀ … xₙ₋₁]` | ν(Σᵢ Πⁱ(V⊗xᵢ)), stored as itself, pointing to its size |
-;; | `{k v …}` | p ↦ ν(Σ k⊗⟨v⟩) plus the set of keys and the size |
-;; | `#{x …}` | p ↦ ν(Σ x) plus the size |
-;; | integer n | Bⁿ⊗Z, so `+` is binding |
+;; | `[x₀ … xₙ₋₁]` | ν(Σᵢ Πⁱ(V⊗xᵢ)) itself, with no pointer; M records its length next to it |
+;; | `{k v …}` | p ↦ ν(Σ k⊗⟨v⟩); M also records the set of keys and the size |
+;; | `#{x …}` | p ↦ ν(Σ x); M also records the size |
+;; | integer n | Bⁿ⊗Z, so `inc` is one more binding with B, and `+` binds two numbers and unbinds one Z (Bᵐ⊗Bⁿ = Bᵐ⁺ⁿ) |
 ;; | closure | p ↦ ν(L⊗form + R⊗env) |
 ;;
 ;; A map is a *record*: `get` is one unbind and one cleanup. Map equality
