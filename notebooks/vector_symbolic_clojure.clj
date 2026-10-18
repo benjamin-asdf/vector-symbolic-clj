@@ -142,8 +142,9 @@
 ;; are similar vectors, and `nth` is one readout. The price: a vector holds
 ;; about D/48 elements, and it tolerates less noise than a list, the less
 ;; the longer it is, because each element gets a smaller share of the
-;; vector. The program picks, as it would pick between a list and a vector
-;; in Clojure.
+;; vector. The trade-off is the programmer's choice. Need any number of
+;; elements that read back reliably, even under heavy noise? Use a list.
+;; Need sequences that are similar when their elements are? Use a vector.
 
 (examples vsc/run
           '[(similarity [:a :b :c :d] [:a :b :c :e])
