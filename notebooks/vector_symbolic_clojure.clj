@@ -116,8 +116,9 @@
 ;; two: L⊗a + R⊗b. To read the first element, unbind L and clean up. Every
 ;; such cell also gets its own random ID (a *pointer*), for a reason
 ;; explained under "What breaks". The rest of the encoding follows the same
-;; pattern. In the table, ν means "rescale to length 1", and ⟨v⟩ is v behind
-;; its own pointer.
+;; pattern. In the table, L, R, V, B and Z are fixed random vectors, Π
+;; shuffles the dimensions in a fixed random order, ν rescales to length 1,
+;; and ⟨v⟩ is v behind its own pointer.
 ;;
 ;; | value | vector |
 ;; |---|---|
@@ -130,10 +131,8 @@
 ;; | integer n | Bⁿ⊗Z, so `+` is binding |
 ;; | closure | p ↦ ν(L⊗form + R⊗env) |
 ;;
-;; L, R, V, B and Z are fixed random vectors, Π shuffles the dimensions in
-;; a fixed random order, and ν normalises to length 1. A map is a *record*:
-;; `get` is one unbind and one cleanup. Map equality ignores key order for
-;; free, because addition commutes.
+;; A map is a *record*: `get` is one unbind and one cleanup. Map equality
+;; ignores key order for free, because addition commutes.
 ;;
 ;; Lists and vectors are encoded differently on purpose. A list is a chain
 ;; of pointers: robust and unbounded, but two lists that differ in one
