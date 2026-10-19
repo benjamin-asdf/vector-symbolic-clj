@@ -80,8 +80,9 @@
 ;; The change: decide by argmax, or relative to the chance level 1/√D.
 ;; The same round trip now passes 10 of 10 up to σ = 3. One cutoff was
 ;; missed and fixed later, in naming the primitive of a superposed call.
-;; The CEK machine's own datapath still has fixed cutoffs: 0.5 to name a
-;; primitive, 0.6 for a jump, 0.4 for a rule match.
+;; The CEK machine's own datapath still has fixed cutoffs: 0.5 in its PRIM
+;; instruction, 0.6 to decide a jump or a halt, and 0.4 as the floor under
+;; the nearest rule key, below which no rule matches.
 
 ;; ## 6. Vectors as pointer chains, then as superpositions
 ;;
