@@ -258,7 +258,8 @@
 
 ;; ---------------------------------------------------------------------------
 ;; the machine's substrate: each function is one method of Work in
-;; vsc_machine.py, the only place this ns talks to Python
+;; vsc_machine.py. Apart from loading the module (py-module), this is the
+;; only place this ns calls Python
 
 (defn- new-work
   "Fresh machine memories over the core's cleanup `c` and frame memory `f`."
@@ -302,7 +303,10 @@
   [label pairs]
   (apply py/call-attr (W) "intern" label pairs))
 
-(defn- items-of "The elements of the list or vector `x`." [x]
+(defn- items-of
+  "The elements of the argument list `x`, a cell chain. A vector is no cell
+  chain and comes back empty: the rules turn it into a list first."
+  [x]
   (let [xs (py/call-attr (W) "items_of" x)]
     (mapv #(py/get-item xs %) (range (py/call-attr xs "__len__")))))
 
@@ -331,6 +335,12 @@
 
 (defn- probe "[index similarity] of `x`'s nearest row in Work's table `table`." [table x]
   (py/->jvm (py/call-attr (W) "probe" table x)))
+
+(defn- gc-agreement
+  "[live-count agree?]: the W records reachable from `root`, and whether
+  marking by unbinding and cleanup finds the same set."
+  [root]
+  (py/->jvm (py/call-attr (W) "gc_agrees" root)))
 
 (defn- rule-count [] (py/get-attr (py/get-attr (W) "R") "n"))
 (defn- rule-key [i] (py/call-attr (py/get-attr (W) "R") "key" i))
@@ -600,7 +610,7 @@
   "Does W's collector mark, from the state in `regs`, the same live set that
   marking by unbinding and cleanup finds?"
   [regs]
-  (second (py/->jvm (py/call-attr (W) "gc_agrees" (reg regs 'S)))))
+  (second (gc-agreement (reg regs 'S))))
 
 (defn- opm-name
   "Name of the operand-memory entry nearest to `x`, if it is a clear match."

@@ -133,6 +133,9 @@
   (testing "first of superposed vectors is one linear read"
     ;; crosstalk from the other elements, no exact field gain as for cells
     (is (close? {:a 0.5 :c 0.5} (worlds '(first (amb [:a :b] [:c :d]))) 0.02)))
+  (testing "integer elements are boxed: all-boxed reads in one go, a mix per world"
+    (is (close? {1 0.5 2 0.5} (worlds '(first (amb [1 :a] [2 :c]))) 0.02))
+    (is (close? {:b 0.75 1 0.25} (worlds '(first (superpose {[1 :a] 1 [:b :c] 3}))) 0.02)))
   (testing "a vector is linear in its elements: [x p] + [y q] = [x q] + [y p]"
     (is (<= 99 (w/run '(similarity (amb [:x :p] [:y :q]) (amb [:x :q] [:y :p]))))))
   (testing "lists keep the joint: given the first is :x, the second is :p"

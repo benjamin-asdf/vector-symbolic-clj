@@ -50,11 +50,12 @@
 (c/set-knobs! {})
 
 ;; ---------------------------------------------------------------------------
-(p "\n== 4.2 binding commutes (map values boxed like keys)")
+(p "\n== 4.2 binding commutes (map entries k⊗v instead of k⊗Π(v))")
 (c/init!)
 (p "fixed: (get {1 2 2 3} 2) =" (c/run '(get {1 2 2 3} 2)))
-(with-redefs-fn {#'vsc.core/value-slot (priv 'slot)}
-  #(do (c/init!) (p "values boxed like keys:" (try-run (fn [] (c/run '(get {1 2 2 3} 2)))))))
+(with-redefs-fn {#'vsc.core/entry (fn [k v] (bind k v))
+                 #'vsc.core/entry-value (fn [trace k] (unbind k trace))}
+  #(do (c/init!) (p "undirected entries:" (try-run (fn [] (c/run '(get {1 2 2 3} 2)))))))
 
 ;; ---------------------------------------------------------------------------
 (p "\n== 4.3 residue chimeras (integers unboxed in sets)")

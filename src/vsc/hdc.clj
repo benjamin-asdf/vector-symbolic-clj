@@ -139,10 +139,10 @@
    (mapv vec (py/->jvm (py/call-attr @module "peel" (py/->py-list mems) v theta limit)))))
 
 (defn intern!
-  "Index of the pointer for `trace`: an existing one for an equal trace of the
-  same label, else the fresh `key`."
-  [m key trace label]
-  (py/call-attr m "intern" key trace label))
+  "Index of the pointer for `trace`: an existing one for a trace of the same
+  label more similar than `dedupe` (default 0.999), else the fresh `key`."
+  ([m key trace label] (py/call-attr m "intern" key trace label))
+  ([m key trace label dedupe] (py/call-attr m "intern" key trace label dedupe)))
 
 (defn deref-ptr
   "The trace pointer `p` refers to."

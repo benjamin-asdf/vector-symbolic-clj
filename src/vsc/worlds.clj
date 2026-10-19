@@ -238,6 +238,18 @@
                (not-any? (fn [[l i]] (and (not= l NUM) (contains? empties i))) ws))
       (first kinds))))
 
+(defn- vec-first
+  "Element 0 of a superposition of vectors, in one read when its worlds are
+  all boxed integers or all unboxed. Unboxing follows the heaviest world
+  only, so a mix of the two falls back to `per-world`."
+  [v per-world]
+  (let [y (#'core/vec-read v 0)
+        boxed (map #(= :box (label->kind (first %))) (readout y))]
+    (cond
+      (not-any? true? boxed) y
+      (every? true? boxed) (#'core/unslot y)
+      :else (per-world))))
+
 (defn- apply-prim [f args]
   (let [nm (core/prim-name f)
         plain #(core/apply-plain f %)]
@@ -252,7 +264,7 @@
           :list ((if (= 'first nm) core/car core/cdr) (first args))
           ;; a vector's element 0 is one unbind away, linear in the worlds;
           ;; its rest is a new list per world
-          :vec (if (= 'first nm) (#'core/vec-nth (first args) 0) (enumerate plain args))
+          :vec (if (= 'first nm) (vec-first (first args) #(enumerate plain args)) (enumerate plain args))
           (enumerate plain args)))
       :else (enumerate plain args))))
 

@@ -46,6 +46,10 @@ section (`git show <rev>^:<path>`). "Current" line numbers are as of
   `(get {1 2 2 3} 2)` returned 1.
 - **Fix:** `value-slot` = `(pointer :vbox x)` (current `core.clj:249`),
   with the new label `16 :vbox` and `unslot` accepting `#{:box :vbox}`.
+- **Superseded** in `b3b1c87`: an entry is the directed bind k⊗Π(v), one
+  substrate op (`h/bind-dir`, core.clj `entry`/`entry-value`); `value-slot`
+  and `:vbox` are gone. `scripts/failure_modes.clj` now rebuilds the bug by
+  swapping `entry` back to the plain bind.
 
 ## 4.4 Zero
 

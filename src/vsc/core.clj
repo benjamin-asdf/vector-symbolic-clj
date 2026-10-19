@@ -116,9 +116,11 @@
   (h/cleanup (m :C) p))
 
 (defn- pointer
-  "M ↞ (p ↦ trace) for a fresh pointer p, or the pointer of an equal trace."
-  [kind trace]
-  (h/mem-get (m :M) (h/intern! (m :M) (h/unitary (sp)) trace (kind->label kind))))
+  "M ↞ (p ↦ trace) for a fresh pointer p, or the pointer of an equal trace:
+  one more similar than `dedupe` (default 0.999)."
+  ([kind trace] (h/mem-get (m :M) (h/intern! (m :M) (h/unitary (sp)) trace (kind->label kind))))
+  ([kind trace dedupe]
+   (h/mem-get (m :M) (h/intern! (m :M) (h/unitary (sp)) trace (kind->label kind) dedupe))))
 
 (defn- deref-ptr [p] (h/deref-ptr (m :M) p))
 
@@ -238,7 +240,12 @@
 ;; (they are similar by design), so both are boxed behind a hash-consed
 ;; pointer wherever they enter a map or set.
 
-(defn- slot [x] (if (#{:num :vec} (kind-of x)) (pointer :box x) x))
+(defn- slot [x]
+  (case (kind-of x)
+    :num (pointer :box x)
+    ;; two long vectors can be closer than 0.999 and still differ
+    :vec (pointer :box x (m :vec-dedupe))
+    x))
 (defn- unslot [y] (if (= :box (kind-of y)) (cleanup (deref-ptr y)) y))
 
 (defn- permute [v k] (h/permute (sp) v k))
@@ -417,12 +424,14 @@
       n
       (throw (ex-info (str "unreadable vector size " n) {:n n})))))
 
-(defn- vec-nth
-  "Element i of vector v: M(V ⊘ Π⁻ⁱ(v)), unboxed. Linear up to the cleanup,
-  so on a superposition of vectors it reads the superposition of their
-  elements."
+(defn- vec-read
+  "Element i of vector v as stored, still boxed: M(V ⊘ Π⁻ⁱ(v)). Linear up
+  to the cleanup, so on a superposition of vectors it reads the
+  superposition of their elements."
   [v i]
-  (unslot (cleanup (unbind (role :V) (permute v (- i))))))
+  (cleanup (unbind (role :V) (permute v (- i)))))
+
+(defn- vec-nth "Element i of vector v, unboxed." [v i] (unslot (vec-read v i)))
 
 (defn- vec-elems
   "Host seq of the elements of a non-empty vector, read one by one (not
