@@ -5,7 +5,8 @@
 (require '[scicloj.clay.v2.api :as clay])
 (let [path (or (first *command-line-args*) "notebooks/vector_symbolic_clojure.clj")
       title ({"notebooks/vector_symbolic_clojure.clj" "A Vector-Symbolic Clojure"
-              "notebooks/building_the_interpreter.clj" "Building a Vector-Symbolic Interpreter"}
+              "notebooks/building_the_interpreter.clj" "Building a Vector-Symbolic Interpreter"
+              "notebooks/history.clj" "How the Vector-Symbolic Clojure Got Here"}
              path)]
   (clay/make! {:source-path path
                :format [:quarto :html]
@@ -14,7 +15,7 @@
                :live-reload false
                :quarto (cond-> {} title (assoc :pagetitle title))
                :base-target-path "_notebook"
-               ;; both notebooks share the target: never wipe it
+               ;; the notebooks share the target: never wipe it
                :clean-up-target-dir false}))
 (shutdown-agents)
 (System/exit 0)

@@ -2,17 +2,19 @@
 (ns vector-symbolic-clojure
   (:require
    [clojure.java.io :as io]
+   [clojure.pprint]
+   [clojure.repl]
    [clojure.string :as str]
    [scicloj.kindly.v4.kind :as kind]
    [vsc.core :as vsc]
+   [vsc.hdc :as h]
    [vsc.machine :as machine]
    [vsc.worlds :as w]))
 
 ;; # A Vector-Symbolic Clojure
 ;;
 ;; *Every value is one high-dimensional vector. September 2026, updated
-;; October 2026: vectors are now positional superpositions, not pointer
-;; chains.*
+;; October 2026.*
 ;;
 ;; This notebook runs a small Clojure in which every value is a single
 ;; vector of 2048 numbers. That covers lists, maps, sets, integers,
@@ -36,8 +38,8 @@
 ;;
 ;; **Three findings.**
 ;;
-;; - It works, but only after fixing seven failure modes that the algebra
-;;   hides (below).
+;; - It works, once the design avoids seven traps that the algebra hides
+;;   (below).
 ;; - Stored data survives heavy damage. Computation is far more fragile.
 ;; - A value can be a weighted mix of several values, and the program
 ;;   computes on all of them at once. Getting this to work needed a new kind
@@ -45,6 +47,9 @@
 ;;
 ;; How the interpreter is built, step by step, with all the code:
 ;; [Building a Vector-Symbolic Interpreter](building/).
+;;
+;; How the seven traps turned up, in the order we hit them:
+;; [History](history/).
 ;;
 ;; Code, tests, experiments and the paper draft:
 ;; [github.com/benjamin-asdf/vector-symbolic-clj](https://github.com/benjamin-asdf/vector-symbolic-clj).
@@ -115,10 +120,10 @@
 ;; Bind a to a fixed role label L and b to a role label R, and bundle the
 ;; two: L⊗a + R⊗b. To read the first element, unbind L and clean up. Every
 ;; such cell also gets its own random ID (a *pointer*), for a reason
-;; explained under "What breaks". The rest of the encoding follows the same
+;; explained under "What the algebra hides". The rest of the encoding follows the same
 ;; pattern. In the table, L, R, V, B and Z are fixed random vectors, Bⁿ is
 ;; B bound to itself n times, Π shuffles the dimensions in a fixed random
-;; order, ν rescales to length 1, and ⟨v⟩ is v behind its own pointer.
+;; order, and ν rescales to length 1.
 ;;
 ;; | value | vector |
 ;; |---|---|
@@ -126,7 +131,7 @@
 ;; | `(a . b)` | a pointer p, with M: p ↦ ν(L⊗a + R⊗b) |
 ;; | `first`, `rest` | unbind L or R from what p points to, then clean up |
 ;; | `[x₀ … xₙ₋₁]` | ν(Σᵢ Πⁱ(V⊗xᵢ)) itself, with no pointer; M records its length next to it |
-;; | `{k v …}` | p ↦ ν(Σ k⊗⟨v⟩); M also records the set of keys and the size |
+;; | `{k v …}` | p ↦ ν(Σ k⊗Π(v)); M also records the set of keys and the size |
 ;; | `#{x …}` | p ↦ ν(Σ x); M also records the size |
 ;; | integer n | Bⁿ⊗Z, so `inc` is one more binding with B, and `+` binds two numbers and unbinds one Z (Bᵐ⊗Bⁿ = Bᵐ⁺ⁿ) |
 ;; | closure | p ↦ ν(L⊗form + R⊗env) |
@@ -186,21 +191,20 @@
           '[(first (degrade (quote (a b c)) 100))
             (get (degrade {:a 1 :b 2} 60) :b)])
 
-;; ## What breaks
+;; ## What the algebra hides
 ;;
-;; Running real programs turned up seven failure modes that the algebra
-;; hides.
+;; Seven traps hide in the algebra, and each one shaped the design.
 ;;
-;; **1. Similar lists get confused.** Our first `(fact 5)` failed with
-;; "unable to resolve symbol: a". In the original paper, a list cell is
+;; **1. Similar lists get confused.** In the original paper, a list cell is
 ;; just the bundle of its parts. Recursion creates many nearly equal cells,
 ;; such as ((a . 5) . ()) and ((a . 4) . ()), and as bundles they are 89%
 ;; similar. Reading one of them beats its look-alike by a margin of only
-;; 0.05, so a little noise returns the wrong cell. The fix: every cell gets
-;; its own random ID, and cells with equal contents share one ID, so
-;; checking equality is still one comparison. The right cell now wins by
-;; 0.66, and reading survives 2.8× more noise (σ ≈ 11 instead of 4). (Noise σ here means noise of
-;; σ times the vector's own size.)
+;; 0.05, so a little noise returns the wrong cell, and `(fact 5)` fails
+;; with "unable to resolve symbol: a". So every cell gets its own random
+;; ID, and cells with equal contents share one ID, so checking equality is
+;; still one comparison. The right cell then wins by 0.66, and reading
+;; survives 2.8× more noise (σ ≈ 11 instead of 4). (Noise σ here means
+;; noise of σ times the vector's own size.)
 ;;
 ;; The lesson is not "never let things be similar". A cleanup's margin is
 ;; 1 minus the similarity to the nearest wrong item, so similarity and
@@ -209,13 +213,25 @@
 
 ^:kindly/hide-code
 (figure "paper-f2-cell-confusion.png"
-        "Left: the margin of a rest cleanup over the best sibling. Right: accuracy under probe noise.")
+        "Left: the margin of a rest cleanup over the best sibling, bundled cells against cells with IDs. Right: accuracy under probe noise.")
 
-;; **2. Binding commutes.** In `{1 2, 2 3}` the entry 1 ↦ 2 contributes
-;; 1⊗2 = 2⊗1, so `(get {1 2 2 3} 2)` returned 1. Each value now gets its
-;; own pointer, which no key can equal.
+;; **2. Binding commutes.** The original paper binds by circular
+;; convolution, and that commutes: a⊗b = b⊗a. Its list cells do not mind,
+;; because the labels L and R tell first from rest. A map entry has no such
+;; labels. Stored as k⊗v, the entry 1 ↦ 2 is 1⊗2 = 2⊗1, so
+;; `(get {1 2 2 3} 2)` would answer 1.
 ;;
-;; **3. Numbers can blend into fake numbers.** We store an integer by its
+;; So an entry is a directed bind, k⊗Π(v), with Π the fixed random
+;; shuffle from the table above, and reading it unbinds k and undoes Π.
+;; The cheapest permutation, shifting every number one place along, would
+;; not do: a shift commutes with circular convolution, so
+;; shift(1)⊗2 = shift(2)⊗1. Π goes on the value and not on the key,
+;; because keys unbind exactly and a shuffled key no longer does. Pairs
+;; without a direction, where a–b is the same as b–a, have their uses too,
+;; a symmetric relation for one. They can be a second structure, built on
+;; the plain bind.
+;;
+;; **3. Numbers can blend into fake numbers.** An integer is stored by its
 ;; remainders, like reading six clocks at once: 11 is "1 on a 5-hour clock,
 ;; 4 on a 7-hour clock, 0 on an 11-hour clock", and so on up to a 19-hour
 ;; clock. Each clock lives in its own share of the vector. That makes
@@ -226,44 +242,57 @@
 ;; every clock. A number that shows 11's reading on some clocks and 12's on
 ;; the others, 13102 for example, matches the set exactly as well as 11 or
 ;; 12 do. It is a *chimera*: a fake member stitched together from pieces of
-;; real ones. With six clocks there are 2⁶ − 2 = 62 of them. (The figure
-;; is a reconstruction: the readout that fell for chimeras was replaced
-;; before the code's first commit.)
+;; real ones. With six clocks there are 2⁶ − 2 = 62 of them. Here is the
+;; sum of 11 and 12, built with the interpreter's own number encoding,
+;; against its members, a chimera and a few ordinary numbers:
+
+^:kindly/hide-code
+(let [S (h/space 2048 1)
+      N (h/numbers S)
+      both (h/bundle S (h/num-vec N 11) (h/num-vec N 12))
+      [read-back s] (h/read-num N (h/normalize S both))]
+  (kind/table
+   {:column-names ["number" "similarity to 11 + 12"]
+    :row-vectors (concat
+                  (for [n [11 12 13102 42 777 -5000]]
+                    [(str n (when (= n 13102) " (chimera)"))
+                     (format "%.3f" (h/sim S both (h/num-vec N n)))])
+                  [[(str "clock readout of 11 + 12: " read-back)
+                    (format "%.3f" s)]])}))
+
+;; The readout, asked which number the sum is, answers with a chimera.
 
 ^:kindly/hide-code
 (figure "paper-f3-chimeras.png"
         "Left: all 62 fakes score exactly like the real members 11 and 12; random numbers score near 0. Right: each clock of the fake 13102 matches either 11 or 12.")
 
-;; The fix: inside sets and maps, each number is stored behind its own
-;; random ID, and IDs cannot be stitched together.
+;; So inside sets and maps, each number is stored behind its own random
+;; ID, and IDs cannot be stitched together.
 ;;
-;; **4. Zero lived in a single dimension.** The number 0 was a vector with
-;; all its weight in one of the 2048 dimensions. When that one dimension
-;; was damaged, all arithmetic broke. Zero is now spread over all
-;; dimensions like every other value. The clocks cause a second trap: 5005
-;; = 5·7·11·13 reads 0 on four of the six clocks, so it is 4/6 similar to
-;; zero, and a test "similar enough to zero" would accept it. `zero?` now
+;; **4. Partly equal is not equal.** The clocks set a second trap: 5005 =
+;; 5·7·11·13 reads 0 on four of the six clocks, so it is 4/6 similar to
+;; zero, and a test "similar enough to zero" would accept it. `zero?`
 ;; asks for equality:
 
 (examples vsc/run '[(zero? 5005) (zero? 0)])
 
 ;; **5. Fixed thresholds throw robustness away.** Bigger vectors should
 ;; tolerate more noise, but a fixed "similar enough" cutoff does not grow
-;; with them. The first interpreter recognised a value's kind when its
-;; cosine exceeded 0.5. A clean vector's cosine to
-;; its own noisy probe is 1/√(1 + σ²), which crosses 0.5 at σ = √3 for
-;; *every* dimension. So every structure failed at σ ≈ 1.7, while the
-;; cleanup underneath survives σ ≈ 17 at the size of these memories. Deciding by argmax, or relative to
-;; the chance level 1/√D, makes robustness grow with √D again. Fixed
-;; thresholds are common practice: Nengo's associative memory defaults to
-;; 0.3 in every dimension.
+;; with them. Say a value's kind counts as recognised when its cosine
+;; exceeds 0.5. A clean vector's cosine to its own noisy probe is
+;; 1/√(1 + σ²), which crosses 0.5 at σ = √3 for *every* dimension. So
+;; every structure would fail at σ ≈ 1.7, while the cleanup underneath
+;; survives σ ≈ 17 at the size of these memories. Deciding by argmax, or
+;; relative to the chance level 1/√D, makes robustness grow with √D again,
+;; and that is how the interpreter decides. Fixed thresholds are common
+;; practice: Nengo's associative memory defaults to 0.3 in every dimension.
 ;;
-;; **6. A shared field makes strangers similar.** A vector first stored
-;; its length inside itself. Then any two vectors of the same length shared
-;; that part and looked 20% alike, even with no element in common. That is
+;; **6. A shared field makes strangers similar.** If a vector stored its
+;; length inside itself, any two vectors of the same length would share
+;; that part and look 20% alike, even with no element in common. That is
 ;; far above chance, and the superposition memory below treats anything
-;; above chance as present, so unrelated vectors crept into results. The
-;; length now lives next to the vector in the memory, not inside it.
+;; above chance as present, so unrelated vectors would creep into results.
+;; So the length lives next to the vector in the memory, not inside it.
 ;;
 ;; **7. A sum of tuples forgets which values went together.** A vector is
 ;; a sum over its positions, so [1 1] + [2 2] is exactly [1 2] + [2 1]. A
@@ -333,35 +362,55 @@
 ;; | single cleanup, unrelated items | 14.1 | 14.1 | 14.1 | 14.1 |
 ;; | single cleanup, 16 look-alikes | 9.4 | 9.0 | 5.6 | 9.2 |
 ;; | reading a vector stored beside 15 look-alikes | 3.0 | 3.0 | | 1.8 |
+;;
+;; So the hope for a Hopfield network is probably not a better cleanup.
+;; Exact recall is the one job a lookup table already does as well as
+;; anything can. The hope is a different job: a memory of what the
+;; computation *did*, not only of what it stored. Which values a function
+;; returned, which code paths a program took. A new situation would then be
+;; completed from similar old ones. The pull towards the centre of a group
+;; of look-alikes, a loss in the table above, is the same mechanism seen
+;; from the other side: it is how such a memory would form a prototype and
+;; generalise. That would make the interpreter a neuro-symbolic system,
+;; exact where it cleans up and associative where it remembers. The CEK
+;; machine below already picks its rules by similarity; a memory of its
+;; past runs would be the next step. We have not built it.
 
 ;; ## The interpreter as vectors
 ;;
 ;; The evaluator above is host code. The next step moves it into vectors. A
 ;; classic design for interpreters, the CEK machine, keeps three things:
-;; **C**, what to evaluate now; **E**, which variable has which value; and
-;; **K**, a to-do list of what comes after. Here all three, plus a mode, are
-;; bundled into one vector:
-;; s ↦ ν(C⊗control + E⊗env + K⊗to-do + M⊗mode).
+;; the **C**ontrol, what to evaluate now; the **E**nvironment, which
+;; variable has which value; and the **K**ontinuation, a to-do list of what
+;; comes after (spelled with a K by tradition, since C is taken). Here all
+;; three, plus a mode, are bundled into one vector:
+;; s ↦ ν(C⊗control + E⊗env + K⊗continuation + M⊗mode).
 ;; Its 35 transition rules sit in a memory and are picked by similarity.
 ;; Rule keys are *sums* of features, so the most specific matching rule
 ;; wins by nearest neighbour, and shorter keys act as defaults. The host
-;; loop is 47 lines and knows no Lisp. Tail calls come for free.
+;; loop is under 50 lines and knows no Lisp. Tail calls come for free.
 
-;; One step of the machine goes round this loop. Everything in the blue
-;; boxes is a vector in memory; only the loop itself is host code.
+;; ### One step
+;;
+;; The machine runs in steps. Each step goes round the loop below in three
+;; phases, and each phase reads some vectors and produces others. The
+;; orange lines follow one real step: the moment the machine meets
+;; `(if (zero? x) :zero (inc x))`.
 
 ^:kindly/hide-code
 (defn cek-diagram []
   (let [blue {:fill "#eef4fb" :stroke "#2c6fbb" :stroke-width 1.5 :rx 10}
-        box (fn [x y title lines]
-              (into [:g [:rect (merge blue {:x x :y y :width 320 :height 128})]
-                     [:text {:x (+ x 16) :y (+ y 28) :font-size 15 :font-weight 600
-                             :fill "#1b3a5c"} title]]
+        box (fn [x y title lines example]
+              (into [:g [:rect (merge blue {:x x :y y :width 350 :height 150})]
+                     [:text {:x (+ x 14) :y (+ y 26) :font-size 15 :font-weight 600
+                             :fill "#1b3a5c"} title]
+                     [:text {:x (+ x 14) :y (+ y 136) :font-size 12.5 :fill "#b05f00"
+                             :font-family "monospace"} example]]
                     (map-indexed
                      (fn [i [a b]]
-                       [:text {:x (+ x 16) :y (+ y 54 (* i 20)) :font-size 13 :fill "#222"}
+                       [:text {:x (+ x 14) :y (+ y 52 (* i 20)) :font-size 13 :fill "#222"}
                         [:tspan {:font-family "monospace" :font-weight 600 :fill "#2c6fbb"} a]
-                        (str "  " b)])
+                        [:tspan {:x (+ x 50)} b]])
                      lines)))
         arrow (fn [x1 y1 x2 y2 label lx ly anchor]
                 [:g [:line {:x1 x1 :y1 y1 :x2 x2 :y2 y2 :stroke "#555" :stroke-width 1.6
@@ -369,33 +418,125 @@
                  [:text {:x lx :y ly :font-size 12.5 :font-style "italic" :fill "#555"
                          :text-anchor anchor} label]])]
     (kind/hiccup
-     [:svg {:viewBox "0 0 780 380" :style {:width "100%" :max-width "780px"
+     [:svg {:viewBox "0 0 800 440" :style {:width "100%" :max-width "800px"
                                            :font-family "system-ui, sans-serif"}}
       [:defs [:marker {:id "arrowhead" :markerWidth 10 :markerHeight 8 :refX 9 :refY 4
                        :orient "auto"} [:path {:d "M0,0 L10,4 L0,8 z" :fill "#555"}]]]
-      (box 20 16 "state s: one vector"
-           [["C" "what to evaluate now"] ["E" "variables → values"]
-            ["K" "to-do list (9 kinds of frame)"]])
-      (box 440 16 "key(s): the state's shape"
-           [["fetch" "12 instructions read s"] ["Σ" "mode + kind + head"]
-            ["+" "identity + next frame"]])
-      (box 440 234 "rule memory R"
-           [["35" "rules, each with a key"] ["nearest" "key wins"]
-            ["⇒" "the most specific rule"]])
-      (box 20 234 "the rule's microprogram"
-           [["list" "of instruction vectors"] ["9 ops" "FIELD CLEAN BIND UNBIND"]
-            ["" "REC MOV JMPEQ PRIM DEF"]])
-      (arrow 340 80 440 80 "read its shape" 390 70 "middle")
-      (arrow 600 144 600 234 "nearest key" 611 194 "start")
-      (arrow 440 298 340 298 "run it" 390 288 "middle")
-      (arrow 180 234 180 144 "new state" 169 194 "end")
-      [:rect {:x 262 :y 172 :width 256 :height 36 :rx 18 :fill "#fff4e0"
+      (box 16 16 "the state s: one vector"
+           [["C" "control: what to evaluate now"] ["E" "environment: variables → values"]
+            ["K" "continuation: the frames still to do"] ["M" "mode: EVAL, RET, APPLY or HALT"]]
+           "EVAL, C = (if (zero? x) …), K = [halt]")
+      (box 434 16 "1 · fetch: read the state's shape"
+           [["in " "s"] ["out" "C, E, K, M unpacked into registers,"]
+            ["" "and KEY, a vector naming the shape:"] ["" "mode + kind of C + head of C + frame"]]
+           "KEY = EVAL + list + if + halt")
+      (box 434 274 "2 · select: which rule fits?"
+           [["in " "KEY"] ["how" "nearest of the 35 rule keys"]
+            ["" "stored in the rule memory R"] ["out" "that rule's microprogram"]]
+           "rule if (its key: EVAL + list + if)")
+      (box 16 274 "3 · run the microprogram"
+           [["in " "the registers C, E, K, M"] ["how" "instructions on vectors: read a"]
+            ["" "field, bind, clean up, build a record"] ["out" "the next state s′"]]
+           "push an if frame; C = (zero? x)")
+      (arrow 366 70 434 70 "unpack" 400 60 "middle")
+      (arrow 609 166 609 274 "KEY" 620 224 "start")
+      (arrow 434 340 366 340 "code" 400 330 "middle")
+      (arrow 191 274 191 166 "s′ is the new s" 178 224 "end")
+      [:text {:x 178 :y 240 :font-size 12.5 :font-style "italic" :fill "#555"
+              :text-anchor "end"} "(until mode = HALT)"]
+      [:rect {:x 280 :y 202 :width 240 :height 36 :rx 18 :fill "#fff4e0"
               :stroke "#d98a00" :stroke-width 1.5}]
-      [:text {:x 390 :y 195 :font-size 13.5 :font-weight 600 :fill "#7a4b00"
-              :text-anchor "middle"} "host loop · 47 lines · no Lisp"]])))
+      [:text {:x 400 :y 225 :font-size 13.5 :font-weight 600 :fill "#7a4b00"
+              :text-anchor "middle"} "host loop · under 50 lines · no Lisp"]])))
 
 ^:kindly/hide-code
 (cek-diagram)
+
+;; The key is the whole trick. It describes the state by up to five
+;; features: the **mode**; the **kind** of C (symbol, number, list,
+;; closure, …); the **head** of C when C is a list starting with a special
+;; form such as `if` or `let`; C's **identity** when C is one of the two
+;; primitives that re-enter evaluation, `apply` and `eval`; and the type of
+;; the **frame** on top of K. Each feature is a random vector bound to its
+;; role, and the key is their sum. The rule memory then does what a `case`
+;; statement does in an ordinary interpreter, by similarity.
+;;
+;; Here is that step again, decoded live from the vectors. The rule `if`
+;; saves the two branches and the environment in a new frame on K, and
+;; makes the test the next thing to evaluate.
+
+^:kindly/hide-code
+(kind/hidden (machine/init!))
+
+^:kindly/hide-code
+(let [reg #'vsc.machine/reg
+      steps (atom [])]
+  (binding [machine/*trace* (fn [step i regs]
+                              (swap! steps conj
+                                     {:rule ((#'vsc.machine/v :rule-names) i)
+                                      :key (#'vsc.machine/decode-key (reg regs 'KEY))
+                                      :mode (str (#'vsc.machine/opm-name (reg regs 'M) 0.9))
+                                      :C (pr-str (vsc/decode (reg regs 'C)))
+                                      :K (pr-str (mapv #(symbol (str/replace (str %) "-fr" ""))
+                                                       (#'vsc.machine/frames (reg regs 'K))))}))]
+    (machine/run '((fn [x] (if (zero? x) :zero (inc x))) 1)))
+  (let [[before after] (drop-while #(not= 'if (:rule %)) @steps)
+        k (:key before)
+        show (fn [s] (kind/code (str "mode " (:mode s) "\nC    " (:C s) "\nK    " (:K s))))]
+    (kind/table
+     {:column-names ["" "decoded from the vectors"]
+      :row-vectors [["the state" (show before)]
+                    ["1 · its key" (kind/code (str/join " + " (map (fn [f] (str (name f) " " (-> (str (get k f)) (str/replace #"^k-" "") (str/replace #"-fr$" ""))))
+                                                                    (filter k [:mode :kind :head :ident :frame]))))]
+                    ["2 · the rule chosen" (kind/code (str (:rule before)))]
+                    ["3 · the next state" (show after)]]})))
+
+;; ### The code
+;;
+;; The host loop is all the host code there is: fetch, select, run, until
+;; the mode is HALT. `exec!` is the interpreter of the nine instructions.
+;; Nothing in it knows about Lisp.
+
+^:kindly/hide-code
+(kind/code (str/join "\n\n" (map #(clojure.repl/source-fn %)
+                                 '[vsc.machine/run-state! vsc.machine/run-micro! vsc.machine/exec!])))
+
+;; Everything Lisp-specific is data, assembled into instruction vectors when
+;; the machine starts. The instructions:
+;;
+;; | instruction | does |
+;; |---|---|
+;; | `FIELD d x r s` | d ← cleanup(r ⊘ x): read field r of record x |
+;; | `CLEAN d x s` | d ← cleanup(x) in memory s, e.g. to classify x by kind |
+;; | `BIND d x y`, `UNBIND d x y` | d ← x ⊗ y, d ← x ⊘ y |
+;; | `REC d s r₁ x₁ …` | d ← a new record ν(Σ rᵢ⊗xᵢ), stored in memory s |
+;; | `MOV d x` | d ← x |
+;; | `JMPEQ x y l` | jump to l if x and y are the same vector |
+;; | `PRIM d f x` | d ← the primitive f (`+`, `first`, …) applied to the list x |
+;; | `DEF x y` | store the global x ↦ y |
+;;
+;; S, C, E, K, M are the state's registers; T, A, B, N, X, Y, Z are
+;; scratch. `(PACK)` builds the next state from C, E, K and M, and `(JMP l)`
+;; jumps unconditionally. The fetch phase is itself a microprogram of twelve
+;; instructions:
+
+^:kindly/hide-code
+(kind/code (clojure.repl/source-fn 'vsc.machine/fetch-program))
+
+;; And the two rules of `if`. The first fires on the step above. Read
+;; with C = `(if test then else)`: X ← the rest of C, `(test then else)`;
+;; C ← its first element, the test; A ← the rest, `(then else)`; push a
+;; frame onto K that remembers the branches A, the environment E and the
+;; old K as its next N; then evaluate C. The second rule fires when the
+;; test's value comes back to that frame: it pops the frame, restores the
+;; environment, and evaluates one branch. The frame is gone by then, which
+;; is why tail calls come for free.
+
+^:kindly/hide-code
+(kind/code (with-out-str
+             (doseq [r (filter #(#{'if 'if-branch} (:name %)) machine/rules)]
+               (clojure.pprint/pprint r))))
+
 
 ;; **Why the most specific rule wins.** A state's key always has all five
 ;; features. A rule's key names only the features it cares about: a
@@ -415,9 +556,6 @@
 ;; what is being evaluated, the rule that nearest-neighbour lookup chose,
 ;; and the to-do list. At step 14 the `if` frame is already gone: the branch
 ;; runs as a tail call, so the to-do list does not grow.
-
-^:kindly/hide-code
-(kind/hidden (machine/init!))
 
 ^:kindly/hide-code
 (let [{:keys [value steps]} (machine/trace '((fn [x] (if (zero? x) :zero (inc x))) 1))
