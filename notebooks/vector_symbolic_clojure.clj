@@ -124,7 +124,7 @@
 ;; two: L⊗a + R⊗b. To read the first element, unbind L and clean up. Every
 ;; such cell also gets its own random ID (a *pointer*), for a reason
 ;; explained under "What the algebra hides". The rest of the encoding follows the same
-;; pattern. In the table, L, R, V, K, C, B and Z are fixed random vectors, Bⁿ is
+;; pattern. In the table, L, R, V, KEYS, SIZE, B and Z are fixed random vectors, Bⁿ is
 ;; B bound to itself n times, Π shuffles the dimensions in a fixed random
 ;; order, and ν rescales to length 1.
 ;;
@@ -134,8 +134,8 @@
 ;; | `(a . b)` | a pointer p, with M: p ↦ ν(L⊗a + R⊗b) |
 ;; | `first`, `rest` | unbind L or R from what p points to, then clean up |
 ;; | `[x₀ … xₙ₋₁]` | ν(Σᵢ Πⁱ(V⊗xᵢ)) itself, with no pointer; M records its length next to it |
-;; | `{k v …}` | p ↦ ν(ν(Σ k⊗Π(v)) + ν(K⊗Σ k) + C⊗n): the entries, the set of keys, and the size n |
-;; | `#{x …}` | p ↦ ν(ν(Σ x) + C⊗n) |
+;; | `{k v …}` | p ↦ ν(ν(Σ k⊗Π(v)) + ν(KEYS⊗Σ k) + SIZE⊗n): the entries, the set of keys, and the size n |
+;; | `#{x …}` | p ↦ ν(ν(Σ x) + SIZE⊗n) |
 ;; | integer n | Bⁿ⊗Z, so `inc` is one more binding with B, and `+` binds two numbers and unbinds one Z (Bᵐ⊗Bⁿ = Bᵐ⁺ⁿ) |
 ;; | closure | p ↦ ν(L⊗form + R⊗env) |
 ;;
@@ -296,6 +296,9 @@
 ;; far above chance, and the superposition memory below treats anything
 ;; above chance as present, so unrelated vectors would creep into results.
 ;; So the length lives next to the vector in the memory, not inside it.
+;; Maps and sets keep their size in their trace, and that is fine: their
+;; value is the random pointer p, so two maps of one size are as unrelated
+;; as any two pointers.
 ;;
 ;; **7. A sum of tuples forgets which values went together.** A vector is
 ;; a sum over its positions, so [1 1] + [2 2] is exactly [1 2] + [2 1]. A

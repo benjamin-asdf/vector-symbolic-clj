@@ -8,7 +8,8 @@
 ;;
 ;; *A companion to [A Vector-Symbolic Clojure](../), which describes the
 ;; design as it is. This page records how it got that way: what broke,
-;; roughly in the order we found it, and what changed. September–October 2026.*
+;; roughly in the order we found it, and what changed. The overview
+;; numbers its seven traps by theme, so the numbers here differ. September–October 2026.*
 ;;
 ;; The starting point was the design of Tomkins-Flanagan and Kelly's "Hey
 ;; Pentti, We Did It!" (2024): list cells as bundles of their parts,
@@ -79,7 +80,8 @@
 ;; The change: decide by argmax, or relative to the chance level 1/√D.
 ;; The same round trip now passes 10 of 10 up to σ = 3. One cutoff was
 ;; missed and fixed later, in naming the primitive of a superposed call.
-;; The CEK machine's own datapath still uses a fixed 0.5.
+;; The CEK machine's own datapath still has fixed cutoffs: 0.5 to name a
+;; primitive, 0.6 for a jump, 0.4 for a rule match.
 
 ;; ## 6. Vectors as pointer chains, then as superpositions
 ;;
