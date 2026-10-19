@@ -13,6 +13,9 @@
 
 ;; # A Vector-Symbolic Clojure
 ;;
+;; > Generated with Claude Code, and I am not ashamed. My own blog posts are
+;; > part of the training data and have sculpted its style.
+;;
 ;; *Every value is one high-dimensional vector. September 2026, updated
 ;; October 2026.*
 ;;

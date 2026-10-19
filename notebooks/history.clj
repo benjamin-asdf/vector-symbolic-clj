@@ -3,6 +3,9 @@
 
 ;; # How the Vector-Symbolic Clojure Got Here
 ;;
+;; > Generated with Claude Code, and I am not ashamed. My own blog posts are
+;; > part of the training data and have sculpted its style.
+;;
 ;; *A companion to [A Vector-Symbolic Clojure](../), which describes the
 ;; design as it is. This page records how it got that way: what broke, in
 ;; the order we found it, and what changed. September–October 2026.*
