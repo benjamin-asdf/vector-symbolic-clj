@@ -51,7 +51,7 @@
 ;; How the interpreter is built, step by step, with all the code:
 ;; [Building a Vector-Symbolic Interpreter](building/).
 ;;
-;; How the seven traps turned up, in the order we hit them:
+;; How the design got here, roughly in the order the traps turned up:
 ;; [History](history/).
 ;;
 ;; Code, tests, experiments and the paper draft:
@@ -124,7 +124,7 @@
 ;; two: L⊗a + R⊗b. To read the first element, unbind L and clean up. Every
 ;; such cell also gets its own random ID (a *pointer*), for a reason
 ;; explained under "What the algebra hides". The rest of the encoding follows the same
-;; pattern. In the table, L, R, V, B and Z are fixed random vectors, Bⁿ is
+;; pattern. In the table, L, R, V, K, C, B and Z are fixed random vectors, Bⁿ is
 ;; B bound to itself n times, Π shuffles the dimensions in a fixed random
 ;; order, and ν rescales to length 1.
 ;;
@@ -134,8 +134,8 @@
 ;; | `(a . b)` | a pointer p, with M: p ↦ ν(L⊗a + R⊗b) |
 ;; | `first`, `rest` | unbind L or R from what p points to, then clean up |
 ;; | `[x₀ … xₙ₋₁]` | ν(Σᵢ Πⁱ(V⊗xᵢ)) itself, with no pointer; M records its length next to it |
-;; | `{k v …}` | p ↦ ν(Σ k⊗Π(v)); M also records the set of keys and the size |
-;; | `#{x …}` | p ↦ ν(Σ x); M also records the size |
+;; | `{k v …}` | p ↦ ν(ν(Σ k⊗Π(v)) + ν(K⊗Σ k) + C⊗n): the entries, the set of keys, and the size n |
+;; | `#{x …}` | p ↦ ν(ν(Σ x) + C⊗n) |
 ;; | integer n | Bⁿ⊗Z, so `inc` is one more binding with B, and `+` binds two numbers and unbinds one Z (Bᵐ⊗Bⁿ = Bᵐ⁺ⁿ) |
 ;; | closure | p ↦ ν(L⊗form + R⊗env) |
 ;;
@@ -455,12 +455,13 @@
 ^:kindly/hide-code
 (cek-diagram)
 
-;; The key is the whole trick. It describes the state by up to five
-;; features: the **mode**; the **kind** of C (symbol, number, list,
-;; closure, …); the **head** of C when C is a list starting with a special
-;; form such as `if` or `let`; C's **identity** when C is one of the two
-;; primitives that re-enter evaluation, `apply` and `eval`; and the type of
-;; the **frame** on top of K. Each feature is a random vector bound to its
+;; The key is the whole trick. It describes the state by five features:
+;; the **mode**; the **kind** of C (symbol, number, list, closure, …); the
+;; **head** of C, which matters when C is a list starting with a special
+;; form such as `if` or `let`; C's **identity**, which matters when C is
+;; one of the two primitives that re-enter evaluation, `apply` and `eval`;
+;; and the type of the **frame** on top of K. Every state's key has all
+;; five; a rule names only those it cares about. Each feature is a random vector bound to its
 ;; role, and the key is their sum. The rule memory then does what a `case`
 ;; statement does in an ordinary interpreter, by similarity.
 ;;

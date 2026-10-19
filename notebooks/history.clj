@@ -7,8 +7,8 @@
 ;; > this kind are part of the training data and have sculpted its style.
 ;;
 ;; *A companion to [A Vector-Symbolic Clojure](../), which describes the
-;; design as it is. This page records how it got that way: what broke, in
-;; the order we found it, and what changed. September–October 2026.*
+;; design as it is. This page records how it got that way: what broke,
+;; roughly in the order we found it, and what changed. September–October 2026.*
 ;;
 ;; The starting point was the design of Tomkins-Flanagan and Kelly's "Hey
 ;; Pentti, We Did It!" (2024): list cells as bundles of their parts,
@@ -46,7 +46,18 @@
 ;; longer reproduces. The fix stayed: integers inside maps and sets sit
 ;; behind their own pointers.
 
-;; ## 3. Zero in one dimension
+;; ## 3. Map entries
+;;
+;; On the first day, a benchmark task found `(get {1 2 2 3} 2)` returning
+;; 1: the entry 1 ↦ 2 was 1⊗2, which is also 2⊗1. The first fix stored
+;; every map value behind its own pointer, which made the pair directed at
+;; the cost of one extra memory row per value. In October a directed bind,
+;; k⊗Π(v), replaced it. Done as two operations, a bind and then a permutation, it made
+;; maps fail from noise σ = 2 instead of about 3, because the substrate's
+;; noise compounds between operations. As one operation it matches the old
+;; robustness.
+
+;; ## 4. Zero in one dimension
 ;;
 ;; B⁰ is the identity of convolution, a vector with all its weight in
 ;; dimension 0. Damaging that one dimension, at a lesion of 0.5%, destroyed
@@ -57,7 +68,7 @@
 ;; dimensions; `zero?` and `=` compare identities. `(+ 17 25)` then came
 ;; out right in 300 of 300 runs up to a 10% lesion.
 
-;; ## 4. Fixed thresholds
+;; ## 5. Fixed thresholds
 ;;
 ;; Every stored structure failed at noise σ ≈ 1.5–1.7, for every vector
 ;; size, while the cleanup underneath survived σ ≈ 17. The interpreter
@@ -68,8 +79,9 @@
 ;; The change: decide by argmax, or relative to the chance level 1/√D.
 ;; The same round trip now passes 10 of 10 up to σ = 3. One cutoff was
 ;; missed and fixed later, in naming the primitive of a superposed call.
+;; The CEK machine's own datapath still uses a fixed 0.5.
 
-;; ## 5. Vectors as pointer chains, then as superpositions
+;; ## 6. Vectors as pointer chains, then as superpositions
 ;;
 ;; Clojure vectors started as lists: chains of pointer cells. In October
 ;; they became positional superpositions, ν(Σᵢ Πⁱ(V⊗xᵢ)), so that vectors
@@ -84,7 +96,7 @@
 ;; the superposition memory took as present. The length moved out of the
 ;; vector, next to it in the memory.
 
-;; ## 6. Tuples of worlds
+;; ## 7. Tuples of worlds
 ;;
 ;; With vectors as superpositions, the dice and sprinkler demos built
 ;; their joint worlds as vectors, and read back far from the exact joints
@@ -92,17 +104,6 @@
 ;; vectors keeps each position's distribution and loses which values went
 ;; together: [1 1] + [2 2] is [1 2] + [2 1]. Joint worlds went back to
 ;; lists.
-
-;; ## 7. Map entries
-;;
-;; A benchmark task found `(get {1 2 2 3} 2)` returning 1: the entry
-;; 1 ↦ 2 was 1⊗2, which is also 2⊗1. The first fix stored every map value
-;; behind its own pointer, which made the pair directed at the cost of one
-;; extra memory row per value. It was later replaced by a directed bind,
-;; k⊗Π(v). Done as two operations, a bind and then a permutation, it made
-;; maps fail from noise σ = 2 instead of about 3, because the substrate's
-;; noise compounds between operations. As one operation it matches the old
-;; robustness.
 
 ;; ## 8. Hopfield networks
 ;;
