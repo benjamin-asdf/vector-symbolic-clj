@@ -45,7 +45,7 @@ proof leaves open what happens when programs run. This paper is about that
 gap.
 
 **Why Clojure.** Its core types, persistent maps and sets, are what VSAs
-represent best. A map is a record, Σ kᵢ⊗vᵢ, read with one unbind and one
+represent best. A map is a record, Σ kᵢ⊗Π(vᵢ), read with one unbind and one
 cleanup, and its equality ignores key order because superposition
 commutes. Lisp 1.5 has only cons cells, which is the structure VSAs handle
 worst. Meier (2023) introduced VSAs to Clojure programmers, and her
@@ -523,7 +523,8 @@ superposition has to survive dereferencing: M(Σ wᵢpᵢ) should be
 - **Destructors lift linearly.** `first`, `rest`, environment and global
   lookup are each one memory read for every world. `get` with a superposed
   key enumerates; the keyed lookup that lifts is `follow` on a `relation`,
-  one row per key. `first` of a superposed vector is one unbind. Integer arithmetic lifts exactly, because ⊗ distributes over
+  one row per key. `first` of a superposed vector is one unbind, unless its element worlds
+  mix boxed integers with other values; then it enumerates. Integer arithmetic lifts exactly, because ⊗ distributes over
   +: `(+ (amb 1 2) 10)` equals `(amb 11 12)` to 10⁻¹⁵.
 - **Function bodies run once** for all worlds. Constructors, and primitives
   with no linear form, enumerate.

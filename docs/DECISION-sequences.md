@@ -104,7 +104,9 @@ because those are lists.
    them as lists. A few linearly independent vectors, like
    `(amb [1 2] [10 20])`, still read back exactly.
 2. **`first` of a superposed vector lifts linearly**: element 0 is one
-   unbind, so `vsc.worlds` reads it without enumerating. `rest` of a vector
+   unbind, so `vsc.worlds` reads it without enumerating. Integer elements
+   are boxed, and unboxing follows the heaviest world, so element worlds
+   that mix boxed integers with other values enumerate. `rest` of a vector
    is a new list in each world, so it enumerates.
 3. **Vectors are less noise tolerant than lists, and more so the longer
    they are.** Each element is read at share 1/√n, against 1/√2
