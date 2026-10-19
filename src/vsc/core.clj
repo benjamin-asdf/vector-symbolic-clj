@@ -17,7 +17,7 @@
     [x₀ … xₙ₋₁]  = v = ν(Σᵢ Πⁱ(V⊗xᵢ)), stored in M as itself (no pointer),
                    with M: v ↦ N⊗n; nth i = M(V⊘Π⁻ⁱ(v)), Π a random
                    permutation; count = M(N⊘M(v))
-    {k v, ...}   = p  with  M: p ↦ ν(ν(Σ k⊗⟨v⟩) + ν(K⊗Σ k) + C⊗n)
+    {k v, ...}   = p  with  M: p ↦ ν(ν(Σ k⊗Π(v)) + ν(K⊗Σ k) + C⊗n)
     #{x, ...}    = p  with  M: p ↦ ν(ν(Σ x) + C⊗n)
     (fn ...)     = p  with  M: p ↦ ν(L⊗form + R⊗env)   ;; a closure
     n            = B^n⊗Z, B and Z unitary; inc is B⊗n, + is (m⊗n)⊘Z, zero?
@@ -68,7 +68,7 @@
 ;; memory labels = kinds
 (def ^:private label->kind
   {1 :sym 2 :kw 3 :str 4 :num 5 :nil 6 :true 7 :false 8 :prim
-   10 :list 11 :vec 12 :map 13 :set 14 :fn 15 :box 16 :vbox})
+   10 :list 11 :vec 12 :map 13 :set 14 :fn 15 :box})
 (def ^:private kind->label (zipmap (vals label->kind) (keys label->kind)))
 
 (def ^:private coll-kinds [:list :vec :map :set])
@@ -239,14 +239,22 @@
 ;; pointer wherever they enter a map or set.
 
 (defn- slot [x] (if (#{:num :vec} (kind-of x)) (pointer :box x) x))
-(defn- unslot [y] (if (#{:box :vbox} (kind-of y)) (cleanup (deref-ptr y)) y))
+(defn- unslot [y] (if (= :box (kind-of y)) (cleanup (deref-ptr y)) y))
 
-;; Binding commutes, so if a map value were the same vector as a key, the
-;; entry k'⊗k would answer the probe k with k' at full strength:
-;; (get {1 2 2 3} 2) returned 1. Map values therefore sit behind their own
-;; hash-consed pointer, which no key ever equals.
+(defn- permute [v k] (h/permute (sp) v k))
 
-(defn- value-slot [x] (pointer :vbox x))
+;; Binding commutes, so with entries k⊗v the entry 1⊗2 = 2⊗1 answers the
+;; probe 2 with 1 at full strength: (get {1 2 2 3} 2) returned 1. An entry
+;; is therefore k⊗Π(v), directed by the fixed random permutation Π. A cyclic
+;; shift would not do: it commutes with circular convolution, so
+;; shift(1)⊗2 = shift(2)⊗1. Π goes on the value, not the key: keys are
+;; unitary, so unbinding the key stays exact, and a permuted key is not
+;; unitary. Binding and permuting are one op (hdc bind_dir): as two, op
+;; noise compounds before any cleanup, and maps failed from σ = 2 instead
+;; of about 3.
+
+(defn- entry [k v] (h/bind-dir (sp) k v))
+(defn- entry-value [trace k] (h/unbind-dir (sp) k trace))
 
 (defn- recall-slot
   "The map/set constituent nearest to `p` (never a bare integer)."
@@ -305,7 +313,7 @@
 
 (defn mk-map
   "Map from a seq of [k v] vector pairs; later keys win.
-  Trace: ν(ν(Σ k⊗⟨v⟩) + ν(K⊗Σ k) + C⊗n), ⟨v⟩ the value's own pointer."
+  Trace: ν(ν(Σ k⊗Π(v)) + ν(K⊗Σ k) + C⊗n)."
   [entries]
   (construct :map mk-map-plain entries))
 
@@ -313,11 +321,11 @@
   (let [entries (reduce (fn [acc [k v]] (conj (filterv #(not (eq? k (first %))) acc) [k v]))
                         [] entries)
         _ (check-capacity "map" 3 (count entries))
-        slots (mapv (fn [[k v]] [(slot k) (value-slot v)]) entries)]
+        slots (mapv (fn [[k v]] [(slot k) (slot v)]) entries)]
     (if (empty? entries)
       (tag :map)
       (pointer :map
-               (nu (bundle (nu (apply bundle (map (fn [[k v]] (bind k v)) slots)))
+               (nu (bundle (nu (apply bundle (map (fn [[k v]] (entry k v)) slots)))
                            (nu (bind (role :K) (apply bundle (map first slots))))
                            (bind (role :C) (num-vec (count slots)))))))))
 
@@ -331,11 +339,11 @@
 
 (defn- map-get [mv k]
   (when (map-contains? mv k)
-    (unslot (recall-slot (unbind (slot k) (deref-ptr mv))))))
+    (unslot (recall-slot (entry-value (deref-ptr mv) (slot k))))))
 
 (defn- map-entries [mv]
   (let [trace (deref-ptr mv)]
-    (mapv (fn [k] [k (unslot (recall-slot (unbind (slot k) trace)))]) (map-keys mv))))
+    (mapv (fn [k] [k (unslot (recall-slot (entry-value trace (slot k))))]) (map-keys mv))))
 
 (defn mk-set
   "Trace: ν(ν(Σ x) + C⊗n)."
@@ -384,7 +392,6 @@
 
 (defn- vec-slot [x] (if (= :num (kind-of x)) (pointer :box x) x))
 
-(defn- permute [v k] (h/permute (sp) v k))
 
 (defn- mk-vec-plain [xs]
   (let [xs (vec xs)

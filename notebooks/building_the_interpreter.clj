@@ -392,8 +392,10 @@
 ;;   the overview). The real `eq?` cleans
 ;;   up both sides and compares identities, and `kind` compares with the
 ;;   chance level 1/√D.
-;; - **Maps and sets** as bundles: `{k v}` is ν(Σ k⊗⟨v⟩) plus the set of
-;;   keys and the size. `get` is one unbind and one cleanup. Keys are listed
+;; - **Maps and sets** as bundles: `{k v}` is ν(Σ k⊗Π(v)) plus the set of
+;;   keys and the size, where the fixed random permutation Π gives each
+;;   pair a direction (binding alone commutes). `get` is one unbind and one
+;;   cleanup. Keys are listed
 ;;   by *explaining away*: clean up, subtract what was found, repeat.
 ;; - **A global memory** F instead of a global list. It is probed with L⊗name,
 ;;   as in the original paper.

@@ -103,16 +103,16 @@ because "tuples turn out to degrade rather quickly". §4.1 quantifies why.
 | `first` / `rest` | M(L ⊘ M(p)) / M(R ⊘ M(p)) |
 | `[x₀ … xₙ₋₁]` | v = ν(Σᵢ Πⁱ(V⊗xᵢ)), stored in M as itself, with M: v ↦ N⊗n |
 | `nth` of a vector | M(V ⊘ Π⁻ⁱ(v)) |
-| `{k v …}` | p ↦ ν(ν(Σ k⊗⟨v⟩) + ν(K⊗Σ k) + C⊗n) |
+| `{k v …}` | p ↦ ν(ν(Σ k⊗Π(v)) + ν(K⊗Σ k) + C⊗n) |
 | `#{x …}` | p ↦ ν(ν(Σ x) + C⊗n) |
 | closure | p ↦ ν(L⊗form + R⊗env) |
 | integer n | Bⁿ⊗Z (residue number system, §4.3) |
 | environment / globals | an association list of cells / a memory F probed with L⊗sym |
 
 *Table 1. The encoding. L, R, K, C, V, N are unitary roles, Π is a fixed
-random permutation of the dimensions, and ⟨v⟩ is a hash-consed pointer to
-v. Integer and vector keys and set members are boxed the same way (§4.3,
-§4.6), and so are integer elements of vectors.*
+random permutation of the dimensions. Integer and vector keys, values and
+set members are boxed behind hash-consed pointers (§4.3, §4.6), and so are
+integer elements of vectors.*
 
 - **Pointers.** Every list, map, set and closure is a random pointer that M
   associates with its trace. Equal traces are hash-consed onto one pointer,
@@ -179,8 +179,18 @@ v. Integer and vector keys and set members are boxed the same way (§4.3,
 - **Symptom.** `(get {1 2 2 3} 2)` returned 1.
 - **Cause.** The entry 1 ↦ 2 contributes 1⊗2 = 2⊗1, so probing the key 2
   recovers 1 at full strength.
-- **Fix.** Store each value as its own pointer ⟨v⟩, which no key equals
-  (commit `6ab342c`; found by a benchmark task).
+- **Context.** TK24 bind by circular convolution and drop permutations on
+  purpose: their cons cells are asymmetric through the roles L and R. A
+  map entry k⊗v has no roles.
+- **Fix.** A directed bind: an entry is k⊗Π(v), read as Π⁻¹(k⊘trace).
+  A cyclic shift would not do, since it is a convolution with a shifted
+  impulse and commutes with ⊗: shift(1)⊗2 = shift(2)⊗1. Π permutes the
+  value, not the key, because keys are unitary and unbind exactly; a
+  permuted key is not unitary (one entry read back at cosine 0.56 against
+  0.70 in a two-entry map, D = 2048). Found by a benchmark task; the first
+  fix (commit `6ab342c`) stored every value behind its own pointer, one
+  extra row of M per value. Undirected pairs remain useful (a symmetric
+  relation) and can be a separate structure on the plain bind.
 
 **4.3 Residue integers form chimeras** (`figures/paper-f3-chimeras.png`).
 - **The encoding.** Scanning the whole integer range on every cleanup was
@@ -194,10 +204,14 @@ v. Integer and vector keys and set members are boxed the same way (§4.3,
   match *some* member matches on every band. For ν(B¹¹ + B¹²) there are 62
   such chimeras, and each has cosine 0.665 to the superposition, exactly
   the value of the members 11 and 12. Random integers score 0.00 on average.
-- **Evidence.** This is a reconstruction (`scripts/paper_f3.py`). The
+- **Evidence.** The chimeras are a property of the current encoding: with
+  `Numbers` at D = 2048, ν(B¹¹ + B¹²) has cosine 0.673 to 11, 12 and 13102
+  alike (random integers 0.010 on average), and the residue readout of
+  the superposition returns the chimera −293919 at 0.673. The figure is
+  `scripts/paper_f3.py`. The end-to-end failure does not reproduce: the
   readout over integers that failed was replaced before the first commit,
-  so the failure no longer reproduces end to end: with boxing switched off,
-  `(contains? #{11 12} 13102)` is still false.
+  and with boxing switched off `(contains? #{11 12} 13102)` is still
+  false.
 - **Fix.** Integers inside maps and sets are boxed behind pointers.
 
 **4.4 Zero.**
@@ -578,6 +592,14 @@ values, with destructors, lookup and function bodies lifted over all worlds.
   single winner, so argmax is optimal and softness only leaks. The one
   place that wants blends, superposition, needs a separation function
   outside the softmax family (in the terms of Millidge et al., 2022).
+- **The case for an associative memory lies elsewhere.** §6 shows that
+  exact recall leaves an MHN nothing to win. Its promise is a different
+  role: remembering what a computation did (values returned, code paths
+  taken) and completing a new situation from similar past ones. The pull
+  towards a group's centre that costs it look-alike recall in §6 is the
+  same mechanism that would form prototypes there. The CEK machine already
+  selects rules by similarity (§7.2); a memory of its past runs would make
+  it neuro-symbolic in this sense. We have not built or measured it.
 - **Pointers versus linearity** is the central tension. Pointers buy
   identity and lose superposition; a linear memory keeps superposition and
   crosstalks with everything stored. *proj* is linear on the detected

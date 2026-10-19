@@ -74,7 +74,7 @@ dimensions, and M the cleanup memory.
 | `(a . b)` | pointer *p*, with M: *p* ↦ ν(L⊗a + R⊗b) |
 | `first` / `rest` | M(L ⊘ M(p)) / M(R ⊘ M(p)), the paper's eqs. 3–4 |
 | `[x₀ … xₙ₋₁]` | v = ν(Σᵢ Πⁱ(V⊗xᵢ)), stored in M as itself, M: v ↦ N⊗n; `nth` is M(V ⊘ Π⁻ⁱ v) |
-| `{k v …}` | *p* ↦ ν(ν(Σ k⊗⟨v⟩) + ν(K⊗Σ k) + C⊗n), ⟨v⟩ a pointer to v |
+| `{k v …}` | *p* ↦ ν(ν(Σ k⊗Π(v)) + ν(K⊗Σ k) + C⊗n), Π the random permutation |
 | `#{x …}` | *p* ↦ ν(ν(Σ x) + C⊗n) |
 | `(fn …)` closure | *p* ↦ ν(L⊗form + R⊗env) |
 | integer n | Bⁿ, so `+` is ⊗, `-` is ⊘, `inc` is ⊗B |
@@ -123,13 +123,16 @@ implementation.
    and it covers ±808,307.
 3. **Integers are boxed inside superpositions.** Under the residue encoding, n
    and n+p agree on p's band, so explaining away over a set of integers
-   latched onto "chimera" numbers. Map keys, map values and set members are
-   therefore boxed behind hash-consed pointers, which are near-orthogonal.
-4. **Map values get their own pointer.** Binding commutes, so if a value is
-   also a key, the entry k′⊗k answers the probe k with k′ at full strength:
-   `(get {1 2 2 3} 2)` returned 1. Each value is stored as ⟨v⟩, a
-   hash-consed pointer to v that no key ever equals. The P3 `map-update`
-   task found this.
+   latched onto "chimera" numbers. Integer (and vector) map keys, map
+   values and set members are therefore boxed behind hash-consed pointers,
+   which are near-orthogonal.
+4. **Map entries are directed.** Binding commutes, so the entry 1⊗2 = 2⊗1
+   answers the probe 2 with 1 at full strength: `(get {1 2 2 3} 2)`
+   returned 1. An entry is k⊗Π(v), with Π the fixed random permutation; a
+   cyclic shift would not do, since it commutes with circular convolution.
+   Π is on the value because keys are unitary and unbind exactly. The P3
+   `map-update` task found this; the first fix boxed every value behind its
+   own pointer instead.
 5. **Lists and vectors make opposite trade-offs, and the program picks.**
    Pointers (change 1) give up what makes HDC attractive for structured
    data: similar structures as similar vectors. So only lists are pointer

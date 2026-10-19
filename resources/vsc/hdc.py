@@ -259,6 +259,19 @@ class Space:
         return self._op("unbind",
                         np.fft.irfft(np.conj(np.fft.rfft(a)) * np.fft.rfft(c), n=self.dim))
 
+    def bind_dir(self, a, b):
+        """a ⊗ Π(b): directed binding, which does not commute. One op: the
+        permutation is wiring, exact, and adds no noise of its own."""
+        a, b = self._in(a), self._in(b)
+        b = b[self._perm_power(1)]
+        return self._op("bind", np.fft.irfft(np.fft.rfft(a) * np.fft.rfft(b), n=self.dim))
+
+    def unbind_dir(self, a, c):
+        """Π⁻¹(a ⊘ c), the inverse of bind_dir in a. One op."""
+        a, c = self._in(a), self._in(c)
+        u = np.fft.irfft(np.conj(np.fft.rfft(a)) * np.fft.rfft(c), n=self.dim)
+        return self._op("unbind", u[self._perm_power(-1)])
+
     def inverse(self, a):
         return self._made("inverse", np.fft.irfft(np.conj(np.fft.rfft(self._in(a))), n=self.dim))
 

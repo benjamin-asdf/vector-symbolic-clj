@@ -88,6 +88,8 @@
 (defn power [s a k] (py/call-attr s "power" a k))
 (defn permute "Π^k(v) for the space's fixed random permutation Π." [s v k]
   (py/call-attr s "permute" v k))
+(defn bind-dir "a ⊗ Π(b), directed binding as one op." [s a b] (py/call-attr s "bind_dir" a b))
+(defn unbind-dir "Π⁻¹(a ⊘ c), the inverse of bind-dir in a." [s a c] (py/call-attr s "unbind_dir" a c))
 (defn bundle [s & vs] (apply py/call-attr s "bundle" vs))
 (defn normalize [s v] (py/call-attr s "normalize" v))
 (defn sim ^double [s a b] (py/call-attr s "sim" a b))
