@@ -8,7 +8,6 @@
   (:require
    [clojure.java.io :as io]
    [clojure.pprint :as pp]
-   [libpython-clj2.python :as py]
    [vsc.core :as vsc]
    [vsc.hdc :as h]
    [vsc.machine :as machine]))
@@ -94,12 +93,11 @@
   [form]
   (machine/init!)
   (doseq [p programs] (machine/run p))
-  (let [rows (atom [])
-        W (get @@#'vsc.machine/vm :work)]
+  (let [rows (atom [])]
     (binding [machine/*trace*
               (fn [_ i regs]
                 (let [key (aget ^objects regs (.indexOf ^java.util.List machine/registers 'KEY))
-                      sims (vec (py/->jvm (py/call-attr W "rule_sims" key)))
+                      sims (machine/rule-sims key)
                       [a b] (take 2 (sort > sims))]
                   (swap! rows conj {:rule i :top a :second b :sims sims})))]
       (machine/run form))

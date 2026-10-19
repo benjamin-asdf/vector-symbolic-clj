@@ -256,10 +256,97 @@
   ;; reload, so that a rebuilt machine picks up an edited vsc_machine.py
   (py/call-attr (py/import-module "importlib") "reload" (py/import-module "vsc_machine")))
 
+;; ---------------------------------------------------------------------------
+;; the machine's substrate: each function is one method of Work in
+;; vsc_machine.py, the only place this ns talks to Python
+
+(defn- new-work
+  "Fresh machine memories over the core's cleanup `c` and frame memory `f`."
+  [c f]
+  (py/call-attr (py-module) "Work" c f))
+
+(defn- table-add!
+  "Store row `x` in Work's table `table` (\"opm\", \"cls\" or \"R\"), with
+  associated `value` and `label`; returns its index."
+  [table x value label]
+  (py/call-attr (py/get-attr (W) table) "add" x value label))
+
+(defn- set-roles! [l r il ir fields gc-roles]
+  (py/call-attr (W) "set_roles" l r il ir (py/->py-list fields) (py/->py-list gc-roles)))
+
+(defn- set-kinds! [labels atoms empty-idx empty-atoms unknown wcell none]
+  (py/call-attr (W) "set_kinds" (py/->py-list labels) (py/->py-list atoms)
+                (py/->py-list empty-idx) (py/->py-list empty-atoms) unknown wcell none))
+
+(defn- set-list-labels! [labels] (py/call-attr (W) "set_list_labels" (py/->py-list labels)))
+
+(defn- asm-instr
+  "The instruction vector for `fields`, one vector per field role (nil for
+  an absent operand), shared by equal instructions."
+  [fields]
+  (py/call-attr (W) "asm_instr" (py/->py-list fields)))
+
+(defn- asm-cell "Code cell `key` -> ν(IL⊗instr + IR⊗next)." [key instr nxt]
+  (py/call-attr (W) "asm_cell" key instr nxt))
+
+(defn- asm-end "The end-of-program code pointer." [] (py/call-attr (W) "asm_end"))
+
+(defn- bind* [a b] (py/call-attr (W) "bind" a b))
+(defn- unbind* [a c] (py/call-attr (W) "unbind" a c))
+(defn- field "Field `r` of record `x`, cleaned up in space `s`." [x r s] (py/call-attr (W) "field" x r s))
+(defn- clean [x s] (py/call-attr (W) "clean" x s))
+(defn- record "ν(Σ rᵢ⊗xᵢ) of `pairs` [r₁ x₁ r₂ x₂ …], stored nowhere." [pairs] (apply py/call-attr (W) "record" pairs))
+(defn- alloc! "A fresh pointer in W to the record of `pairs`." [pairs] (apply py/call-attr (W) "alloc" pairs))
+(defn- intern!
+  "The core's hash-consed pointer, of type `label`, to the record of `pairs`."
+  [label pairs]
+  (apply py/call-attr (W) "intern" label pairs))
+
+(defn- items-of "The elements of the list or vector `x`." [x]
+  (let [xs (py/call-attr (W) "items_of" x)]
+    (mapv #(py/get-item xs %) (range (py/call-attr xs "__len__")))))
+
+(defn- read-instr
+  "[field indices, next code pointer] of the instruction at code pointer `pc`."
+  [pc]
+  (let [r (py/call-attr (W) "decode" pc)]
+    [(py/->jvm (py/get-item r 0)) (py/get-item r 1)]))
+
+(defn- select-rule
+  "[rule index, similarity, entry code pointer] of the rule key nearest to
+  `key`. A rule's entry pointer is kept on first use, so that the instruction
+  cache, keyed by identity, meets the same object each time."
+  [key]
+  (let [r (py/call-attr (W) "select" key)
+        i (py/get-item r 0)]
+    [i (py/get-item r 1)
+     (or (get-in @vm [:entries i])
+         (let [pc (py/get-item r 2)] (swap! vm assoc-in [:entries i] pc) pc))]))
+
+(defn- collect!
+  "Drop the W records unreachable from `root`, once W has doubled since the
+  last collection; with `force?`, drop every record now (root nil)."
+  ([root] (py/call-attr (W) "gc" root false))
+  ([root force?] (py/call-attr (W) "gc" root force?)))
+
+(defn- probe "[index similarity] of `x`'s nearest row in Work's table `table`." [table x]
+  (py/->jvm (py/call-attr (W) "probe" table x)))
+
+(defn- rule-count [] (py/get-attr (py/get-attr (W) "R") "n"))
+(defn- rule-key [i] (py/call-attr (py/get-attr (W) "R") "key" i))
+
+(defn rule-sims
+  "The similarity of `key` to every rule key in R, by rule index."
+  [key]
+  (vec (py/->jvm (py/call-attr (W) "rule_sims" key))))
+
+(defn- work-stats [] (py/->jvm (py/call-attr (W) "get_stats")))
+(defn- reset-work-stats! [] (py/call-attr (W) "reset_stats"))
+
 (defn- opm-add!
   "Add `vec` to the operand memory under `name`; returns its index."
   [name vec]
-  (let [i (py/call-attr (py/get-attr (W) "opm") "add" vec nil 0)]
+  (let [i (table-add! "opm" vec nil 0)]
     (swap! vm (fn [s] (-> s (update :names assoc name i) (update :consts assoc i vec)
                           (update :name-of assoc i name))))
     i))
@@ -303,15 +390,13 @@
   "Store `prog` as a list of instruction cells; returns its entry pointer.
   Labels must already be in the operand memory."
   [prog]
-  (let [w (W)
-        cells (positions prog)]
+  (let [cells (positions prog)]
     (reduce (fn [nxt [labels [op & args]]]
               (let [fields (concat [(named op)]
                                    (map named args)
                                    (repeat (- n-fields 1 (count args)) nil))
-                    instr (py/call-attr w "asm_instr" (py/->py-list fields))
                     key (if (seq labels) (named (first labels)) (h/unitary (sp)))]
-                (py/call-attr w "asm_cell" key instr nxt)))
+                (asm-cell key (asm-instr fields) nxt)))
             (v :end) (reverse cells))))
 
 (defn- declare-labels!
@@ -325,15 +410,14 @@
 (defn- feature-key
   "The rule key for a feature map, built like the fetch program builds it."
   [{:keys [mode kind head ident frame]}]
-  (let [w (W)
-        b #(h/bind (sp) %1 %2)
+  (let [b #(h/bind (sp) %1 %2)
         cls #(if (symbol? %) (or (named %) (vsc/encode %)) %)
         parts (cond-> [(named 'FM) (named mode)]
                 kind (into [(named 'FK) (named kind)])
                 head (into [(named 'FH) (b (named kind) (cls head))])
                 ident (into [(named 'FI) (b (named kind) (cls ident))])
                 frame (into [(named 'FF) (named frame)]))]
-    (apply py/call-attr w "record" parts)))
+    (record parts)))
 
 (defn- class-members
   "What the CLASS space recognises: the special forms, and the two
@@ -349,32 +433,27 @@
 (defn- build!
   "Create the machine's memories and assemble fetch, boot, routines and rules."
   []
-  (let [s (sp)
-        w (py/call-attr (py-module) "Work" (cm :C) (cm :F))]
-    (reset! vm {:work w :names {} :consts {} :name-of {}})
+  (let [s (sp)]
+    (reset! vm {:work (new-work (cm :C) (cm :F)) :names {} :consts {} :name-of {}})
     (doseq [r registers] (opm-add! r (h/unitary s)))
     (doseq [[n x] (sort-by (comp str key) (constants))] (opm-add! n x))
-    (let [roles (fn [ns] (py/->py-list (map named ns)))
-          fields (vec (repeatedly n-fields #(h/unitary s)))]
-      (py/call-attr w "set_roles" (named 'L) (named 'R) (h/unitary s) (h/unitary s)
-                    (py/->py-list fields) (roles '[C E K M T A B N L R])))
+    (set-roles! (named 'L) (named 'R) (h/unitary s) (h/unitary s)
+                (repeatedly n-fields #(h/unitary s)) (map named '[C E K M T A B N L R]))
     (let [label->kind @#'vsc.core/label->kind
           empties (for [[k tag] (cm :tags)] [(first (h/nearest (cm :M) tag)) (named (empty-kind-names k))])]
-      (py/call-attr w "set_kinds"
-                    (py/->py-list (keys label->kind))
-                    (py/->py-list (map #(named (kind-names %)) (vals label->kind)))
-                    (py/->py-list (map first empties)) (py/->py-list (map second empties))
-                    (named 'k-unknown) (named 'k-wcell) (named 'none))
-      (py/call-attr w "set_list_labels" (py/->py-list [10])))
-    (doseq [x (class-members)] (py/call-attr (py/get-attr w "cls") "add" x nil 0))
-    (swap! vm assoc :end (py/call-attr w "asm_end")
+      (set-kinds! (keys label->kind) (map #(named (kind-names %)) (vals label->kind))
+                  (map first empties) (map second empties)
+                  (named 'k-unknown) (named 'k-wcell) (named 'none))
+      (set-list-labels! [10]))
+    (doseq [x (class-members)] (table-add! "cls" x nil 0))
+    (swap! vm assoc :end (asm-end)
            :internal [[(named '%spread) spread]])
     (let [progs (concat [fetch-program boot-program] routines (map :code rules))]
       (doseq [p progs] (declare-labels! p))
       (swap! vm assoc :fetch (assemble! fetch-program) :boot (assemble! boot-program))
       (doseq [p routines] (assemble! p))
       (doseq [[i {:keys [key code]}] (map-indexed vector rules)]
-        (py/call-attr (py/get-attr w "R") "add" (feature-key key) (assemble! code) i)))
+        (table-add! "R" (feature-key key) (assemble! code) i)))
     (swap! vm assoc :rule-names (mapv :name rules)
            :reg (zipmap registers (range))
            :space (into {} (map (fn [n i] [(get (v :names) n) i]) clean-spaces (range)))
@@ -385,29 +464,23 @@
 ;; ---------------------------------------------------------------------------
 ;; the datapath: what each instruction does to vectors (one substrate call each)
 
-(defn- field [x r s] (py/call-attr (W) "field" x r s))
-(defn- clean [x s] (py/call-attr (W) "clean" x s))
 (defn- sim ^double [a b] (h/sim (sp) a b))
 
 (defn- store
   "Build ν(Σ rᵢ⊗xᵢ) from `pairs` [r₁ x₁ r₂ x₂ …] and store it in `space`."
   [space pairs]
   (case space
-    :W (apply py/call-attr (W) "alloc" pairs)
-    :NONE (apply py/call-attr (W) "record" pairs)
-    :LIST (apply py/call-attr (W) "intern" 10 pairs)
-    :FN (apply py/call-attr (W) "intern" 14 pairs)))
-
-(defn- items [x]
-  (let [xs (py/call-attr (W) "items_of" x)]
-    (mapv #(py/get-item xs %) (range (py/call-attr xs "__len__")))))
+    :W (alloc! pairs)
+    :NONE (record pairs)
+    :LIST (intern! 10 pairs)
+    :FN (intern! 14 pairs)))
 
 (defn- prim [f args]
   (let [[i _ s] (h/recall (cm :P) f)
         g (if (> s vsc/theta-atom)
             (:f (nth (cm :prims) i))
             (second (apply max-key #(sim f (first %)) (v :internal))))]
-    (g (items args))))
+    (g (items-of args))))
 
 (defn- decode
   "[field indices, next code pointer] of the instruction at `pc`, fetched
@@ -418,8 +491,7 @@
   [pc]
   (let [ic ^java.util.Map (v :icache)]
     (or (and ic (.get ic pc))
-        (let [r (py/call-attr (W) "decode" pc)
-              d [(py/->jvm (py/get-item r 0)) (py/get-item r 1)]]
+        (let [d (read-instr pc)]
           (when ic (.put ic pc d))
           d))))
 
@@ -446,8 +518,8 @@
     (case ((v :opcode) (a 0))
       FIELD (put! (field (val 2) (imm 3) ((v :space) (a 4))))
       CLEAN (put! (clean (val 2) ((v :space) (a 3))))
-      BIND (put! (py/call-attr (W) "bind" (val 2) (val 3)))
-      UNBIND (put! (py/call-attr (W) "unbind" (val 2) (val 3)))
+      BIND (put! (bind* (val 2) (val 3)))
+      UNBIND (put! (unbind* (val 2) (val 3)))
       REC (put! (store ((v :rec-space) (a 2))
                        (mapcat (fn [k] [(imm k) (val (inc k))])
                                (take-while #(>= (a %) 0) (range 3 n-fields 2)))))
@@ -473,15 +545,13 @@
   [^objects regs]
   (loop [step 0]
     (run-micro! regs (v :fetch))
-    (let [r (py/call-attr (W) "select" (reg regs 'KEY))
-          i (py/get-item r 0)]
-      (when (< (py/get-item r 1) theta-rule)
-        (throw (ex-info "no rule matches the machine state" {:sim (py/get-item r 1)})))
+    (let [[i sim-key pc] (select-rule (reg regs 'KEY))]
+      (when (< sim-key theta-rule)
+        (throw (ex-info "no rule matches the machine state" {:sim sim-key})))
       (when *trace* (*trace* step i regs))
-      (run-micro! regs (or (get-in @vm [:entries i])
-                           (let [pc (py/get-item r 2)] (swap! vm assoc-in [:entries i] pc) pc)))
+      (run-micro! regs pc)
       (swap! counters update :steps inc)
-      (py/call-attr (W) "gc" (reg regs 'S) false)
+      (collect! (reg regs 'S))
       (cond
         (> (sim (reg regs 'M) (named 'HALT)) theta-jump) (reg regs 'C)
         (> (sim (reg regs 'M) (named 'ERROR)) theta-jump)
@@ -498,7 +568,7 @@
     (aset regs ((v :reg) 'C) (vsc/encode form))
     (run-micro! regs (v :boot))
     (try (run-state! regs)
-         (finally (py/call-attr (W) "gc" nil true)))))
+         (finally (collect! nil true)))))
 
 (defn run
   "Evaluate a host form on the vector machine and decode the result."
@@ -532,8 +602,6 @@
   [regs]
   (second (py/->jvm (py/call-attr (W) "gc_agrees" (reg regs 'S)))))
 
-(defn- probe [table x] (py/->jvm (py/call-attr (W) "probe" table x)))
-
 (defn- opm-name
   "Name of the operand-memory entry nearest to `x`, if it is a clear match."
   [x theta]
@@ -543,8 +611,6 @@
 (defn- class-name [x]
   (let [[i s] (probe "cls" x)]
     (when (> s 0.2) (nth (concat vsc/special-forms '[%apply %eval]) i))))
-
-(defn- unbind* [a c] (py/call-attr (W) "unbind" a c))
 
 (defn- decode-key
   "Read the features back out of a rule key vector: unbind each feature
@@ -566,21 +632,19 @@
   (loop [pc pc out []]
     (if-not pc
       out
-      (let [r (py/call-attr (W) "decode" pc)
-            ops (py/->jvm (py/get-item r 0))
+      (let [[ops nxt] (read-instr pc)
             label (opm-name pc 0.9)
             instr (mapv (v :name-of) (take-while #(>= % 0) ops))]
-        (recur (py/get-item r 1) (conj out (if (keyword? label) [label instr] instr)))))))
+        (recur nxt (conj out (if (keyword? label) [label instr] instr)))))))
 
 (defn rule-table
   "Every rule in R: index, decoded key, and its microprogram."
   []
-  (let [R (py/get-attr (W) "R")]
-    (for [i (range (py/get-attr R "n"))]
-      {:index i
-       :name ((v :rule-names) i)
-       :key (decode-key (py/call-attr R "key" i))
-       :code (disassemble (py/get-item (py/call-attr (W) "select" (py/call-attr R "key" i)) 2))})))
+  (for [i (range (rule-count))]
+    {:index i
+     :name ((v :rule-names) i)
+     :key (decode-key (rule-key i))
+     :code (disassemble (nth (select-rule (rule-key i)) 2))}))
 
 (defn print-rule-table []
   (doseq [{:keys [index name key code]} (rule-table)]
@@ -621,8 +685,8 @@
   substrate's own (full scans of M, memo hits, FFTs, W allocations, GCs)."
   []
   (merge @counters (into {} (map (fn [[k x]] [(keyword k) x]))
-                         (py/->jvm (py/call-attr (W) "get_stats")))))
+                         (work-stats))))
 
 (defn reset-stats! []
   (reset! counters {:steps 0 :instrs 0})
-  (py/call-attr (W) "reset_stats"))
+  (reset-work-stats!))
