@@ -802,7 +802,8 @@
 ;;     termination.
 ;; 16. Kanerva, P. (2014). Computing with 10,000-bit words. Allerton 2014.
 ;;     [doi:10.1109/ALLERTON.2014.7028470](https://doi.org/10.1109/ALLERTON.2014.7028470).
-;;     Discusses how a Lisp could be built from hypervector operations.
+;;     Discusses how a Lisp could be built from hypervector operations;
+;;     Kanerva has also called for an HDC-Lisp in his talks.
 ;; 17. Meier, C. (2023). Vector symbolic architectures in Clojure.
 ;;     Clojure/Conj 2023. [vsa-clj](https://github.com/gigasquid/vsa-clj).
 ;;     VSA computing experiments in Clojure.
