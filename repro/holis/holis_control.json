@@ -1,0 +1,221 @@
+{
+ "meta": {
+  "script": "holis_control.py",
+  "upstream": {
+   "repo": "https://github.com/eilene-ftf/holis",
+   "commit": "db208d782863febfb50ec46b25a3700369f5cfea",
+   "file": "holis.ipynb",
+   "sha256": "80eee8cdeed896fe1987bd9c391d3001c3e46f736227f8cac8f9784b2dd09175"
+  },
+  "python": "3.14.7",
+  "numpy": "2.5.4",
+  "date": "2026-10-20",
+  "settings": {
+   "D": [
+    512,
+    2048
+   ],
+   "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ],
+   "fizzbuzz_D": 512,
+   "fizzbuzz_seed": 0,
+   "sigma": 0
+  }
+ },
+ "small": [
+  {
+   "program": "(CAR (a b c))",
+   "D": 512,
+   "expected": "[\"a\"]",
+   "correct": 5,
+   "runs": 5
+  },
+  {
+   "program": "(CDR (a b c))",
+   "D": 512,
+   "expected": "[[\"b\", \"c\"]]",
+   "correct": 5,
+   "runs": 5
+  },
+  {
+   "program": "(CONS a (b c))",
+   "D": 512,
+   "expected": "[[\"a\", \"b\", \"c\"]]",
+   "correct": 5,
+   "runs": 5
+  },
+  {
+   "program": "(EQ a a)",
+   "D": 512,
+   "expected": "[\"T\"]",
+   "correct": 5,
+   "runs": 5
+  },
+  {
+   "program": "(EQ a b)",
+   "D": 512,
+   "expected": "[\"F\"]",
+   "correct": 5,
+   "runs": 5
+  },
+  {
+   "program": "(ATOM a)",
+   "D": 512,
+   "expected": "[\"T\"]",
+   "correct": 5,
+   "runs": 5
+  },
+  {
+   "program": "(ATOM (a b))",
+   "D": 512,
+   "expected": "[\"F\"]",
+   "correct": 5,
+   "runs": 5
+  },
+  {
+   "program": "(COND ((EQ a a) . yes) (T . no))",
+   "D": 512,
+   "expected": "[\"yes\"]",
+   "correct": 5,
+   "runs": 5
+  },
+  {
+   "program": "(COND ((EQ a b) . yes) (T . no))",
+   "D": 512,
+   "expected": "[\"no\"]",
+   "correct": 5,
+   "runs": 5
+  },
+  {
+   "program": "((LAMBDA (x) (CONS x (b c))) a)",
+   "D": 512,
+   "expected": "[[\"a\", \"b\", \"c\"]]",
+   "correct": 4,
+   "runs": 5
+  },
+  {
+   "program": "(CAR (a b c))",
+   "D": 2048,
+   "expected": "[\"a\"]",
+   "correct": 5,
+   "runs": 5
+  },
+  {
+   "program": "(CDR (a b c))",
+   "D": 2048,
+   "expected": "[[\"b\", \"c\"]]",
+   "correct": 5,
+   "runs": 5
+  },
+  {
+   "program": "(CONS a (b c))",
+   "D": 2048,
+   "expected": "[[\"a\", \"b\", \"c\"]]",
+   "correct": 5,
+   "runs": 5
+  },
+  {
+   "program": "(EQ a a)",
+   "D": 2048,
+   "expected": "[\"T\"]",
+   "correct": 5,
+   "runs": 5
+  },
+  {
+   "program": "(EQ a b)",
+   "D": 2048,
+   "expected": "[\"F\"]",
+   "correct": 5,
+   "runs": 5
+  },
+  {
+   "program": "(ATOM a)",
+   "D": 2048,
+   "expected": "[\"T\"]",
+   "correct": 5,
+   "runs": 5
+  },
+  {
+   "program": "(ATOM (a b))",
+   "D": 2048,
+   "expected": "[\"F\"]",
+   "correct": 5,
+   "runs": 5
+  },
+  {
+   "program": "(COND ((EQ a a) . yes) (T . no))",
+   "D": 2048,
+   "expected": "[\"yes\"]",
+   "correct": 5,
+   "runs": 5
+  },
+  {
+   "program": "(COND ((EQ a b) . yes) (T . no))",
+   "D": 2048,
+   "expected": "[\"no\"]",
+   "correct": 5,
+   "runs": 5
+  },
+  {
+   "program": "((LAMBDA (x) (CONS x (b c))) a)",
+   "D": 2048,
+   "expected": "[[\"a\", \"b\", \"c\"]]",
+   "correct": 4,
+   "runs": 5
+  }
+ ],
+ "fizzbuzz": [
+  {
+   "program": "their fizzbuzz DEFINEs",
+   "result": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
+   "expected": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
+   "correct": true,
+   "seconds": 5.9
+  },
+  {
+   "program": "countdown 3 1",
+   "source": "(countdown (((NIL))) (NIL))",
+   "result": "[[[\"NIL\"]]]",
+   "expected": "[[[\"NIL\"]]]",
+   "correct": true,
+   "seconds": 16.6
+  },
+  {
+   "program": "divisible 3 3",
+   "source": "(divisible (((NIL))) (((NIL))))",
+   "result": "[\"T\"]",
+   "expected": "[\"T\"]",
+   "correct": true,
+   "seconds": 83.1
+  },
+  {
+   "program": "divisible 4 3",
+   "source": "(divisible ((((NIL)))) (((NIL))))",
+   "result": "[\"F\"]",
+   "expected": "[\"F\"]",
+   "correct": true,
+   "seconds": 767.8
+  },
+  {
+   "program": "and T F",
+   "source": "(and T F)",
+   "result": "[\"F\"]",
+   "expected": "[\"F\"]",
+   "correct": true,
+   "seconds": 51.7
+  },
+  {
+   "program": "take 2 (a b c)",
+   "source": "(take ((NIL)) (a b c))",
+   "result": "[[\"a\", \"b\"]]",
+   "expected": "[[\"a\", \"b\"]]",
+   "correct": true,
+   "seconds": 241.2
+  }
+ ]
+}

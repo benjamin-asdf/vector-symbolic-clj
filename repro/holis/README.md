@@ -1,0 +1,85 @@
+# Reproducing our failure modes in the original authors' code
+
+Harnesses that run the failure modes of our paper (`paper/draft.md` §4)
+against the original code of the two "Hey Pentti" papers. The write-up is
+the notebook `notebooks/holis_reproduction.clj`, which reads the JSON files
+in this directory.
+
+| code | paper | pinned commit | license |
+|---|---|---|---|
+| [eilene-ftf/holis](https://github.com/eilene-ftf/holis), `holis.ipynb` | Tomkins-Flanagan & Kelly, "Hey Pentti, We Did It!" (ICCM 2024) | `db208d782863febfb50ec46b25a3700369f5cfea` | AGPL-3.0 |
+| [hanleyc01/residuelisp](https://github.com/hanleyc01/residuelisp) | Hanley, Tomkins-Flanagan & Kelly, "Hey Pentti, We Did (More of) It!" (IJCNN 2025, arXiv:2511.08767) | `09864c74f1a35680a0008e59d7ab2571269a986f` | MIT |
+
+None of their code is copied here. `upstream.py` fetches it at run time
+from the pinned commit (from a local clone if `HOLIS_CLONE` /
+`RESIDUELISP_CLONE` is set, else from GitHub) into `.upstream/`
+(gitignored). holis is a notebook: we exec its code cells into a module.
+residuelisp is a package: we put its `src/` on `sys.path`.
+
+## Setup
+
+residuelisp needs Python ≥ 3.13; holis needs only numpy.
+
+```sh
+cd repro/holis
+python3 -m venv .venv            # Python 3.14.7 was used
+.venv/bin/pip install numpy more-itertools   # numpy 2.5.4, more-itertools 11.2.1
+```
+
+## Run
+
+Each script writes one JSON file next to itself. Run them one at a time.
+Times are on one core of the machine we used.
+
+```sh
+cd repro/holis
+export OPENBLAS_NUM_THREADS=1
+ulimit -v 8000000
+.venv/bin/python holis_control.py          # noise-free control      ~25 min
+.venv/bin/python holis_errata.py           # E1-E4, noise-free       ~1 min
+.venv/bin/python holis_commute.py          # 4.2                     ~1 min
+.venv/bin/python holis_thresholds.py       # 4.5                     ~30 min
+.venv/bin/python holis_cells.py            # 4.1, paper mode         ~3 min
+.venv/bin/python residuelisp_control.py    # noise-free control      ~1 min
+.venv/bin/python residuelisp_errata.py     # R1-R5, noise-free       ~1 min
+.venv/bin/python residuelisp_residues.py   # 4.3, 4.4                ~15 min
+.venv/bin/python residuelisp_thresholds.py # 4.5                     ~10 min
+```
+
+## What the instrumentation changes
+
+- **Probe noise**, as in our paper: before every cleanup, the probe p
+  becomes p + σ·|p|/√D · N(0, I) (complex N for residuelisp's FHRR).
+  holis: `SimpleCleanUp.recall` (item and function memory) and
+  `SimpleAssoc.recall` (pointer memory). residuelisp:
+  `CleanupMemory.recall` and `AssociativeMemory.deref`.
+- **Controls** are one attribute or one function each: holis's pointer
+  threshold set to 5/√D instead of 0.2 (`holis_thresholds.py`; −1, plain
+  argmax, breaks their atom test, see `holis_cells.py`), holis's inner `car`
+  answering NIL for non-pointers (`holis_errata.py`), holis's cell stored
+  as its own bundle, the paper's eq. 2 (`holis_cells.py`).
+- **Budget**: a holis run that builds more than a fixed number of cells,
+  or a residuelisp run that makes more than a fixed number of cleanups, is
+  stopped and counted as a failure.
+- **Logging**: residuelisp prints debug output on every step and calls its
+  `decode` inside those messages; we silence the prints and stub `decode`
+  while a program runs.
+- **Spacing**: residuelisp's lexer drops a `)` right after an integer, so
+  our residuelisp programs put a space there (erratum R5).
+
+## Outputs
+
+| file | what |
+|---|---|
+| `holis_control.json` | noise-free control, small programs and their fizzbuzz helpers |
+| `holis_errata.json` | E1 CAR of an atom (with control), E2 CAR does not evaluate, E3 LABEL, E4 memory growth |
+| `holis_commute.json` | 4.2 via role symbols, with (x . y) / (y . x) controls |
+| `holis_thresholds.json` | 4.5 lookups, reads, a program; θ = 0.2 vs 5/√D |
+| `holis_cells.json` | 4.1 paper mode vs pointer cells |
+| `residuelisp_control.json` | noise-free control |
+| `residuelisp_errata.json` | R1 integer tag (4.6), R2 `and`, R3 `if`, R4 decoder range, R5 lexer |
+| `residuelisp_residues.json` | 4.3 chimeras and 4.4 zero against their RHC code |
+| `residuelisp_thresholds.json` | 4.5 noise sweep |
+
+Every JSON file records the upstream commit, Python and numpy versions,
+and the settings it ran with.

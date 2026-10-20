@@ -1,0 +1,295 @@
+{
+ "meta": {
+  "script": "residuelisp_errata.py",
+  "upstream": {
+   "repo": "https://github.com/hanleyc01/residuelisp",
+   "commit": "09864c74f1a35680a0008e59d7ab2571269a986f"
+  },
+  "python": "3.14.7",
+  "numpy": "2.5.4",
+  "date": "2026-10-20",
+  "settings": {
+   "D": 1000,
+   "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ],
+   "sigma": 0
+  }
+ },
+ "programs": [
+  {
+   "program": "(eq? 3 5 )",
+   "expected": "#f",
+   "correct": 0,
+   "runs": 5,
+   "results": {
+    "#t": 5
+   },
+   "erratum": "R1"
+  },
+  {
+   "program": "(eq? 3 1000 )",
+   "expected": "#f",
+   "correct": 0,
+   "runs": 5,
+   "results": {
+    "#t": 5
+   },
+   "erratum": "R1"
+  },
+  {
+   "program": "(eq? 3 3 )",
+   "expected": "#t",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "#t": 5
+   },
+   "erratum": "R1 control"
+  },
+  {
+   "program": "(and #t #f)",
+   "expected": "#f",
+   "correct": 0,
+   "runs": 5,
+   "results": {
+    "#t": 5
+   },
+   "erratum": "R2"
+  },
+  {
+   "program": "(and #t nil)",
+   "expected": "nil or #f",
+   "correct": 0,
+   "runs": 5,
+   "results": {
+    "#t": 5
+   },
+   "erratum": "R2"
+  },
+  {
+   "program": "(eq? (cons a (cons b nil)) (cons a (cons c nil)))",
+   "expected": "#f",
+   "correct": 0,
+   "runs": 5,
+   "results": {
+    "#t": 5
+   },
+   "erratum": "R2"
+  },
+  {
+   "program": "(eq? (cons a (cons b nil)) (cons a (cons b nil)))",
+   "expected": "#t",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "#t": 5
+   },
+   "erratum": "R2 control"
+  },
+  {
+   "program": "(if (eq? a b) yes no)",
+   "expected": "no",
+   "correct": 0,
+   "runs": 5,
+   "results": {
+    "yes": 5
+   },
+   "erratum": "R3"
+  },
+  {
+   "program": "(if (and #f #f) yes no)",
+   "expected": "no",
+   "correct": 0,
+   "runs": 5,
+   "results": {
+    "yes": 5
+   },
+   "erratum": "R3"
+  },
+  {
+   "program": "(if #f yes no)",
+   "expected": "no",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "no": 5
+   },
+   "erratum": "R3 control"
+  },
+  {
+   "program": "(+ 150 100 )",
+   "expected": "250",
+   "correct": 0,
+   "runs": 5,
+   "results": {
+    "37": 1,
+    "15": 1,
+    "119": 1,
+    "77": 1,
+    "61": 1
+   },
+   "erratum": "R4"
+  },
+  {
+   "program": "(+ 199 1 )",
+   "expected": "200",
+   "correct": 0,
+   "runs": 5,
+   "results": {
+    "173": 1,
+    "32": 1,
+    "16": 2,
+    "61": 1
+   },
+   "erratum": "R4"
+  },
+  {
+   "program": "(- 3 5 )",
+   "expected": "-2 (1153 mod 1155)",
+   "correct": 0,
+   "runs": 5,
+   "results": {
+    "173": 1,
+    "15": 1,
+    "121": 1,
+    "127": 1,
+    "46": 1
+   },
+   "erratum": "R4"
+  },
+  {
+   "program": "(+ 100 99 )",
+   "expected": "199",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "199": 5
+   },
+   "erratum": "R4 control"
+  }
+ ],
+ "tag_similarity": [
+  {
+   "seed": 0,
+   "sim(3,5)": 1.0194948972810078,
+   "sim(3,1000)": 0.9004882961855292,
+   "sim(3,3)": 1.9161103973644702,
+   "sim(a,b)": -0.0025331487635793194,
+   "cos(3,5)": 0.5120805194839491,
+   "cos(3,1000)": 0.47349961329131146
+  },
+  {
+   "seed": 1,
+   "sim(3,5)": 0.9959889086823911,
+   "sim(3,1000)": 0.9875860750659804,
+   "sim(3,3)": 2.0453639803347095,
+   "sim(a,b)": 0.04541724601958333,
+   "cos(3,5)": 0.493348357204512,
+   "cos(3,1000)": 0.48682278761022596
+  },
+  {
+   "seed": 2,
+   "sim(3,5)": 1.032640496931177,
+   "sim(3,1000)": 0.8999959803728649,
+   "sim(3,3)": 1.9800974110802971,
+   "sim(a,b)": 0.012409116616185177,
+   "cos(3,5)": 0.5120753012988303,
+   "cos(3,1000)": 0.4585945103866417
+  },
+  {
+   "seed": 3,
+   "sim(3,5)": 1.045682336443854,
+   "sim(3,1000)": 0.9570087519866795,
+   "sim(3,3)": 2.009039600026175,
+   "sim(a,b)": 0.033787464238970506,
+   "cos(3,5)": 0.519740038225636,
+   "cos(3,1000)": 0.48479097182143027
+  },
+  {
+   "seed": 4,
+   "sim(3,5)": 1.0147207338868003,
+   "sim(3,1000)": 1.0132860019306433,
+   "sim(3,3)": 1.991055965834541,
+   "sim(a,b)": -0.025201904424218925,
+   "cos(3,5)": 0.5064134965767907,
+   "cos(3,1000)": 0.5074125564290733
+  }
+ ],
+ "test_oracle": [
+  {
+   "seed": 0,
+   "program": "(+ 5 5 )",
+   "equals(result, encode(n))": {
+    "10": "#t",
+    "7": "#t",
+    "0": "#t",
+    "999": "#t"
+   }
+  },
+  {
+   "seed": 1,
+   "program": "(+ 5 5 )",
+   "equals(result, encode(n))": {
+    "10": "#t",
+    "7": "#t",
+    "0": "#t",
+    "999": "#t"
+   }
+  },
+  {
+   "seed": 2,
+   "program": "(+ 5 5 )",
+   "equals(result, encode(n))": {
+    "10": "#t",
+    "7": "#t",
+    "0": "#t",
+    "999": "#t"
+   }
+  },
+  {
+   "seed": 3,
+   "program": "(+ 5 5 )",
+   "equals(result, encode(n))": {
+    "10": "#t",
+    "7": "#t",
+    "0": "#t",
+    "999": "#t"
+   }
+  },
+  {
+   "seed": 4,
+   "program": "(+ 5 5 )",
+   "equals(result, encode(n))": {
+    "10": "#t",
+    "7": "#t",
+    "0": "#t",
+    "999": "#t"
+   }
+  }
+ ],
+ "lexer": [
+  {
+   "source": "(g 1)",
+   "tokens": "( g 1"
+  },
+  {
+   "source": "(g 1 )",
+   "tokens": "( g 1 )"
+  },
+  {
+   "source": "(+ (+ 1 2) 3)",
+   "tokens": "( + ( + 1 2 3",
+   "result_seed0": "InterpreterError: Segmentation fault in car hehe"
+  },
+  {
+   "source": "(+ (+ 1 2 ) 3 )",
+   "tokens": "( + ( + 1 2 ) 3 )",
+   "result_seed0": "6"
+  }
+ ]
+}

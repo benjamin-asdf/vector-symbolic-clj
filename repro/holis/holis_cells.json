@@ -1,0 +1,483 @@
+{
+ "meta": {
+  "script": "holis_cells.py",
+  "upstream": {
+   "repo": "https://github.com/eilene-ftf/holis",
+   "commit": "db208d782863febfb50ec46b25a3700369f5cfea",
+   "file": "holis.ipynb",
+   "sha256": "80eee8cdeed896fe1987bd9c391d3001c3e46f736227f8cac8f9784b2dd09175"
+  },
+  "python": "3.14.7",
+  "numpy": "2.5.4",
+  "date": "2026-10-20",
+  "settings": {
+   "D": 2048,
+   "sigma_read": [
+    0,
+    0.5,
+    1,
+    1.5,
+    2,
+    3,
+    4,
+    5,
+    6,
+    8,
+    10,
+    12,
+    16
+   ],
+   "read_seeds": 20,
+   "program_seeds": 10,
+   "program_sigma": 0,
+   "max_cells_program": 20000
+  }
+ },
+ "sibling": [
+  {
+   "mode": "pointer",
+   "seed": 0,
+   "cos(n,n+1)_mean": -0.008623378839089238,
+   "cos(n,n+2)_mean": 0.005513877568897022
+  },
+  {
+   "mode": "pointer",
+   "seed": 1,
+   "cos(n,n+1)_mean": 0.01559652671687193,
+   "cos(n,n+2)_mean": 0.0060542555577716445
+  },
+  {
+   "mode": "pointer",
+   "seed": 2,
+   "cos(n,n+1)_mean": -0.012310222122464512,
+   "cos(n,n+2)_mean": 0.0060130519210077815
+  },
+  {
+   "mode": "pointer",
+   "seed": 3,
+   "cos(n,n+1)_mean": 0.006545669709491466,
+   "cos(n,n+2)_mean": -0.0003698157631472779
+  },
+  {
+   "mode": "pointer",
+   "seed": 4,
+   "cos(n,n+1)_mean": 5.283531508120844e-05,
+   "cos(n,n+2)_mean": 0.008307071503663941
+  },
+  {
+   "mode": "paper",
+   "seed": 0,
+   "cos(n,n+1)_mean": 0.7079094660423526,
+   "cos(n,n+2)_mean": 0.7437451882000413
+  },
+  {
+   "mode": "paper",
+   "seed": 1,
+   "cos(n,n+1)_mean": 0.8221094341265961,
+   "cos(n,n+2)_mean": 0.6912348747972544
+  },
+  {
+   "mode": "paper",
+   "seed": 2,
+   "cos(n,n+1)_mean": 0.7887561433313568,
+   "cos(n,n+2)_mean": 0.7558525531592725
+  },
+  {
+   "mode": "paper",
+   "seed": 3,
+   "cos(n,n+1)_mean": 0.7806354498989293,
+   "cos(n,n+2)_mean": 0.7633270996692422
+  },
+  {
+   "mode": "paper",
+   "seed": 4,
+   "cos(n,n+1)_mean": 0.6151097271068456,
+   "cos(n,n+2)_mean": 0.6485270548369172
+  }
+ ],
+ "read": [
+  {
+   "mode": "pointer",
+   "sigma": 0,
+   "correct": 20,
+   "runs": 20
+  },
+  {
+   "mode": "pointer",
+   "sigma": 0.5,
+   "correct": 20,
+   "runs": 20
+  },
+  {
+   "mode": "pointer",
+   "sigma": 1,
+   "correct": 20,
+   "runs": 20
+  },
+  {
+   "mode": "pointer",
+   "sigma": 1.5,
+   "correct": 20,
+   "runs": 20
+  },
+  {
+   "mode": "pointer",
+   "sigma": 2,
+   "correct": 20,
+   "runs": 20
+  },
+  {
+   "mode": "pointer",
+   "sigma": 3,
+   "correct": 20,
+   "runs": 20
+  },
+  {
+   "mode": "pointer",
+   "sigma": 4,
+   "correct": 16,
+   "runs": 20
+  },
+  {
+   "mode": "pointer",
+   "sigma": 5,
+   "correct": 0,
+   "runs": 20
+  },
+  {
+   "mode": "pointer",
+   "sigma": 6,
+   "correct": 0,
+   "runs": 20
+  },
+  {
+   "mode": "pointer",
+   "sigma": 8,
+   "correct": 0,
+   "runs": 20
+  },
+  {
+   "mode": "pointer",
+   "sigma": 10,
+   "correct": 0,
+   "runs": 20
+  },
+  {
+   "mode": "pointer",
+   "sigma": 12,
+   "correct": 0,
+   "runs": 20
+  },
+  {
+   "mode": "pointer",
+   "sigma": 16,
+   "correct": 0,
+   "runs": 20
+  },
+  {
+   "mode": "pointer, theta=5/sqrt(D)",
+   "sigma": 0,
+   "correct": 20,
+   "runs": 20
+  },
+  {
+   "mode": "pointer, theta=5/sqrt(D)",
+   "sigma": 0.5,
+   "correct": 20,
+   "runs": 20
+  },
+  {
+   "mode": "pointer, theta=5/sqrt(D)",
+   "sigma": 1,
+   "correct": 20,
+   "runs": 20
+  },
+  {
+   "mode": "pointer, theta=5/sqrt(D)",
+   "sigma": 1.5,
+   "correct": 20,
+   "runs": 20
+  },
+  {
+   "mode": "pointer, theta=5/sqrt(D)",
+   "sigma": 2,
+   "correct": 20,
+   "runs": 20
+  },
+  {
+   "mode": "pointer, theta=5/sqrt(D)",
+   "sigma": 3,
+   "correct": 20,
+   "runs": 20
+  },
+  {
+   "mode": "pointer, theta=5/sqrt(D)",
+   "sigma": 4,
+   "correct": 20,
+   "runs": 20
+  },
+  {
+   "mode": "pointer, theta=5/sqrt(D)",
+   "sigma": 5,
+   "correct": 18,
+   "runs": 20
+  },
+  {
+   "mode": "pointer, theta=5/sqrt(D)",
+   "sigma": 6,
+   "correct": 17,
+   "runs": 20
+  },
+  {
+   "mode": "pointer, theta=5/sqrt(D)",
+   "sigma": 8,
+   "correct": 1,
+   "runs": 20
+  },
+  {
+   "mode": "pointer, theta=5/sqrt(D)",
+   "sigma": 10,
+   "correct": 0,
+   "runs": 20
+  },
+  {
+   "mode": "pointer, theta=5/sqrt(D)",
+   "sigma": 12,
+   "correct": 0,
+   "runs": 20
+  },
+  {
+   "mode": "pointer, theta=5/sqrt(D)",
+   "sigma": 16,
+   "correct": 0,
+   "runs": 20
+  },
+  {
+   "mode": "pointer, theta=-1",
+   "sigma": 0,
+   "correct": 0,
+   "runs": 20
+  },
+  {
+   "mode": "pointer, theta=-1",
+   "sigma": 0.5,
+   "correct": 0,
+   "runs": 20
+  },
+  {
+   "mode": "pointer, theta=-1",
+   "sigma": 1,
+   "correct": 0,
+   "runs": 20
+  },
+  {
+   "mode": "pointer, theta=-1",
+   "sigma": 1.5,
+   "correct": 0,
+   "runs": 20
+  },
+  {
+   "mode": "pointer, theta=-1",
+   "sigma": 2,
+   "correct": 0,
+   "runs": 20
+  },
+  {
+   "mode": "pointer, theta=-1",
+   "sigma": 3,
+   "correct": 0,
+   "runs": 20
+  },
+  {
+   "mode": "pointer, theta=-1",
+   "sigma": 4,
+   "correct": 0,
+   "runs": 20
+  },
+  {
+   "mode": "pointer, theta=-1",
+   "sigma": 5,
+   "correct": 0,
+   "runs": 20
+  },
+  {
+   "mode": "pointer, theta=-1",
+   "sigma": 6,
+   "correct": 0,
+   "runs": 20
+  },
+  {
+   "mode": "pointer, theta=-1",
+   "sigma": 8,
+   "correct": 0,
+   "runs": 20
+  },
+  {
+   "mode": "pointer, theta=-1",
+   "sigma": 10,
+   "correct": 0,
+   "runs": 20
+  },
+  {
+   "mode": "pointer, theta=-1",
+   "sigma": 12,
+   "correct": 0,
+   "runs": 20
+  },
+  {
+   "mode": "pointer, theta=-1",
+   "sigma": 16,
+   "correct": 0,
+   "runs": 20
+  },
+  {
+   "mode": "paper",
+   "sigma": 0,
+   "correct": 20,
+   "runs": 20
+  },
+  {
+   "mode": "paper",
+   "sigma": 0.5,
+   "correct": 20,
+   "runs": 20
+  },
+  {
+   "mode": "paper",
+   "sigma": 1,
+   "correct": 20,
+   "runs": 20
+  },
+  {
+   "mode": "paper",
+   "sigma": 1.5,
+   "correct": 20,
+   "runs": 20
+  },
+  {
+   "mode": "paper",
+   "sigma": 2,
+   "correct": 20,
+   "runs": 20
+  },
+  {
+   "mode": "paper",
+   "sigma": 3,
+   "correct": 19,
+   "runs": 20
+  },
+  {
+   "mode": "paper",
+   "sigma": 4,
+   "correct": 17,
+   "runs": 20
+  },
+  {
+   "mode": "paper",
+   "sigma": 5,
+   "correct": 15,
+   "runs": 20
+  },
+  {
+   "mode": "paper",
+   "sigma": 6,
+   "correct": 14,
+   "runs": 20
+  },
+  {
+   "mode": "paper",
+   "sigma": 8,
+   "correct": 5,
+   "runs": 20
+  },
+  {
+   "mode": "paper",
+   "sigma": 10,
+   "correct": 1,
+   "runs": 20
+  },
+  {
+   "mode": "paper",
+   "sigma": 12,
+   "correct": 0,
+   "runs": 20
+  },
+  {
+   "mode": "paper",
+   "sigma": 16,
+   "correct": 0,
+   "runs": 20
+  }
+ ],
+ "program": [
+  {
+   "mode": "pointer",
+   "program": "(CAR (a b c))",
+   "expected": "[\"a\"]",
+   "correct": 10,
+   "runs": 10,
+   "results": {
+    "[\"a\"]": 10
+   },
+   "cos(form, ev(form))_mean": 0.005188574353425808
+  },
+  {
+   "mode": "pointer",
+   "program": "(COND ((EQ a b) . yes) (T . no))",
+   "expected": "[\"no\"]",
+   "correct": 10,
+   "runs": 10,
+   "results": {
+    "[\"no\"]": 10
+   },
+   "cos(form, ev(form))_mean": 0.001073873160995833
+  },
+  {
+   "mode": "pointer",
+   "program": "((LAMBDA (x) (CONS x (b c))) a)",
+   "expected": "[[\"a\", \"b\", \"c\"]]",
+   "correct": 9,
+   "runs": 10,
+   "results": {
+    "[[\"a\", \"b\", \"c\"]]": 9,
+    "[[\"a\", \"LAMBDA\", [\"c\"], \"LAMBDA\"]]": 1
+   },
+   "cos(form, ev(form))_mean": 0.0054416600368887924
+  },
+  {
+   "mode": "paper",
+   "program": "(CAR (a b c))",
+   "expected": "[\"a\"]",
+   "correct": 10,
+   "runs": 10,
+   "results": {
+    "[\"a\"]": 10
+   },
+   "cos(form, ev(form))_mean": -0.0033657554596250973
+  },
+  {
+   "mode": "paper",
+   "program": "(COND ((EQ a b) . yes) (T . no))",
+   "expected": "[\"no\"]",
+   "correct": 10,
+   "runs": 10,
+   "results": {
+    "[\"no\"]": 10
+   },
+   "cos(form, ev(form))_mean": -0.0009103254252936993
+  },
+  {
+   "mode": "paper",
+   "program": "((LAMBDA (x) (CONS x (b c))) a)",
+   "expected": "[[\"a\", \"b\", \"c\"]]",
+   "correct": 0,
+   "runs": 10,
+   "results": {
+    "[[\"CONS\", \"a\", [\"b\", \"c\"]]]": 7,
+    "[[\"CONS\", [\"x\", \"b\", \"c\"], [\"b\", \"c\"]]]": 2,
+    "[[\"CONS\", [\"b\", \"c\"], [\"b\", \"c\"]]]": 1
+   },
+   "cos(form, ev(form))_mean": 0.43514008395450565
+  }
+ ]
+}

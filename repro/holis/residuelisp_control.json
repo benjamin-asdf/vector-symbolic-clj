@@ -1,0 +1,162 @@
+{
+ "meta": {
+  "script": "residuelisp_control.py",
+  "upstream": {
+   "repo": "https://github.com/hanleyc01/residuelisp",
+   "commit": "09864c74f1a35680a0008e59d7ab2571269a986f"
+  },
+  "python": "3.14.7",
+  "numpy": "2.5.4",
+  "date": "2026-10-20",
+  "settings": {
+   "D": 1000,
+   "vsa": "FHRR",
+   "integers": "RHCIntegers, moduli [3, 5, 7, 11]",
+   "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ],
+   "sigma": 0
+  }
+ },
+ "rows": [
+  {
+   "program": "(+ 1 2 )",
+   "expected": "3",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "3": 5
+   }
+  },
+  {
+   "program": "(+ 20 22 )",
+   "expected": "42",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "42": 5
+   }
+  },
+  {
+   "program": "(- 7 3 )",
+   "expected": "4",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "4": 5
+   }
+  },
+  {
+   "program": "(car (cons 1 2 ) )",
+   "expected": "1",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "1": 5
+   }
+  },
+  {
+   "program": "(cdr (cons a b))",
+   "expected": "b",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "b": 5
+   }
+  },
+  {
+   "program": "((lambda (x) ((lambda (y) (cons x (cons y nil))) n)) m)",
+   "expected": "[\"m\", \"n\"]",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "[\"m\", \"n\"]": 5
+   }
+  },
+  {
+   "program": "(eq? a a)",
+   "expected": "#t",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "#t": 5
+   }
+  },
+  {
+   "program": "(eq? a b)",
+   "expected": "#f",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "#f": 5
+   }
+  },
+  {
+   "program": "(eq? 3 3 )",
+   "expected": "#t",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "#t": 5
+   }
+  },
+  {
+   "program": "(int? 3 )",
+   "expected": "#t",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "#t": 5
+   }
+  },
+  {
+   "program": "(int? a)",
+   "expected": "#f",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "#f": 5
+   }
+  },
+  {
+   "program": "(and #t #t)",
+   "expected": "#t",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "#t": 5
+   }
+  },
+  {
+   "program": "(and #f #t)",
+   "expected": "#f",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "#f": 5
+   }
+  },
+  {
+   "program": "(if #t yes no)",
+   "expected": "yes",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "yes": 5
+   }
+  },
+  {
+   "program": "(if #f yes no)",
+   "expected": "no",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "no": 5
+   }
+  }
+ ]
+}

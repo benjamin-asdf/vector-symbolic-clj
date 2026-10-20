@@ -1,0 +1,192 @@
+{
+ "meta": {
+  "script": "holis_errata.py",
+  "upstream": {
+   "repo": "https://github.com/eilene-ftf/holis",
+   "commit": "db208d782863febfb50ec46b25a3700369f5cfea",
+   "file": "holis.ipynb",
+   "sha256": "80eee8cdeed896fe1987bd9c391d3001c3e46f736227f8cac8f9784b2dd09175"
+  },
+  "python": "3.14.7",
+  "numpy": "2.5.4",
+  "date": "2026-10-20",
+  "settings": {
+   "program": "((LAMBDA (x) (CONS x (b c))) a)",
+   "seeds": 100,
+   "dims": [
+    512,
+    2048
+   ],
+   "sigma": 0
+  }
+ },
+ "car_of_atom": [
+  {
+   "D": 512,
+   "variant": "theirs",
+   "wrong": 7,
+   "runs": 100
+  },
+  {
+   "D": 512,
+   "variant": "car(atom) = NIL",
+   "wrong": 0,
+   "runs": 100
+  },
+  {
+   "D": 2048,
+   "variant": "theirs",
+   "wrong": 11,
+   "runs": 100
+  },
+  {
+   "D": 2048,
+   "variant": "car(atom) = NIL",
+   "wrong": 0,
+   "runs": 100
+  }
+ ],
+ "car_of_atom_examples": [
+  {
+   "D": 512,
+   "variant": "theirs",
+   "seed": 0,
+   "result": "[[\"a\", \"b\", \"LAMBDA\", \"x\", [\"CONS\", \"a\", [\"b\", \"c\"]]]]"
+  },
+  {
+   "D": 512,
+   "variant": "theirs",
+   "seed": 34,
+   "result": "[[\"a\", \"LAMBDA\"]]"
+  },
+  {
+   "D": 512,
+   "variant": "theirs",
+   "seed": 41,
+   "result": "[[\"a\", \"b\", \"LAMBDA\", \"a\", [\"x\", [\"b\", \"c\"]]]]"
+  },
+  {
+   "D": 512,
+   "variant": "theirs",
+   "seed": 43,
+   "result": "[[\"a\", \"b\"]]"
+  },
+  {
+   "D": 2048,
+   "variant": "theirs",
+   "seed": 2,
+   "result": "[[\"a\", \"LAMBDA\", [\"c\"], \"LAMBDA\"]]"
+  },
+  {
+   "D": 2048,
+   "variant": "theirs",
+   "seed": 11,
+   "result": "[[\"LAMBDA\", \"b\", \"c\"]]"
+  },
+  {
+   "D": 2048,
+   "variant": "theirs",
+   "seed": 21,
+   "result": "[[\"a\", 1]]"
+  },
+  {
+   "D": 2048,
+   "variant": "theirs",
+   "seed": 46,
+   "result": "[[\"a\", \"b\", \"LAMBDA\", \"lhs\", \"CONS\"]]"
+  }
+ ],
+ "car_of_a_spread": {
+  "512": {
+   "NIL": 11,
+   "1": 9,
+   "CONS": 9,
+   "b": 9,
+   "lhs": 8,
+   "a": 7,
+   "\u03c6": 6,
+   "F": 6,
+   "rhs": 5,
+   "c": 5,
+   "T": 5,
+   "DEFINE": 4,
+   "QUOTE": 3,
+   "LABEL": 3,
+   "x": 2,
+   "CDR": 2,
+   "EQ": 2,
+   "CAR": 1,
+   "COND": 1,
+   "ATOM": 1,
+   "LAMBDA": 1
+  },
+  "2048": {
+   "a": 14,
+   "lhs": 11,
+   "F": 9,
+   "x": 7,
+   "T": 7,
+   "c": 7,
+   "NIL": 5,
+   "CONS": 5,
+   "EQ": 5,
+   "\u03c6": 5,
+   "DEFINE": 4,
+   "1": 4,
+   "LAMBDA": 4,
+   "CAR": 3,
+   "QUOTE": 2,
+   "LABEL": 2,
+   "CDR": 2,
+   "b": 2,
+   "rhs": 1,
+   "ATOM": 1
+  }
+ },
+ "other": [
+  {
+   "program": "(CAR (CDR (a b c)))",
+   "note": "Lisp 1.5 gives b",
+   "D": 512,
+   "runs": 5,
+   "results": {
+    "[\"CDR\"]": 5
+   }
+  },
+  {
+   "program": "(LABEL f (LAMBDA (x) x))",
+   "note": "LABEL",
+   "D": 512,
+   "runs": 5,
+   "results": {
+    "TypeError: vsa_env.<locals>.label() got an unexpected keyword argument 'ind'": 5
+   }
+  }
+ ],
+ "memory_growth": [
+  {
+   "items stored": 100,
+   "matrix rows": 100,
+   "MB at D=512": 0.4
+  },
+  {
+   "items stored": 200,
+   "matrix rows": 10100,
+   "MB at D=512": 41.4
+  },
+  {
+   "items stored": 400,
+   "matrix rows": 30100,
+   "MB at D=512": 123.3
+  },
+  {
+   "items stored": 800,
+   "matrix rows": 70100,
+   "MB at D=512": 287.1
+  }
+ ],
+ "memory_after_fizzbuzz_defines": {
+  "items stored": 635,
+  "matrix rows": 53600
+ }
+}

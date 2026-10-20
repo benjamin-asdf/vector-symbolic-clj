@@ -6,7 +6,8 @@
 (let [path (or (first *command-line-args*) "notebooks/vector_symbolic_clojure.clj")
       title ({"notebooks/vector_symbolic_clojure.clj" "A Vector-Symbolic Clojure"
               "notebooks/building_the_interpreter.clj" "Building a Vector-Symbolic Interpreter"
-              "notebooks/history.clj" "How the Vector-Symbolic Clojure Got Here"}
+              "notebooks/history.clj" "How the Vector-Symbolic Clojure Got Here"
+              "notebooks/holis_reproduction.clj" "Reproducing the Traps in the Original Code"}
              path)]
   (clay/make! {:source-path path
                :format [:quarto :html]

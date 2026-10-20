@@ -1,0 +1,271 @@
+{
+ "meta": {
+  "script": "holis_commute.py",
+  "upstream": {
+   "repo": "https://github.com/eilene-ftf/holis",
+   "commit": "db208d782863febfb50ec46b25a3700369f5cfea",
+   "file": "holis.ipynb",
+   "sha256": "80eee8cdeed896fe1987bd9c391d3001c3e46f736227f8cac8f9784b2dd09175"
+  },
+  "python": "3.14.7",
+  "numpy": "2.5.4",
+  "date": "2026-10-20",
+  "settings": {
+   "dims": [
+    512,
+    2048,
+    8192
+   ],
+   "seeds": 40,
+   "sigma": 0
+  }
+ },
+ "rows": [
+  {
+   "program": "(CAR (x . lhs))",
+   "D": 512,
+   "expected": "x",
+   "correct": 18,
+   "runs": 40,
+   "results": {
+    "rhs": 22,
+    "x": 18
+   }
+  },
+  {
+   "program": "(CDR (rhs . x))",
+   "D": 512,
+   "expected": "x",
+   "correct": 17,
+   "runs": 40,
+   "results": {
+    "lhs": 23,
+    "x": 17
+   }
+  },
+  {
+   "program": "(CAR (x . rhs))",
+   "D": 512,
+   "expected": "x",
+   "correct": 40,
+   "runs": 40,
+   "results": {
+    "x": 40
+   }
+  },
+  {
+   "program": "(CDR (lhs . x))",
+   "D": 512,
+   "expected": "x",
+   "correct": 40,
+   "runs": 40,
+   "results": {
+    "x": 40
+   }
+  },
+  {
+   "program": "(CAR (x . y))",
+   "D": 512,
+   "expected": "x",
+   "correct": 40,
+   "runs": 40,
+   "results": {
+    "x": 40
+   }
+  },
+  {
+   "program": "(CAR (y . x))",
+   "D": 512,
+   "expected": "y",
+   "correct": 40,
+   "runs": 40,
+   "results": {
+    "y": 40
+   }
+  },
+  {
+   "program": "(CDR (x . y))",
+   "D": 512,
+   "expected": "y",
+   "correct": 40,
+   "runs": 40,
+   "results": {
+    "y": 40
+   }
+  },
+  {
+   "program": "(CDR (y . x))",
+   "D": 512,
+   "expected": "x",
+   "correct": 40,
+   "runs": 40,
+   "results": {
+    "x": 40
+   }
+  },
+  {
+   "program": "(CAR (x . lhs))",
+   "D": 2048,
+   "expected": "x",
+   "correct": 19,
+   "runs": 40,
+   "results": {
+    "rhs": 21,
+    "x": 19
+   }
+  },
+  {
+   "program": "(CDR (rhs . x))",
+   "D": 2048,
+   "expected": "x",
+   "correct": 22,
+   "runs": 40,
+   "results": {
+    "x": 22,
+    "lhs": 18
+   }
+  },
+  {
+   "program": "(CAR (x . rhs))",
+   "D": 2048,
+   "expected": "x",
+   "correct": 40,
+   "runs": 40,
+   "results": {
+    "x": 40
+   }
+  },
+  {
+   "program": "(CDR (lhs . x))",
+   "D": 2048,
+   "expected": "x",
+   "correct": 40,
+   "runs": 40,
+   "results": {
+    "x": 40
+   }
+  },
+  {
+   "program": "(CAR (x . y))",
+   "D": 2048,
+   "expected": "x",
+   "correct": 40,
+   "runs": 40,
+   "results": {
+    "x": 40
+   }
+  },
+  {
+   "program": "(CAR (y . x))",
+   "D": 2048,
+   "expected": "y",
+   "correct": 40,
+   "runs": 40,
+   "results": {
+    "y": 40
+   }
+  },
+  {
+   "program": "(CDR (x . y))",
+   "D": 2048,
+   "expected": "y",
+   "correct": 40,
+   "runs": 40,
+   "results": {
+    "y": 40
+   }
+  },
+  {
+   "program": "(CDR (y . x))",
+   "D": 2048,
+   "expected": "x",
+   "correct": 40,
+   "runs": 40,
+   "results": {
+    "x": 40
+   }
+  },
+  {
+   "program": "(CAR (x . lhs))",
+   "D": 8192,
+   "expected": "x",
+   "correct": 20,
+   "runs": 40,
+   "results": {
+    "x": 20,
+    "rhs": 20
+   }
+  },
+  {
+   "program": "(CDR (rhs . x))",
+   "D": 8192,
+   "expected": "x",
+   "correct": 22,
+   "runs": 40,
+   "results": {
+    "x": 22,
+    "lhs": 18
+   }
+  },
+  {
+   "program": "(CAR (x . rhs))",
+   "D": 8192,
+   "expected": "x",
+   "correct": 40,
+   "runs": 40,
+   "results": {
+    "x": 40
+   }
+  },
+  {
+   "program": "(CDR (lhs . x))",
+   "D": 8192,
+   "expected": "x",
+   "correct": 40,
+   "runs": 40,
+   "results": {
+    "x": 40
+   }
+  },
+  {
+   "program": "(CAR (x . y))",
+   "D": 8192,
+   "expected": "x",
+   "correct": 40,
+   "runs": 40,
+   "results": {
+    "x": 40
+   }
+  },
+  {
+   "program": "(CAR (y . x))",
+   "D": 8192,
+   "expected": "y",
+   "correct": 40,
+   "runs": 40,
+   "results": {
+    "y": 40
+   }
+  },
+  {
+   "program": "(CDR (x . y))",
+   "D": 8192,
+   "expected": "y",
+   "correct": 40,
+   "runs": 40,
+   "results": {
+    "y": 40
+   }
+  },
+  {
+   "program": "(CDR (y . x))",
+   "D": 8192,
+   "expected": "x",
+   "correct": 40,
+   "runs": 40,
+   "results": {
+    "x": 40
+   }
+  }
+ ]
+}

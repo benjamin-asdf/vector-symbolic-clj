@@ -77,6 +77,14 @@
 ;; How the design got here, roughly in the order the traps turned up:
 ;; [History](history/).
 ;;
+;; Which of the traps exist in the original authors' own code, holis
+;; (2024) and residuelisp (2025), run at pinned commits under the same
+;; noise: [Reproducing the Traps in the Original Code](holis/). In short:
+;; holis has trap 5 (its fixed 0.2 caps noise at σ ≈ 5 for every D), and
+;; residuelisp has trap 6 (one tag on every integer makes any two
+;; integers `eq?`). Neither has the chimeras or the zero trap. Running
+;; them also turned up eight further bugs.
+;;
 ;; Code, tests, experiments and the paper draft:
 ;; [github.com/benjamin-asdf/vector-symbolic-clj](https://github.com/benjamin-asdf/vector-symbolic-clj).
 
@@ -260,9 +268,11 @@
 ;; **3. Numbers can blend into fake numbers.** An integer is stored by its
 ;; remainders, like reading six clocks at once: 11 is "1 on a 5-hour clock,
 ;; 4 on a 7-hour clock, 0 on an 11-hour clock", and so on up to a 19-hour
-;; clock. Each clock lives in its own share of the vector. That makes
-;; numbers cheap to recognise: read each clock, then combine (Kymn et al.,
-;; 2025; Hanley et al., 2025).
+;; clock. Residue numbers come from Kymn et al. (2025) and Hanley et al.
+;; (2025). Giving each clock its own share of the vector is our variant.
+;; It makes numbers cheap to recognise: read each clock, then combine.
+;; Their product code mixes all clocks in every coordinate, and the
+;; chimeras below do not occur in it ([reproduction](holis/)).
 ;;
 ;; Now put 11 and 12 into one set. The set shows both numbers' readings on
 ;; every clock. A number that shows 11's reading on some clocks and 12's on
@@ -732,8 +742,9 @@
 ;; 2. Hanley, C., Tomkins-Flanagan, E., & Kelly, M. A. (2025). Hey Pentti,
 ;;    we did (more of) it!: A vector-symbolic Lisp with residue arithmetic.
 ;;    IJCNN 2025. [arXiv:2511.08767](https://arxiv.org/abs/2511.08767).
-;;    Adds integers in a residue number system, the encoding whose
-;;    chimeras trap 3 describes.
+;;    [code](https://github.com/hanleyc01/residuelisp). Adds integers in
+;;    a residue number system. Its product code has no chimeras; trap 3
+;;    comes from our banded variant.
 ;; 3. Kleyko, D., et al. (2022). Vector symbolic architectures as a
 ;;    computing framework for emerging hardware. *Proceedings of the IEEE*
 ;;    110(10). [doi:10.1109/JPROC.2022.3209104](https://doi.org/10.1109/JPROC.2022.3209104).

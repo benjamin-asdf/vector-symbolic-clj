@@ -1,0 +1,1888 @@
+{
+ "meta": {
+  "script": "holis_thresholds.py",
+  "upstream": {
+   "repo": "https://github.com/eilene-ftf/holis",
+   "commit": "db208d782863febfb50ec46b25a3700369f5cfea",
+   "file": "holis.ipynb",
+   "sha256": "80eee8cdeed896fe1987bd9c391d3001c3e46f736227f8cac8f9784b2dd09175"
+  },
+  "python": "3.14.7",
+  "numpy": "2.5.4",
+  "date": "2026-10-20",
+  "settings": {
+   "dims": [
+    512,
+    2048,
+    8192
+   ],
+   "modes": [
+    "theirs (theta=0.2)",
+    "chance floor (theta=5/sqrt(D))"
+   ],
+   "sigma_lookup": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    4.5,
+    5,
+    5.5,
+    6,
+    7,
+    8,
+    10,
+    12,
+    16
+   ],
+   "sigma_read": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    8,
+    10,
+    12
+   ],
+   "sigma_program": [
+    0,
+    2,
+    4,
+    5,
+    6,
+    8,
+    10
+   ],
+   "lookup": "25 lists x 8 repeats per (D, sigma, mode), env seed 0",
+   "read_seeds": 20,
+   "program_seeds": 10,
+   "program": "((LAMBDA (x) (CONS x (b c))) a)",
+   "noise": "p + sigma*|p|/sqrt(D)*N(0,I) before every SimpleCleanUp.recall and SimpleAssoc.recall",
+   "max_cells_program": 300,
+   "why_small": "their SimpleCleanUp grows by 100 zero rows per stored item past 100 rows (erratum E4); larger memories exceed 8 GB at D = 8192"
+  }
+ },
+ "theory": {
+  "sigma_where_cos_hits_0.2": 4.898979485566356,
+  "sigma_where_cos_hits_5/sqrt(D)": {
+   "512": 4.4136152981427825,
+   "2048": 8.995554457619608,
+   "8192": 18.074291134094306
+  }
+ },
+ "lookup": [
+  {
+   "D": 512,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 0,
+   "correct": 200,
+   "trials": 200,
+   "theta_fallbacks": 0
+  },
+  {
+   "D": 512,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 1,
+   "correct": 200,
+   "trials": 200,
+   "theta_fallbacks": 0
+  },
+  {
+   "D": 512,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 2,
+   "correct": 196,
+   "trials": 200,
+   "theta_fallbacks": 0
+  },
+  {
+   "D": 512,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 3,
+   "correct": 159,
+   "trials": 200,
+   "theta_fallbacks": 0
+  },
+  {
+   "D": 512,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 4,
+   "correct": 103,
+   "trials": 200,
+   "theta_fallbacks": 26
+  },
+  {
+   "D": 512,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 4.5,
+   "correct": 48,
+   "trials": 200,
+   "theta_fallbacks": 75
+  },
+  {
+   "D": 512,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 5,
+   "correct": 26,
+   "trials": 200,
+   "theta_fallbacks": 104
+  },
+  {
+   "D": 512,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 5.5,
+   "correct": 21,
+   "trials": 200,
+   "theta_fallbacks": 141
+  },
+  {
+   "D": 512,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 6,
+   "correct": 9,
+   "trials": 200,
+   "theta_fallbacks": 160
+  },
+  {
+   "D": 512,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 7,
+   "correct": 3,
+   "trials": 200,
+   "theta_fallbacks": 183
+  },
+  {
+   "D": 512,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 8,
+   "correct": 5,
+   "trials": 200,
+   "theta_fallbacks": 191
+  },
+  {
+   "D": 512,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 10,
+   "correct": 1,
+   "trials": 200,
+   "theta_fallbacks": 198
+  },
+  {
+   "D": 512,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 12,
+   "correct": 1,
+   "trials": 200,
+   "theta_fallbacks": 200
+  },
+  {
+   "D": 512,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 16,
+   "correct": 2,
+   "trials": 200,
+   "theta_fallbacks": 200
+  },
+  {
+   "D": 512,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 0,
+   "correct": 200,
+   "trials": 200,
+   "theta_fallbacks": 0
+  },
+  {
+   "D": 512,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 1,
+   "correct": 200,
+   "trials": 200,
+   "theta_fallbacks": 0
+  },
+  {
+   "D": 512,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 2,
+   "correct": 196,
+   "trials": 200,
+   "theta_fallbacks": 0
+  },
+  {
+   "D": 512,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 3,
+   "correct": 159,
+   "trials": 200,
+   "theta_fallbacks": 1
+  },
+  {
+   "D": 512,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 4,
+   "correct": 84,
+   "trials": 200,
+   "theta_fallbacks": 54
+  },
+  {
+   "D": 512,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 4.5,
+   "correct": 38,
+   "trials": 200,
+   "theta_fallbacks": 101
+  },
+  {
+   "D": 512,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 5,
+   "correct": 15,
+   "trials": 200,
+   "theta_fallbacks": 147
+  },
+  {
+   "D": 512,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 5.5,
+   "correct": 12,
+   "trials": 200,
+   "theta_fallbacks": 165
+  },
+  {
+   "D": 512,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 6,
+   "correct": 7,
+   "trials": 200,
+   "theta_fallbacks": 180
+  },
+  {
+   "D": 512,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 7,
+   "correct": 2,
+   "trials": 200,
+   "theta_fallbacks": 194
+  },
+  {
+   "D": 512,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 8,
+   "correct": 4,
+   "trials": 200,
+   "theta_fallbacks": 197
+  },
+  {
+   "D": 512,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 10,
+   "correct": 1,
+   "trials": 200,
+   "theta_fallbacks": 200
+  },
+  {
+   "D": 512,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 12,
+   "correct": 1,
+   "trials": 200,
+   "theta_fallbacks": 200
+  },
+  {
+   "D": 512,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 16,
+   "correct": 2,
+   "trials": 200,
+   "theta_fallbacks": 200
+  },
+  {
+   "D": 2048,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 0,
+   "correct": 200,
+   "trials": 200,
+   "theta_fallbacks": 0
+  },
+  {
+   "D": 2048,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 1,
+   "correct": 200,
+   "trials": 200,
+   "theta_fallbacks": 0
+  },
+  {
+   "D": 2048,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 2,
+   "correct": 200,
+   "trials": 200,
+   "theta_fallbacks": 0
+  },
+  {
+   "D": 2048,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 3,
+   "correct": 200,
+   "trials": 200,
+   "theta_fallbacks": 0
+  },
+  {
+   "D": 2048,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 4,
+   "correct": 195,
+   "trials": 200,
+   "theta_fallbacks": 4
+  },
+  {
+   "D": 2048,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 4.5,
+   "correct": 164,
+   "trials": 200,
+   "theta_fallbacks": 37
+  },
+  {
+   "D": 2048,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 5,
+   "correct": 83,
+   "trials": 200,
+   "theta_fallbacks": 118
+  },
+  {
+   "D": 2048,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 5.5,
+   "correct": 31,
+   "trials": 200,
+   "theta_fallbacks": 165
+  },
+  {
+   "D": 2048,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 6,
+   "correct": 8,
+   "trials": 200,
+   "theta_fallbacks": 194
+  },
+  {
+   "D": 2048,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 7,
+   "correct": 2,
+   "trials": 200,
+   "theta_fallbacks": 199
+  },
+  {
+   "D": 2048,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 8,
+   "correct": 1,
+   "trials": 200,
+   "theta_fallbacks": 200
+  },
+  {
+   "D": 2048,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 10,
+   "correct": 0,
+   "trials": 200,
+   "theta_fallbacks": 200
+  },
+  {
+   "D": 2048,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 12,
+   "correct": 2,
+   "trials": 200,
+   "theta_fallbacks": 200
+  },
+  {
+   "D": 2048,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 16,
+   "correct": 2,
+   "trials": 200,
+   "theta_fallbacks": 200
+  },
+  {
+   "D": 2048,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 0,
+   "correct": 200,
+   "trials": 200,
+   "theta_fallbacks": 0
+  },
+  {
+   "D": 2048,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 1,
+   "correct": 200,
+   "trials": 200,
+   "theta_fallbacks": 0
+  },
+  {
+   "D": 2048,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 2,
+   "correct": 200,
+   "trials": 200,
+   "theta_fallbacks": 0
+  },
+  {
+   "D": 2048,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 3,
+   "correct": 200,
+   "trials": 200,
+   "theta_fallbacks": 0
+  },
+  {
+   "D": 2048,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 4,
+   "correct": 199,
+   "trials": 200,
+   "theta_fallbacks": 0
+  },
+  {
+   "D": 2048,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 4.5,
+   "correct": 199,
+   "trials": 200,
+   "theta_fallbacks": 0
+  },
+  {
+   "D": 2048,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 5,
+   "correct": 194,
+   "trials": 200,
+   "theta_fallbacks": 0
+  },
+  {
+   "D": 2048,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 5.5,
+   "correct": 178,
+   "trials": 200,
+   "theta_fallbacks": 0
+  },
+  {
+   "D": 2048,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 6,
+   "correct": 165,
+   "trials": 200,
+   "theta_fallbacks": 0
+  },
+  {
+   "D": 2048,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 7,
+   "correct": 119,
+   "trials": 200,
+   "theta_fallbacks": 15
+  },
+  {
+   "D": 2048,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 8,
+   "correct": 91,
+   "trials": 200,
+   "theta_fallbacks": 46
+  },
+  {
+   "D": 2048,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 10,
+   "correct": 21,
+   "trials": 200,
+   "theta_fallbacks": 147
+  },
+  {
+   "D": 2048,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 12,
+   "correct": 8,
+   "trials": 200,
+   "theta_fallbacks": 179
+  },
+  {
+   "D": 2048,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 16,
+   "correct": 2,
+   "trials": 200,
+   "theta_fallbacks": 200
+  },
+  {
+   "D": 8192,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 0,
+   "correct": 200,
+   "trials": 200,
+   "theta_fallbacks": 0
+  },
+  {
+   "D": 8192,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 1,
+   "correct": 200,
+   "trials": 200,
+   "theta_fallbacks": 0
+  },
+  {
+   "D": 8192,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 2,
+   "correct": 200,
+   "trials": 200,
+   "theta_fallbacks": 0
+  },
+  {
+   "D": 8192,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 3,
+   "correct": 200,
+   "trials": 200,
+   "theta_fallbacks": 0
+  },
+  {
+   "D": 8192,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 4,
+   "correct": 200,
+   "trials": 200,
+   "theta_fallbacks": 0
+  },
+  {
+   "D": 8192,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 4.5,
+   "correct": 190,
+   "trials": 200,
+   "theta_fallbacks": 10
+  },
+  {
+   "D": 8192,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 5,
+   "correct": 75,
+   "trials": 200,
+   "theta_fallbacks": 126
+  },
+  {
+   "D": 8192,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 5.5,
+   "correct": 6,
+   "trials": 200,
+   "theta_fallbacks": 197
+  },
+  {
+   "D": 8192,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 6,
+   "correct": 1,
+   "trials": 200,
+   "theta_fallbacks": 200
+  },
+  {
+   "D": 8192,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 7,
+   "correct": 1,
+   "trials": 200,
+   "theta_fallbacks": 200
+  },
+  {
+   "D": 8192,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 8,
+   "correct": 0,
+   "trials": 200,
+   "theta_fallbacks": 200
+  },
+  {
+   "D": 8192,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 10,
+   "correct": 1,
+   "trials": 200,
+   "theta_fallbacks": 200
+  },
+  {
+   "D": 8192,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 12,
+   "correct": 2,
+   "trials": 200,
+   "theta_fallbacks": 200
+  },
+  {
+   "D": 8192,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 16,
+   "correct": 2,
+   "trials": 200,
+   "theta_fallbacks": 200
+  },
+  {
+   "D": 8192,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 0,
+   "correct": 200,
+   "trials": 200,
+   "theta_fallbacks": 0
+  },
+  {
+   "D": 8192,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 1,
+   "correct": 200,
+   "trials": 200,
+   "theta_fallbacks": 0
+  },
+  {
+   "D": 8192,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 2,
+   "correct": 200,
+   "trials": 200,
+   "theta_fallbacks": 0
+  },
+  {
+   "D": 8192,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 3,
+   "correct": 200,
+   "trials": 200,
+   "theta_fallbacks": 0
+  },
+  {
+   "D": 8192,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 4,
+   "correct": 200,
+   "trials": 200,
+   "theta_fallbacks": 0
+  },
+  {
+   "D": 8192,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 4.5,
+   "correct": 200,
+   "trials": 200,
+   "theta_fallbacks": 0
+  },
+  {
+   "D": 8192,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 5,
+   "correct": 200,
+   "trials": 200,
+   "theta_fallbacks": 0
+  },
+  {
+   "D": 8192,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 5.5,
+   "correct": 200,
+   "trials": 200,
+   "theta_fallbacks": 0
+  },
+  {
+   "D": 8192,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 6,
+   "correct": 200,
+   "trials": 200,
+   "theta_fallbacks": 0
+  },
+  {
+   "D": 8192,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 7,
+   "correct": 200,
+   "trials": 200,
+   "theta_fallbacks": 0
+  },
+  {
+   "D": 8192,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 8,
+   "correct": 200,
+   "trials": 200,
+   "theta_fallbacks": 0
+  },
+  {
+   "D": 8192,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 10,
+   "correct": 188,
+   "trials": 200,
+   "theta_fallbacks": 0
+  },
+  {
+   "D": 8192,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 12,
+   "correct": 166,
+   "trials": 200,
+   "theta_fallbacks": 0
+  },
+  {
+   "D": 8192,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 16,
+   "correct": 83,
+   "trials": 200,
+   "theta_fallbacks": 46
+  }
+ ],
+ "read": [
+  {
+   "D": 512,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 0,
+   "correct": 20,
+   "runs": 20,
+   "errors": {}
+  },
+  {
+   "D": 512,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 1,
+   "correct": 20,
+   "runs": 20,
+   "errors": {}
+  },
+  {
+   "D": 512,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 2,
+   "correct": 20,
+   "runs": 20,
+   "errors": {}
+  },
+  {
+   "D": 512,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 3,
+   "correct": 14,
+   "runs": 20,
+   "errors": {}
+  },
+  {
+   "D": 512,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 4,
+   "correct": 0,
+   "runs": 20,
+   "errors": {}
+  },
+  {
+   "D": 512,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 5,
+   "correct": 0,
+   "runs": 20,
+   "errors": {}
+  },
+  {
+   "D": 512,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 6,
+   "correct": 0,
+   "runs": 20,
+   "errors": {}
+  },
+  {
+   "D": 512,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 8,
+   "correct": 0,
+   "runs": 20,
+   "errors": {}
+  },
+  {
+   "D": 512,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 10,
+   "correct": 0,
+   "runs": 20,
+   "errors": {}
+  },
+  {
+   "D": 512,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 12,
+   "correct": 0,
+   "runs": 20,
+   "errors": {}
+  },
+  {
+   "D": 512,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 0,
+   "correct": 20,
+   "runs": 20,
+   "errors": {}
+  },
+  {
+   "D": 512,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 1,
+   "correct": 20,
+   "runs": 20,
+   "errors": {}
+  },
+  {
+   "D": 512,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 2,
+   "correct": 20,
+   "runs": 20,
+   "errors": {}
+  },
+  {
+   "D": 512,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 3,
+   "correct": 14,
+   "runs": 20,
+   "errors": {}
+  },
+  {
+   "D": 512,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 4,
+   "correct": 0,
+   "runs": 20,
+   "errors": {}
+  },
+  {
+   "D": 512,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 5,
+   "correct": 0,
+   "runs": 20,
+   "errors": {}
+  },
+  {
+   "D": 512,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 6,
+   "correct": 0,
+   "runs": 20,
+   "errors": {}
+  },
+  {
+   "D": 512,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 8,
+   "correct": 0,
+   "runs": 20,
+   "errors": {}
+  },
+  {
+   "D": 512,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 10,
+   "correct": 0,
+   "runs": 20,
+   "errors": {}
+  },
+  {
+   "D": 512,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 12,
+   "correct": 0,
+   "runs": 20,
+   "errors": {}
+  },
+  {
+   "D": 2048,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 0,
+   "correct": 20,
+   "runs": 20,
+   "errors": {}
+  },
+  {
+   "D": 2048,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 1,
+   "correct": 20,
+   "runs": 20,
+   "errors": {}
+  },
+  {
+   "D": 2048,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 2,
+   "correct": 20,
+   "runs": 20,
+   "errors": {}
+  },
+  {
+   "D": 2048,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 3,
+   "correct": 20,
+   "runs": 20,
+   "errors": {}
+  },
+  {
+   "D": 2048,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 4,
+   "correct": 17,
+   "runs": 20,
+   "errors": {}
+  },
+  {
+   "D": 2048,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 5,
+   "correct": 0,
+   "runs": 20,
+   "errors": {}
+  },
+  {
+   "D": 2048,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 6,
+   "correct": 0,
+   "runs": 20,
+   "errors": {}
+  },
+  {
+   "D": 2048,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 8,
+   "correct": 0,
+   "runs": 20,
+   "errors": {}
+  },
+  {
+   "D": 2048,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 10,
+   "correct": 0,
+   "runs": 20,
+   "errors": {}
+  },
+  {
+   "D": 2048,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 12,
+   "correct": 0,
+   "runs": 20,
+   "errors": {}
+  },
+  {
+   "D": 2048,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 0,
+   "correct": 20,
+   "runs": 20,
+   "errors": {}
+  },
+  {
+   "D": 2048,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 1,
+   "correct": 20,
+   "runs": 20,
+   "errors": {}
+  },
+  {
+   "D": 2048,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 2,
+   "correct": 20,
+   "runs": 20,
+   "errors": {}
+  },
+  {
+   "D": 2048,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 3,
+   "correct": 20,
+   "runs": 20,
+   "errors": {}
+  },
+  {
+   "D": 2048,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 4,
+   "correct": 20,
+   "runs": 20,
+   "errors": {}
+  },
+  {
+   "D": 2048,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 5,
+   "correct": 18,
+   "runs": 20,
+   "errors": {}
+  },
+  {
+   "D": 2048,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 6,
+   "correct": 15,
+   "runs": 20,
+   "errors": {}
+  },
+  {
+   "D": 2048,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 8,
+   "correct": 0,
+   "runs": 20,
+   "errors": {}
+  },
+  {
+   "D": 2048,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 10,
+   "correct": 0,
+   "runs": 20,
+   "errors": {}
+  },
+  {
+   "D": 2048,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 12,
+   "correct": 0,
+   "runs": 20,
+   "errors": {}
+  },
+  {
+   "D": 8192,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 0,
+   "correct": 20,
+   "runs": 20,
+   "errors": {}
+  },
+  {
+   "D": 8192,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 1,
+   "correct": 20,
+   "runs": 20,
+   "errors": {}
+  },
+  {
+   "D": 8192,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 2,
+   "correct": 20,
+   "runs": 20,
+   "errors": {}
+  },
+  {
+   "D": 8192,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 3,
+   "correct": 20,
+   "runs": 20,
+   "errors": {}
+  },
+  {
+   "D": 8192,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 4,
+   "correct": 20,
+   "runs": 20,
+   "errors": {}
+  },
+  {
+   "D": 8192,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 5,
+   "correct": 0,
+   "runs": 20,
+   "errors": {}
+  },
+  {
+   "D": 8192,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 6,
+   "correct": 0,
+   "runs": 20,
+   "errors": {}
+  },
+  {
+   "D": 8192,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 8,
+   "correct": 0,
+   "runs": 20,
+   "errors": {}
+  },
+  {
+   "D": 8192,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 10,
+   "correct": 0,
+   "runs": 20,
+   "errors": {}
+  },
+  {
+   "D": 8192,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 12,
+   "correct": 0,
+   "runs": 20,
+   "errors": {}
+  },
+  {
+   "D": 8192,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 0,
+   "correct": 20,
+   "runs": 20,
+   "errors": {}
+  },
+  {
+   "D": 8192,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 1,
+   "correct": 20,
+   "runs": 20,
+   "errors": {}
+  },
+  {
+   "D": 8192,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 2,
+   "correct": 20,
+   "runs": 20,
+   "errors": {}
+  },
+  {
+   "D": 8192,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 3,
+   "correct": 20,
+   "runs": 20,
+   "errors": {}
+  },
+  {
+   "D": 8192,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 4,
+   "correct": 20,
+   "runs": 20,
+   "errors": {}
+  },
+  {
+   "D": 8192,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 5,
+   "correct": 20,
+   "runs": 20,
+   "errors": {}
+  },
+  {
+   "D": 8192,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 6,
+   "correct": 20,
+   "runs": 20,
+   "errors": {}
+  },
+  {
+   "D": 8192,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 8,
+   "correct": 20,
+   "runs": 20,
+   "errors": {}
+  },
+  {
+   "D": 8192,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 10,
+   "correct": 18,
+   "runs": 20,
+   "errors": {}
+  },
+  {
+   "D": 8192,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 12,
+   "correct": 11,
+   "runs": 20,
+   "errors": {}
+  }
+ ],
+ "program": [
+  {
+   "D": 512,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 0,
+   "correct": 9,
+   "runs": 10,
+   "errors": {},
+   "wrong_values": {
+    "[\"a\", \"b\", \"LAMBDA\", \"x\", [\"CONS\", \"a\", [\"b\", \"c\"]]]": 1
+   }
+  },
+  {
+   "D": 512,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 2,
+   "correct": 6,
+   "runs": 10,
+   "errors": {},
+   "wrong_values": {
+    "[\"x\", \"b\", \"c\"]": 1,
+    "[\"lhs\", \"b\", \"c\"]": 1,
+    "[\"c\", \"a\", [\"b\", \"c\"]]": 1,
+    "[\"a\", \"LAMBDA\", [\"x\", [\"b\", \"c\"]], \"c\"]": 1
+   }
+  },
+  {
+   "D": 512,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 4,
+   "correct": 0,
+   "runs": 10,
+   "errors": {},
+   "wrong_values": {
+    "rhs": 1,
+    "[[[\"b\", [\"x\"], \"F\"], \"rhs\"], \"lhs\"]": 1,
+    "[\"LAMBDA\", \"CONS\", [[\"a\"], [[[\"LAMBDA\", \"T\"], [\"x\", \"F\"]]]]]": 1,
+    "[\"F\", \"a\"]": 1,
+    "[\"LAMBDA\", 1, [\"NIL\", \"lhs\"]]": 1,
+    "[[\"x\"], [\"rhs\", \"lhs\"]]": 1,
+    "[\"LAMBDA\", \"rhs\"]": 1,
+    "[[[[[[\"F\", [\"T\", [\"CONS\", \"lhs\"]], \"x\"], \"LAMBDA\"], [\"NIL\", ": 1,
+    "[\"lhs\", [\"a\", \"LAMBDA\"]]": 1,
+    "[[\"rhs\", [\"LAMBDA\", \"x\"]], [\"rhs\", [\"x\", 1]]]": 1
+   }
+  },
+  {
+   "D": 512,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 5,
+   "correct": 0,
+   "runs": 10,
+   "errors": {},
+   "wrong_values": {
+    "a": 1,
+    "[\"ATOM\", \"EQ\"]": 1,
+    "[\"x\", \"\\u03c6\"]": 1,
+    "[\"rhs\", [\"a\", [\"b\", \"lhs\"]]]": 1,
+    "[[[\"CONS\", \"rhs\"], \"ATOM\"], \"lhs\"]": 1,
+    "[\"F\", [\"NIL\", \"x\"]]": 1,
+    "LAMBDA": 1,
+    "[\"LAMBDA\", [\"rhs\", \"rhs\"]]": 1,
+    "[\"lhs\", \"\\u03c6\"]": 1,
+    "[\"a\", 1]": 1
+   }
+  },
+  {
+   "D": 512,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 6,
+   "correct": 0,
+   "runs": 10,
+   "errors": {},
+   "wrong_values": {
+    "a": 1,
+    "[\"F\", \"EQ\"]": 1,
+    "[\"x\", \"\\u03c6\"]": 1,
+    "LAMBDA": 2,
+    "[\"ATOM\", \"T\"]": 1,
+    "\u03c6": 1,
+    "[\"CONS\", \"a\"]": 1,
+    "[\"CDR\", \"CONS\"]": 1,
+    "c": 1
+   }
+  },
+  {
+   "D": 512,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 8,
+   "correct": 0,
+   "runs": 10,
+   "errors": {},
+   "wrong_values": {
+    "a": 1,
+    "c": 3,
+    "F": 1,
+    "[\"NIL\", \"T\"]": 1,
+    "[[1], [\"NIL\", \"x\"]]": 1,
+    "LAMBDA": 1,
+    "EQ": 1,
+    "x": 1
+   }
+  },
+  {
+   "D": 512,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 10,
+   "correct": 0,
+   "runs": 10,
+   "errors": {
+    "budget": 1
+   },
+   "wrong_values": {
+    "a": 2,
+    "c": 1,
+    "[\"LAMBDA\", \"b\"]": 1,
+    "lhs": 1,
+    "[[\"lhs\", [\"a\", [\"EQ\", \"T\"]], \"CONS\"], [[[[\"ATOM\", \"a\"], \"LAM": 1,
+    "[[1], [\"NIL\", \"x\"]]": 1,
+    "LAMBDA": 1,
+    "x": 1
+   }
+  },
+  {
+   "D": 512,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 0,
+   "correct": 9,
+   "runs": 10,
+   "errors": {},
+   "wrong_values": {
+    "[\"a\", \"b\", \"LAMBDA\", \"x\", [\"CONS\", \"a\", [\"b\", \"c\"]]]": 1
+   }
+  },
+  {
+   "D": 512,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 2,
+   "correct": 6,
+   "runs": 10,
+   "errors": {},
+   "wrong_values": {
+    "[\"x\", \"b\", \"c\"]": 1,
+    "[\"lhs\", \"b\", \"c\"]": 1,
+    "[\"c\", \"a\", [\"b\", \"c\"]]": 1,
+    "[\"a\", \"LAMBDA\", [\"x\", [\"b\", \"c\"]], \"c\"]": 1
+   }
+  },
+  {
+   "D": 512,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 4,
+   "correct": 0,
+   "runs": 10,
+   "errors": {},
+   "wrong_values": {
+    "a": 1,
+    "[\"lhs\", [[\"x\"], \"ATOM\"]]": 1,
+    "x": 1,
+    "[\"LAMBDA\", \"LAMBDA\"]": 1,
+    "[\"LAMBDA\", \"c\"]": 1,
+    "[[\"CAR\", \"b\", \"F\", \"CONS\", \"F\", \"lhs\", [[\"lhs\", \"rhs\"], [\"F\"": 1,
+    "c": 1,
+    "[\"F\", \"EQ\"]": 1,
+    "[\"lhs\", \"\\u03c6\"]": 1,
+    "[\"a\", [\"LAMBDA\", \"x\"]]": 1
+   }
+  },
+  {
+   "D": 512,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 5,
+   "correct": 0,
+   "runs": 10,
+   "errors": {},
+   "wrong_values": {
+    "a": 1,
+    "F": 1,
+    "[\"x\", \"\\u03c6\"]": 1,
+    "LAMBDA": 2,
+    "[[[\"CONS\", \"rhs\"], \"ATOM\"], \"lhs\"]": 1,
+    "\u03c6": 1,
+    "[\"lhs\", [\"NIL\", \"x\"]]": 1,
+    "[\"lhs\", \"\\u03c6\"]": 1,
+    "c": 1
+   }
+  },
+  {
+   "D": 512,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 6,
+   "correct": 0,
+   "runs": 10,
+   "errors": {},
+   "wrong_values": {
+    "a": 1,
+    "c": 2,
+    "b": 1,
+    "LAMBDA": 2,
+    "[\"ATOM\", \"T\"]": 1,
+    "\u03c6": 1,
+    "[\"CONS\", \"a\"]": 1,
+    "x": 1
+   }
+  },
+  {
+   "D": 512,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 8,
+   "correct": 0,
+   "runs": 10,
+   "errors": {},
+   "wrong_values": {
+    "a": 2,
+    "c": 3,
+    "F": 1,
+    "[\"NIL\", \"T\"]": 1,
+    "[[1], [\"NIL\", \"x\"]]": 1,
+    "LAMBDA": 1,
+    "x": 1
+   }
+  },
+  {
+   "D": 512,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 10,
+   "correct": 0,
+   "runs": 10,
+   "errors": {
+    "budget": 1
+   },
+   "wrong_values": {
+    "a": 2,
+    "c": 1,
+    "[\"LAMBDA\", \"b\"]": 1,
+    "lhs": 1,
+    "EQ": 1,
+    "[[1], [\"NIL\", \"x\"]]": 1,
+    "LAMBDA": 1,
+    "x": 1
+   }
+  },
+  {
+   "D": 2048,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 0,
+   "correct": 9,
+   "runs": 10,
+   "errors": {},
+   "wrong_values": {
+    "[\"a\", \"LAMBDA\", [\"c\"], \"LAMBDA\"]": 1
+   }
+  },
+  {
+   "D": 2048,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 2,
+   "correct": 10,
+   "runs": 10,
+   "errors": {},
+   "wrong_values": {}
+  },
+  {
+   "D": 2048,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 4,
+   "correct": 3,
+   "runs": 10,
+   "errors": {},
+   "wrong_values": {
+    "rhs": 1,
+    "[\"a\", [\"b\", \"LAMBDA\"]]": 1,
+    "[\"T\", \"b\", \"x\"]": 1,
+    "[[\"x\", \"a\", [\"b\", \"c\"]], \"a\", [\"b\", \"c\"]]": 1,
+    "[\"a\", \"b\", 1]": 1,
+    "c": 1,
+    "[[\"LAMBDA\", [\"x\"], [\"CONS\", \"x\", [\"b\", \"c\"]]], \"a\"]": 1
+   }
+  },
+  {
+   "D": 2048,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 5,
+   "correct": 0,
+   "runs": 10,
+   "errors": {},
+   "wrong_values": {
+    "[1, \"b\"]": 1,
+    "[\"LAMBDA\", \"CONS\"]": 1,
+    "CONS": 2,
+    "DEFINE": 2,
+    "[\"LAMBDA\", \"b\"]": 1,
+    "NIL": 1,
+    "\u03c6": 1,
+    "[\"T\", 1]": 1
+   }
+  },
+  {
+   "D": 2048,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 6,
+   "correct": 0,
+   "runs": 10,
+   "errors": {},
+   "wrong_values": {
+    "LAMBDA": 1,
+    "rhs": 1,
+    "DEFINE": 3,
+    "b": 1,
+    "x": 2,
+    "\u03c6": 1,
+    "a": 1
+   }
+  },
+  {
+   "D": 2048,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 8,
+   "correct": 0,
+   "runs": 10,
+   "errors": {},
+   "wrong_values": {
+    "LAMBDA": 1,
+    "rhs": 1,
+    "DEFINE": 3,
+    "b": 1,
+    "x": 2,
+    "\u03c6": 1,
+    "a": 1
+   }
+  },
+  {
+   "D": 2048,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 10,
+   "correct": 0,
+   "runs": 10,
+   "errors": {},
+   "wrong_values": {
+    "LAMBDA": 1,
+    "rhs": 1,
+    "DEFINE": 3,
+    "b": 1,
+    "x": 2,
+    "\u03c6": 1,
+    "a": 1
+   }
+  },
+  {
+   "D": 2048,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 0,
+   "correct": 9,
+   "runs": 10,
+   "errors": {},
+   "wrong_values": {
+    "[\"a\", \"LAMBDA\", [\"c\"], \"LAMBDA\"]": 1
+   }
+  },
+  {
+   "D": 2048,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 2,
+   "correct": 10,
+   "runs": 10,
+   "errors": {},
+   "wrong_values": {}
+  },
+  {
+   "D": 2048,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 4,
+   "correct": 10,
+   "runs": 10,
+   "errors": {},
+   "wrong_values": {}
+  },
+  {
+   "D": 2048,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 5,
+   "correct": 7,
+   "runs": 10,
+   "errors": {},
+   "wrong_values": {
+    "[\"x\", \"b\", [\"x\", \"b\", \"c\"]]": 1,
+    "[\"c\"]": 1,
+    "[\"rhs\", \"lhs\"]": 1
+   }
+  },
+  {
+   "D": 2048,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 6,
+   "correct": 0,
+   "runs": 10,
+   "errors": {},
+   "wrong_values": {
+    "[\"a\", \"x\"]": 1,
+    "[\"a\", \"b\"]": 1,
+    "[\"a\", \"b\", \"c\", [[\"a\"], \"a\"]]": 1,
+    "[\"x\", \"a\"]": 1,
+    "[\"LAMBDA\", \"CONS\", [\"CONS\", [\"x\", [[\"b\", [[[[\"x\"], [\"CONS\", ": 1,
+    "[[\"x\", [\"a\"]], \"x\", [\"b\", \"c\", \"c\"]]": 1,
+    "[\"a\", \"LAMBDA\"]": 1,
+    "a": 1,
+    "[\"LAMBDA\", [\"x\", [\"b\", \"c\"], \"b\", \"c\"], [\"c\"]]": 1,
+    "[[\"c\"], [[\"b\", \"c\"]]]": 1
+   }
+  },
+  {
+   "D": 2048,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 8,
+   "correct": 0,
+   "runs": 10,
+   "errors": {},
+   "wrong_values": {
+    "[1, \"DEFINE\"]": 1,
+    "T": 1,
+    "[[[\"x\"], \"DEFINE\", \"x\"], [\"c\", [[\"CONS\", [[[1, \"T\"], \"a\"], [": 1,
+    "[\"LAMBDA\", \"a\"]": 1,
+    "[\"LAMBDA\", [\"rhs\", [\"rhs\", \"x\"]], \"c\"]": 1,
+    "[[\"DEFINE\", [\"CONS\", [[\"CAR\"], \"CONS\"]]], [[\"b\", \"F\"], [[\"NI": 1,
+    "x": 1,
+    "[\"LAMBDA\", \"LABEL\"]": 1,
+    "[[\"LAMBDA\", \"lhs\"], [\"a\"]]": 1,
+    "a": 1
+   }
+  },
+  {
+   "D": 2048,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 10,
+   "correct": 0,
+   "runs": 10,
+   "errors": {},
+   "wrong_values": {
+    "LAMBDA": 1,
+    "rhs": 1,
+    "DEFINE": 2,
+    "1": 1,
+    "[[\"x\"], \"c\"]": 1,
+    "x": 1,
+    "CONS": 1,
+    "\u03c6": 1,
+    "a": 1
+   }
+  },
+  {
+   "D": 8192,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 0,
+   "correct": 7,
+   "runs": 10,
+   "errors": {},
+   "wrong_values": {
+    "[\"a\", \"LAMBDA\", [\"NIL\", [\"CONS\", \"a\", [\"b\", \"c\"]]], [[\"b\", \"": 1,
+    "[\"a\", \"b\", \"LAMBDA\", \"a\", \"lhs\"]": 1,
+    "[\"a\", \"b\", \"LAMBDA\", \"x\", [\"b\", \"c\"]]": 1
+   }
+  },
+  {
+   "D": 8192,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 2,
+   "correct": 7,
+   "runs": 10,
+   "errors": {},
+   "wrong_values": {
+    "[\"a\", [\"a\", \"b\", \"c\"]]": 1,
+    "[\"a\", [\"b\", \"c\"]]": 1,
+    "[\"LAMBDA\", \"b\", \"c\"]": 1
+   }
+  },
+  {
+   "D": 8192,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 4,
+   "correct": 8,
+   "runs": 10,
+   "errors": {},
+   "wrong_values": {
+    "[\"a\", \"rhs\"]": 1,
+    "[\"a\", \"LAMBDA\", [[[\"b\", \"c\"]], \"a\"], 1]": 1
+   }
+  },
+  {
+   "D": 8192,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 5,
+   "correct": 0,
+   "runs": 10,
+   "errors": {},
+   "wrong_values": {
+    "T": 1,
+    "LAMBDA": 2,
+    "[1, [\"F\", \"a\"]]": 1,
+    "[\"rhs\", \"T\"]": 1,
+    "[\"NIL\", \"F\"]": 1,
+    "CONS": 1,
+    "NIL": 1,
+    "a": 1,
+    "[\"T\", \"CONS\"]": 1
+   }
+  },
+  {
+   "D": 8192,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 6,
+   "correct": 0,
+   "runs": 10,
+   "errors": {},
+   "wrong_values": {
+    "rhs": 1,
+    "LAMBDA": 2,
+    "lhs": 1,
+    "c": 1,
+    "NIL": 1,
+    "CONS": 1,
+    "1": 1,
+    "a": 1,
+    "\u03c6": 1
+   }
+  },
+  {
+   "D": 8192,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 8,
+   "correct": 0,
+   "runs": 10,
+   "errors": {},
+   "wrong_values": {
+    "rhs": 1,
+    "LAMBDA": 2,
+    "lhs": 1,
+    "c": 1,
+    "NIL": 1,
+    "CONS": 1,
+    "1": 1,
+    "a": 1,
+    "\u03c6": 1
+   }
+  },
+  {
+   "D": 8192,
+   "mode": "theirs (theta=0.2)",
+   "sigma": 10,
+   "correct": 0,
+   "runs": 10,
+   "errors": {},
+   "wrong_values": {
+    "rhs": 1,
+    "LAMBDA": 2,
+    "lhs": 1,
+    "c": 1,
+    "1": 2,
+    "CONS": 1,
+    "a": 1,
+    "\u03c6": 1
+   }
+  },
+  {
+   "D": 8192,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 0,
+   "correct": 7,
+   "runs": 10,
+   "errors": {},
+   "wrong_values": {
+    "[\"a\", \"LAMBDA\", [\"NIL\", [\"CONS\", \"a\", [\"b\", \"c\"]]], [[\"b\", \"": 1,
+    "[\"a\", \"b\", \"LAMBDA\", \"a\", \"lhs\"]": 1,
+    "[\"a\", \"b\", \"LAMBDA\", \"x\", [\"b\", \"c\"]]": 1
+   }
+  },
+  {
+   "D": 8192,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 2,
+   "correct": 7,
+   "runs": 10,
+   "errors": {},
+   "wrong_values": {
+    "[\"a\", [\"a\", \"b\", \"c\"]]": 1,
+    "[\"a\", [\"b\", \"c\"]]": 1,
+    "[\"LAMBDA\", \"b\", \"c\"]": 1
+   }
+  },
+  {
+   "D": 8192,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 4,
+   "correct": 8,
+   "runs": 10,
+   "errors": {},
+   "wrong_values": {
+    "[\"a\", \"rhs\"]": 1,
+    "[\"a\", \"LAMBDA\", [[[\"b\", \"c\"]], \"a\"], 1]": 1
+   }
+  },
+  {
+   "D": 8192,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 5,
+   "correct": 8,
+   "runs": 10,
+   "errors": {},
+   "wrong_values": {
+    "[\"a\", \"c\"]": 1,
+    "[\"a\", \"LAMBDA\", [[[\"b\", \"c\"]], \"a\"], 1]": 1
+   }
+  },
+  {
+   "D": 8192,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 6,
+   "correct": 8,
+   "runs": 10,
+   "errors": {},
+   "wrong_values": {
+    "[\"a\", \"a\", \"b\", \"c\"]": 1,
+    "[\"a\", \"LAMBDA\", \"\\u03c6\", 1]": 1
+   }
+  },
+  {
+   "D": 8192,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 8,
+   "correct": 7,
+   "runs": 10,
+   "errors": {},
+   "wrong_values": {
+    "[\"a\", \"a\", \"b\", \"c\"]": 1,
+    "[\"a\", \"LAMBDA\", \"\\u03c6\", 1]": 1,
+    "[\"a\", [\"b\", \"c\"]]": 1
+   }
+  },
+  {
+   "D": 8192,
+   "mode": "chance floor (theta=5/sqrt(D))",
+   "sigma": 10,
+   "correct": 3,
+   "runs": 10,
+   "errors": {},
+   "wrong_values": {
+    "[\"NIL\", \"a\", \"b\", \"LAMBDA\", \"a\", [[\"CONS\", \"x\", [\"b\", \"c\"]]]": 1,
+    "[\"a\", \"LAMBDA\", \"\\u03c6\", 1]": 1,
+    "[\"a\", [\"b\", \"c\"]]": 1,
+    "[\"b\", \"a\"]": 1,
+    "[[\"a\", [\"b\", \"c\"]], \"b\", \"c\"]": 1,
+    "[\"a\", [\"c\"], \"c\"]": 1,
+    "[\"LAMBDA\", \"lhs\", [\"CONS\", \"a\", [\"b\", \"c\"]]]": 1
+   }
+  }
+ ]
+}

@@ -1,0 +1,397 @@
+{
+ "meta": {
+  "script": "residuelisp_thresholds.py",
+  "upstream": {
+   "repo": "https://github.com/hanleyc01/residuelisp",
+   "commit": "09864c74f1a35680a0008e59d7ab2571269a986f"
+  },
+  "python": "3.14.7",
+  "numpy": "2.5.4",
+  "date": "2026-10-20",
+  "settings": {
+   "program": "((lambda (x) ((lambda (y) (cons x (cons y nil))) n)) m)",
+   "max_steps": 5000,
+   "dims": [
+    500,
+    2000,
+    8000
+   ],
+   "sigmas": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    6,
+    8,
+    12,
+    16,
+    24,
+    32
+   ],
+   "seeds": 10,
+   "noise": "p + sigma*|p|/sqrt(D)*CN(0,I) before every CleanupMemory.recall and AssociativeMemory.deref"
+  }
+ },
+ "rows": [
+  {
+   "D": 500,
+   "sigma": 0,
+   "correct": 10,
+   "runs": 10,
+   "errors": {},
+   "wrong_values": {}
+  },
+  {
+   "D": 500,
+   "sigma": 1,
+   "correct": 10,
+   "runs": 10,
+   "errors": {},
+   "wrong_values": {}
+  },
+  {
+   "D": 500,
+   "sigma": 2,
+   "correct": 7,
+   "runs": 10,
+   "errors": {
+    "InterpreterError: Segmentation fault in car hehe": 3
+   },
+   "wrong_values": {}
+  },
+  {
+   "D": 500,
+   "sigma": 3,
+   "correct": 0,
+   "runs": 10,
+   "errors": {
+    "InterpreterError: Segmentation fault in car hehe": 6,
+    "InterpreterError: Segmentation fault in cdr hehe": 2,
+    "InterpreterError: ERROR: argument number mismatch in `associate`.": 2
+   },
+   "wrong_values": {}
+  },
+  {
+   "D": 500,
+   "sigma": 4,
+   "correct": 0,
+   "runs": 10,
+   "errors": {
+    "InterpreterError: Segmentation fault in car hehe": 7,
+    "InterpreterError: Segmentation fault in cdr hehe": 2,
+    "InterpreterError: ERROR: Tuple is not a list.": 1
+   },
+   "wrong_values": {}
+  },
+  {
+   "D": 500,
+   "sigma": 6,
+   "correct": 0,
+   "runs": 10,
+   "errors": {
+    "InterpreterError: Segmentation fault in cdr hehe": 4,
+    "InterpreterError: Segmentation fault in car hehe": 4,
+    "Exception: TODO": 1,
+    "InterpreterError: ERROR: Expected function in `get_args`.": 1
+   },
+   "wrong_values": {}
+  },
+  {
+   "D": 500,
+   "sigma": 8,
+   "correct": 0,
+   "runs": 10,
+   "errors": {
+    "InterpreterError: ERROR: Tuple is not a list.": 2,
+    "InterpreterError: ERROR: Expected function in `get_args`.": 1,
+    "Exception: TODO": 1,
+    "InterpreterError: Segmentation fault in car hehe": 2,
+    "InterpreterError: Segmentation fault in cdr hehe": 3,
+    "InterpreterError: ERROR: Conditional expression requires `CONSEQUENT` and `ALTERNATE`, see documen": 1
+   },
+   "wrong_values": {}
+  },
+  {
+   "D": 500,
+   "sigma": 12,
+   "correct": 0,
+   "runs": 10,
+   "errors": {
+    "budget": 4,
+    "InterpreterError: ERROR: Expected function in `get_args`.": 2,
+    "InterpreterError: Segmentation fault in car hehe": 2,
+    "InterpreterError: ERROR: Expected function in `get_body`.": 1,
+    "InterpreterError: ERROR: Conditional expression requires `CONSEQUENT` and `ALTERNATE`, see documen": 1
+   },
+   "wrong_values": {}
+  },
+  {
+   "D": 500,
+   "sigma": 16,
+   "correct": 0,
+   "runs": 10,
+   "errors": {
+    "budget": 7,
+    "InterpreterError: ERROR: Expected function in `get_args`.": 1,
+    "Exception: TODO": 1,
+    "InterpreterError: ERROR: Expected function in `get_body`.": 1
+   },
+   "wrong_values": {}
+  },
+  {
+   "D": 500,
+   "sigma": 24,
+   "correct": 0,
+   "runs": 10,
+   "errors": {
+    "InterpreterError: ERROR: Conditional expression requires `CONSEQUENT` and `ALTERNATE`, see documen": 1,
+    "Exception: TODO": 4,
+    "InterpreterError: ERROR: Expected function in `get_body`.": 1,
+    "budget": 3,
+    "InterpreterError: ERROR: Expected function in `get_args`.": 1
+   },
+   "wrong_values": {}
+  },
+  {
+   "D": 500,
+   "sigma": 32,
+   "correct": 0,
+   "runs": 10,
+   "errors": {
+    "Exception: TODO": 3,
+    "RecursionError": 2,
+    "budget": 3,
+    "InterpreterError: ERROR: Tuple is not a list.": 1,
+    "InterpreterError: ERROR: Expected function in `get_args`.": 1
+   },
+   "wrong_values": {}
+  },
+  {
+   "D": 2000,
+   "sigma": 0,
+   "correct": 10,
+   "runs": 10,
+   "errors": {},
+   "wrong_values": {}
+  },
+  {
+   "D": 2000,
+   "sigma": 1,
+   "correct": 10,
+   "runs": 10,
+   "errors": {},
+   "wrong_values": {}
+  },
+  {
+   "D": 2000,
+   "sigma": 2,
+   "correct": 10,
+   "runs": 10,
+   "errors": {},
+   "wrong_values": {}
+  },
+  {
+   "D": 2000,
+   "sigma": 3,
+   "correct": 10,
+   "runs": 10,
+   "errors": {},
+   "wrong_values": {}
+  },
+  {
+   "D": 2000,
+   "sigma": 4,
+   "correct": 8,
+   "runs": 10,
+   "errors": {
+    "InterpreterError: ERROR: argument number mismatch in `associate`.": 1,
+    "InterpreterError: Segmentation fault in car hehe": 1
+   },
+   "wrong_values": {}
+  },
+  {
+   "D": 2000,
+   "sigma": 6,
+   "correct": 0,
+   "runs": 10,
+   "errors": {
+    "InterpreterError: Segmentation fault in car hehe": 3,
+    "InterpreterError: ERROR: argument number mismatch in `associate`.": 5,
+    "InterpreterError: Segmentation fault in cdr hehe": 2
+   },
+   "wrong_values": {}
+  },
+  {
+   "D": 2000,
+   "sigma": 8,
+   "correct": 0,
+   "runs": 10,
+   "errors": {
+    "InterpreterError: Segmentation fault in car hehe": 9,
+    "InterpreterError: Segmentation fault in cdr hehe": 1
+   },
+   "wrong_values": {}
+  },
+  {
+   "D": 2000,
+   "sigma": 12,
+   "correct": 0,
+   "runs": 10,
+   "errors": {
+    "InterpreterError: ERROR: Tuple is not a list.": 3,
+    "InterpreterError: Segmentation fault in cdr hehe": 3,
+    "InterpreterError: Segmentation fault in car hehe": 2,
+    "InterpreterError: ERROR: Expected function in `get_args`.": 1,
+    "Exception: TODO": 1
+   },
+   "wrong_values": {}
+  },
+  {
+   "D": 2000,
+   "sigma": 16,
+   "correct": 0,
+   "runs": 10,
+   "errors": {
+    "InterpreterError: ERROR: Expected function in `get_args`.": 3,
+    "InterpreterError: ERROR: Tuple is not a list.": 2,
+    "InterpreterError: Segmentation fault in cdr hehe": 2,
+    "Exception: TODO": 3
+   },
+   "wrong_values": {}
+  },
+  {
+   "D": 2000,
+   "sigma": 24,
+   "correct": 0,
+   "runs": 10,
+   "errors": {
+    "InterpreterError: ERROR: Expected function in `get_body`.": 2,
+    "budget": 6,
+    "InterpreterError: Segmentation fault in car hehe": 1,
+    "InterpreterError: ERROR: Expected function in `get_args`.": 1
+   },
+   "wrong_values": {}
+  },
+  {
+   "D": 2000,
+   "sigma": 32,
+   "correct": 0,
+   "runs": 10,
+   "errors": {
+    "InterpreterError: ERROR: Expected function in `get_args`.": 1,
+    "InterpreterError: Segmentation fault in car hehe": 1,
+    "InterpreterError: ERROR: Expected function in `get_body`.": 2,
+    "budget": 6
+   },
+   "wrong_values": {}
+  },
+  {
+   "D": 8000,
+   "sigma": 0,
+   "correct": 10,
+   "runs": 10,
+   "errors": {},
+   "wrong_values": {}
+  },
+  {
+   "D": 8000,
+   "sigma": 1,
+   "correct": 10,
+   "runs": 10,
+   "errors": {},
+   "wrong_values": {}
+  },
+  {
+   "D": 8000,
+   "sigma": 2,
+   "correct": 10,
+   "runs": 10,
+   "errors": {},
+   "wrong_values": {}
+  },
+  {
+   "D": 8000,
+   "sigma": 3,
+   "correct": 10,
+   "runs": 10,
+   "errors": {},
+   "wrong_values": {}
+  },
+  {
+   "D": 8000,
+   "sigma": 4,
+   "correct": 10,
+   "runs": 10,
+   "errors": {},
+   "wrong_values": {}
+  },
+  {
+   "D": 8000,
+   "sigma": 6,
+   "correct": 10,
+   "runs": 10,
+   "errors": {},
+   "wrong_values": {}
+  },
+  {
+   "D": 8000,
+   "sigma": 8,
+   "correct": 9,
+   "runs": 10,
+   "errors": {
+    "InterpreterError: Segmentation fault in car hehe": 1
+   },
+   "wrong_values": {}
+  },
+  {
+   "D": 8000,
+   "sigma": 12,
+   "correct": 1,
+   "runs": 10,
+   "errors": {
+    "InterpreterError: Segmentation fault in car hehe": 6,
+    "InterpreterError: ERROR: argument number mismatch in `associate`.": 2,
+    "InterpreterError: Segmentation fault in cdr hehe": 1
+   },
+   "wrong_values": {}
+  },
+  {
+   "D": 8000,
+   "sigma": 16,
+   "correct": 0,
+   "runs": 10,
+   "errors": {
+    "InterpreterError: Segmentation fault in car hehe": 7,
+    "InterpreterError: ERROR: argument number mismatch in `associate`.": 1,
+    "InterpreterError: Segmentation fault in cdr hehe": 2
+   },
+   "wrong_values": {}
+  },
+  {
+   "D": 8000,
+   "sigma": 24,
+   "correct": 0,
+   "runs": 10,
+   "errors": {
+    "InterpreterError: Segmentation fault in cdr hehe": 4,
+    "InterpreterError: Segmentation fault in car hehe": 6
+   },
+   "wrong_values": {}
+  },
+  {
+   "D": 8000,
+   "sigma": 32,
+   "correct": 0,
+   "runs": 10,
+   "errors": {
+    "InterpreterError: Segmentation fault in cdr hehe": 2,
+    "InterpreterError: Segmentation fault in car hehe": 3,
+    "budget": 2,
+    "InterpreterError: ERROR: Tuple is not a list.": 2,
+    "InterpreterError: ERROR: Expected function in `get_args`.": 1
+   },
+   "wrong_values": {}
+  }
+ ]
+}
