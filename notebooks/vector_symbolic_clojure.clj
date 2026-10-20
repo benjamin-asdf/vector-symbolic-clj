@@ -687,29 +687,183 @@
 ;; - Records hold about D/64 entries, vectors about D/48; superpositions
 ;;   about D/100 worlds.
 
-;; ## References
+;; ## What is new here
 ;;
-;; - Tomkins-Flanagan, E., & Kelly, M. A. (2024). Hey Pentti, we did it!: A
-;;   fully vector-symbolic Lisp. MathPsych/ICCM 2024. arXiv:2510.17889.
-;; - Hanley, C., Tomkins-Flanagan, E., & Kelly, M. A. (2025). Hey Pentti,
-;;   we did (more of) it!: A vector-symbolic Lisp with residue arithmetic.
-;;   IJCNN 2025. arXiv:2511.08767.
-;; - Kymn, C. J., et al. (2025). Computing with residue numbers in
-;;   high-dimensional representation. *Neural Computation*, 37(1).
-;; - Meier, C. (2023). Vector symbolic architectures in Clojure.
-;;   Clojure/Conj 2023. https://github.com/gigasquid/vsa-clj
-;; - Dewulf, P., De Baets, B., & Stock, M. (2023). The hyperdimensional
-;;   transform for distributional modelling, regression and classification.
-;;   arXiv:2311.08150.
-;; - Furlong, P. M., & Eliasmith, C. (2024). Modelling neural probabilistic
-;;   computation using vector symbolic architectures. *Cognitive
-;;   Neurodynamics*, 18(6).
-;; - Hussmann, H. (1993). *Nondeterminism in Algebraic Specifications and
-;;   Algebraic Programs*. Birkhäuser.
-;; - Plate, T. A. (1995). Holographic reduced representations. *IEEE
-;;   Transactions on Neural Networks*, 6(3), 623–641.
-;; - Ramsauer, H., et al. (2021). Hopfield networks is all you need. ICLR
-;;   2021.
+;; To our knowledge, these are new:
+;;
+;; - **Clojure's data types as single vectors.** Earlier vector-symbolic
+;;   Lisps encode the cons cells of Lisp 1.5, and integers. Here maps
+;;   (with directed entries k⊗Π(v)), sets, positional vectors, closures
+;;   and environments are each one vector too, and integers inside
+;;   collections are boxed against chimeras.
+;; - **A catalogue of what breaks.** Seven traps that the algebra hides,
+;;   each measured and fixed. One rule covers several of them: decide by
+;;   the best match or relative to chance, never by a fixed cutoff, and
+;;   robustness grows with √D.
+;; - **Measurements for a whole language**: noise, capacity and damage,
+;;   with the split between robust stored data and fragile computation.
+;; - **Why a Hopfield cleanup cannot help with exact recall**: an argument
+;;   that holds before any experiment, and the experiments.
+;; - **An evaluator in vector memory.** Rules held in vector memory are not
+;;   new: production systems in HRR (Stewart & Eliasmith, 2008) and a
+;;   Turing machine with its transition table in an item memory (Kleyko et
+;;   al., 2022) do it. New is a complete language evaluator run this way: a
+;;   CEK machine whose 35 rules are picked by nearest key, where sums of
+;;   features make the most specific rule win, with tail calls.
+;; - **Superposition programming as a language feature.** Weighted
+;;   superpositions are ordinary values. Destructors, lookup, arithmetic and
+;;   function bodies act on all worlds at once, `if` splits them, and
+;;   run-time versus call-time choice is explicit. The
+;;   semantics has precedents (Lineal; probabilistic functional
+;;   programming), and so does probability in vectors (Furlong & Eliasmith;
+;;   Hersche et al.). We know of no language that puts them together on a
+;;   vector substrate, with a memory that keeps the worlds.
+;;
+;; ## Related work
+;;
+;; Most relevant first.
+;;
+;; 1. Tomkins-Flanagan, E., & Kelly, M. A. (2024). Hey Pentti, we did it!:
+;;    A fully vector-symbolic Lisp. MathPsych/ICCM 2024.
+;;    [arXiv:2510.17889](https://arxiv.org/abs/2510.17889),
+;;    [code](https://github.com/eilene-ftf/holis). Lisp 1.5's elementary
+;;    functions and lambda in HRR, with a lookup-table cleanup. The
+;;    starting point of this work.
+;; 2. Hanley, C., Tomkins-Flanagan, E., & Kelly, M. A. (2025). Hey Pentti,
+;;    we did (more of) it!: A vector-symbolic Lisp with residue arithmetic.
+;;    IJCNN 2025. [arXiv:2511.08767](https://arxiv.org/abs/2511.08767).
+;;    Adds integers in a residue number system, the encoding whose
+;;    chimeras trap 3 describes.
+;; 3. Kleyko, D., et al. (2022). Vector symbolic architectures as a
+;;    computing framework for emerging hardware. *Proceedings of the IEEE*
+;;    110(10). [doi:10.1109/JPROC.2022.3209104](https://doi.org/10.1109/JPROC.2022.3209104).
+;;    Names "computing in superposition", and runs a Turing machine whose
+;;    transition table is an item memory: the closest precedent for rules
+;;    in vector memory.
+;; 4. Stewart, T. C., & Eliasmith, C. (2008). Building production systems
+;;    with realistic spiking neurons. CogSci 2008.
+;;    [pdf](https://compneuro.uwaterloo.ca/files/Stewart.ProductionSystemsNeurons.pdf).
+;;    IF–THEN rules as HRR associations, chosen by an action selector over
+;;    an HRR state, like the CEK machine's rule memory.
+;; 5. Arrighi, P., & Dowek, G. (2017). Lineal: A linear-algebraic
+;;    λ-calculus. *Logical Methods in Computer Science* 13(1).
+;;    [doi:10.23638/LMCS-13(1:8)2017](https://doi.org/10.23638/LMCS-13(1:8)2017).
+;;    Terms can be linear combinations α·t + β·u, and application
+;;    distributes over sums: the formal model of lifting functions over
+;;    superposed values.
+;; 6. Erwig, M., & Kollmansberger, S. (2006). Probabilistic functional
+;;    programming in Haskell. *Journal of Functional Programming* 16(1).
+;;    [doi:10.1017/S0956796805005721](https://doi.org/10.1017/S0956796805005721).
+;;    Values as weighted lists of outcomes, functions mapped over them:
+;;    the same semantics with explicit lists instead of one vector.
+;; 7. Kiselyov, O., & Shan, C.-c. (2009). Embedded probabilistic
+;;    programming. DSL 2009, LNCS 5658.
+;;    [doi:10.1007/978-3-642-03034-5_17](https://doi.org/10.1007/978-3-642-03034-5_17).
+;;    Hansei: weighted worlds by lazy exact enumeration and importance
+;;    sampling, inside OCaml.
+;; 8. Hersche, M., Zeqiri, M., Benini, L., Sebastian, A., & Rahimi, A.
+;;    (2023). A neuro-vector-symbolic architecture for solving Raven's
+;;    progressive matrices. *Nature Machine Intelligence* 5(4).
+;;    [doi:10.1038/s42256-023-00630-8](https://doi.org/10.1038/s42256-023-00630-8).
+;;    Distributions over attribute values as VSA vectors, with rules
+;;    applied to the whole distribution at once.
+;; 9. Furlong, P. M., & Eliasmith, C. (2022). Fractional binding in vector
+;;    symbolic architectures as quasi-probability statements. CogSci 2022.
+;;    [escholarship](https://escholarship.org/uc/item/33j7c63v). And (2024)
+;;    Modelling neural probabilistic computation using vector symbolic
+;;    architectures. *Cognitive Neurodynamics* 18(6).
+;;    [doi:10.1007/s11571-023-10031-7](https://doi.org/10.1007/s11571-023-10031-7).
+;;    Distributions as vectors, inference by vector operations.
+;; 10. Dewulf, P., De Baets, B., & Stock, M. (2023). The hyperdimensional
+;;     transform for distributional modelling, regression and
+;;     classification. [arXiv:2311.08150](https://arxiv.org/abs/2311.08150).
+;;     Distributions and Bayesian inference with hypervectors.
+;; 11. Vaux, L. (2009). The algebraic lambda calculus. *Mathematical
+;;     Structures in Computer Science* 19(5).
+;;     [doi:10.1017/S0960129509990089](https://doi.org/10.1017/S0960129509990089).
+;;     Lambda terms with weighted sums over a semiring.
+;; 12. Ramsey, N., & Pfeffer, A. (2002). Stochastic lambda calculus and
+;;     monads of probability distributions. POPL 2002.
+;;     [doi:10.1145/503272.503288](https://doi.org/10.1145/503272.503288).
+;;     Semantics for a language whose values are distributions.
+;; 13. Hussmann, H. (1993). *Nondeterminism in Algebraic Specifications and
+;;     Algebraic Programs*. Birkhäuser.
+;;     [doi:10.1007/978-1-4684-6834-2](https://doi.org/10.1007/978-1-4684-6834-2).
+;;     Distinguishes call-time from run-time choice.
+;; 14. McCarthy, J. (1963). A basis for a mathematical theory of
+;;     computation. In *Computer Programming and Formal Systems*.
+;;     [doi:10.1016/S0049-237X(08)72018-4](https://doi.org/10.1016/S0049-237X(08)72018-4).
+;;     The ambiguous operator `amb`.
+;; 15. Tomkins-Flanagan, E., Hanley, C., & Kelly, M. A. (2025). Hey Pentti,
+;;     we did it again!: Differentiable vector-symbolic types that prove
+;;     polynomial termination. MathPsych/ICCM 2025.
+;;     [arXiv:2510.16533](https://arxiv.org/abs/2510.16533). Doug, a typed
+;;     vector-symbolic language whose types guarantee polynomial-time
+;;     termination.
+;; 16. Kanerva, P. (2014). Computing with 10,000-bit words. Allerton 2014.
+;;     [doi:10.1109/ALLERTON.2014.7028470](https://doi.org/10.1109/ALLERTON.2014.7028470).
+;;     Discusses how a Lisp could be built from hypervector operations.
+;; 17. Meier, C. (2023). Vector symbolic architectures in Clojure.
+;;     Clojure/Conj 2023. [vsa-clj](https://github.com/gigasquid/vsa-clj).
+;;     VSA computing experiments in Clojure.
+;; 18. Eliasmith, C., et al. (2012). A large-scale model of the functioning
+;;     brain. *Science* 338(6111).
+;;     [doi:10.1126/science.1225266](https://doi.org/10.1126/science.1225266).
+;;     Spaun: action rules over semantic-pointer (HRR) states at scale.
+;; 19. Cotteret, M., Greatorex, H., Ziegler, M., & Chicca, E. (2024).
+;;     Vector symbolic finite state machines in attractor neural networks.
+;;     *Neural Computation* 36(4).
+;;     [doi:10.1162/neco_a_01638](https://doi.org/10.1162/neco_a_01638).
+;;     Finite-state machines run as attractor dynamics over VSA states.
+;; 20. Yerxa, T., Anderson, A. G., & Weiss, E. (2018). The hyperdimensional
+;;     stack machine. Cognitive Computing 2018.
+;;     [pdf](https://redwood.berkeley.edu/wp-content/uploads/2021/08/Yerxa_HSM.pdf).
+;;     A stack machine from hypervector operations.
+;; 21. Osipov, E., Kleyko, D., & Legalov, A. (2017). Associative synthesis
+;;     of finite state automata model of a controlled object with
+;;     hyperdimensional computing. IECON 2017.
+;;     [doi:10.1109/IECON.2017.8216554](https://doi.org/10.1109/IECON.2017.8216554).
+;;     Finite-state automata in hypervectors.
+;; 22. Frady, E. P., Kent, S. J., Olshausen, B. A., & Sommer, F. T. (2020).
+;;     Resonator networks, 1. *Neural Computation* 32(12).
+;;     [doi:10.1162/neco_a_01331](https://doi.org/10.1162/neco_a_01331).
+;;     Factoring bound and superposed vectors; what exponentially many
+;;     worlds would need.
+;; 23. Kymn, C. J., et al. (2025). Computing with residue numbers in
+;;     high-dimensional representation. *Neural Computation* 37(1).
+;;     [doi:10.1162/neco_a_01723](https://doi.org/10.1162/neco_a_01723).
+;;     The residue integer encoding used here.
+;; 24. Ramsauer, H., et al. (2021). Hopfield networks is all you need. ICLR
+;;     2021. [arXiv:2008.02217](https://arxiv.org/abs/2008.02217). Modern
+;;     Hopfield networks, whose update is attention.
+;; 25. Millidge, B., Salvatori, T., Song, Y., Lukasiewicz, T., & Bogacz, R.
+;;     (2022). Universal Hopfield networks. ICML 2022.
+;;     [PMLR 162](https://proceedings.mlr.press/v162/millidge22a.html).
+;;     Associative memories as similarity, separation and projection.
+;; 26. Stewart, T. C., Tang, Y., & Eliasmith, C. (2011). A biologically
+;;     realistic cleanup memory: Autoassociation in spiking neurons.
+;;     *Cognitive Systems Research* 12(2).
+;;     [doi:10.1016/j.cogsys.2010.06.006](https://doi.org/10.1016/j.cogsys.2010.06.006).
+;;     Cleanup memory built with the Neural Engineering Framework.
+;; 27. Plate, T. A. (1995). Holographic reduced representations. *IEEE
+;;     Transactions on Neural Networks* 6(3).
+;;     [doi:10.1109/72.377968](https://doi.org/10.1109/72.377968). HRR,
+;;     the algebra used here.
+;; 28. Smolensky, P. (1990). Tensor product variable binding and the
+;;     representation of symbolic structures in connectionist systems.
+;;     *Artificial Intelligence* 46.
+;;     [doi:10.1016/0004-3702(90)90007-M](https://doi.org/10.1016/0004-3702(90)90007-M).
+;;     The foundational scheme for structure in vectors.
+;; 29. Selinger, P. (2004). Towards a quantum programming language.
+;;     *Mathematical Structures in Computer Science* 14(4).
+;;     [doi:10.1017/S0960129504004256](https://doi.org/10.1017/S0960129504004256).
+;;     Quantum data with classical control; its types forbid copying,
+;;     which weighted worlds allow.
+;; 30. Bichsel, B., Baader, M., Gehr, T., & Vechev, M. (2020). Silq: A
+;;     high-level quantum language with safe uncomputation and intuitive
+;;     semantics. PLDI 2020.
+;;     [doi:10.1145/3385412.3386007](https://doi.org/10.1145/3385412.3386007).
+;;     A high-level quantum language with automatic uncomputation.
 ;;
 ;; -----
 ;;
