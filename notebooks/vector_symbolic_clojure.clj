@@ -30,6 +30,38 @@
 ;; then run until it broke. Every result below is computed live when the
 ;; page renders.
 ;;
+;; **What we learned.** Each point is measured below.
+;;
+;; 1. **Similar is confusable.** A cleanup's margin is 1 minus the
+;;    similarity to the nearest wrong item. Built as bundles of their parts,
+;;    the cells of a recursion are 89% alike, and reads fail. Give every
+;;    structure its own random pointer, shared by equal contents: reads then
+;;    survive 2.8× more noise. Keep similarity only where you want it, as in
+;;    vectors.
+;; 2. **Never decide with a fixed threshold.** A cutoff like "cosine above
+;;    0.5" fails at noise σ ≈ 1.7 in *every* dimension, while the cleanup
+;;    underneath survives σ ≈ 17. Decide by the best match, or relative to
+;;    chance (1/√D), and robustness grows with √D.
+;; 3. **Convolution commutes, so key–value pairs need direction.** Store an
+;;    entry as k⊗Π(v), with Π a fixed random permutation, as one operation.
+;;    A cyclic shift does not work, since it commutes with convolution too.
+;; 4. **Residue-number integers blend into fake ones.** A superposition of
+;;    11 and 12 matches 62 other integers exactly as well as its members.
+;;    Inside sets and maps, keep integers behind pointers.
+;; 5. **Stored data is robust, computation is fragile.** Lists still read
+;;    back with 60–80% of the dimensions dead; `(fact 4)` breaks at about
+;;    4%, because every bind passes the damage on until the next cleanup.
+;; 6. **A Hopfield network cannot beat a lookup table at exact recall.**
+;;    For a probe that is one stored item plus noise, picking the best match
+;;    is already optimal. Measured: it ties at best and loses on look-alikes.
+;; 7. **Programs can compute on superpositions.** A value can be a weighted
+;;    mix of values, and destructors, arithmetic and `if` act on all of them
+;;    at once. This needs a memory that keeps several matches instead of
+;;    one; it holds about D/100 worlds. It makes no program faster.
+;; 8. **An interpreter can live in vector memory.** A CEK machine whose 35
+;;    rules are vectors, picked by similarity, runs these programs from a
+;;    host loop of under 50 lines that knows no Lisp.
+;;
 ;; **Why care.** Brains, and the neuromorphic chips modelled on them, do not
 ;; store bits in addresses. They store patterns spread over many noisy
 ;; units. Vector-symbolic architectures are a mathematical model of how
@@ -38,15 +70,6 @@
 ;; *program* on that kind of substrate, and what goes wrong when you try?
 ;; It also puts data and code in one format, and it allows a new way of
 ;; programming, on superpositions of values.
-;;
-;; **Three findings.**
-;;
-;; - It works, once the design avoids seven traps that the algebra hides
-;;   (below).
-;; - Stored data survives heavy damage. Computation is far more fragile.
-;; - A value can be a weighted mix of several values, and the program
-;;   computes on all of them at once. Getting this to work needed a new kind
-;;   of memory.
 ;;
 ;; How the interpreter is built, step by step, with all the code:
 ;; [Building a Vector-Symbolic Interpreter](building/).
