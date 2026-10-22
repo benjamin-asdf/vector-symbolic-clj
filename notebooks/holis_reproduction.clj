@@ -24,7 +24,7 @@
 ;; noise the way my paper does, and count. The trap numbers 1–5 are those
 ;; of the overview.
 ;;
-;; Their papers are proofs of concept, and their READMEs say so. Nothing
+;; Their papers are proofs of concept, and holis's README says so. Nothing
 ;; below changes that. A proof of concept is where the next person starts,
 ;; and this page lists what that next person (me) ran into.
 ;;
@@ -72,10 +72,13 @@
 
 ^:kindly/hide-code
 (defn fmt [x]
-  (cond (nil? x) "–"
-        (float? x) (format "%.3f" (double x))
-        (map? x) (str/join ", " (for [[k v] x] (str k " ×" v)))
-        :else (str x)))
+  (-> (cond (nil? x) "–"
+            (float? x) (format "%.3f" (double x))
+            (map? x) (str/join ", " (for [[k v] x] (str k " ×" v)))
+            :else (str x))
+      ;; table cells go into the HTML as is
+      (str/replace "<" "&lt;")
+      (str/replace ">" "&gt;")))
 
 ^:kindly/hide-code
 (defn mean [xs] (/ (reduce + xs) (count xs)))
@@ -122,8 +125,11 @@
 ;;
 ;; - Cells sit behind pointers, as in holis.
 ;; - Function calls bind parameters in a small memory keyed by symbol.
-;; - Integers are Kymn et al.'s residue code over the moduli 3, 5, 7, 11
-;;   (range 0..1154), plus a tag: int(x) = ζ(x) + int.
+;; - Integers have two schemes. The default, `ListIntegers`, is Peano
+;;   lists as in holis. `IntegerEncodingScheme.RHCIntegers`, which
+;;   `main.py -i`, the `test_rhc_*` tests and all my runs use, is Kymn et
+;;   al.'s residue code over the moduli 3, 5, 7, 11 (range 0..1154), plus
+;;   a tag: int(x) = ζ(x) + int. R1 and R4 need `RHCIntegers`.
 ;; - It keeps holis's numbers: θ = 0.2 in the pointer memory and a 0.2
 ;;   floor in its approximate equality. Its similarity is not normalised,
 ;;   though.
@@ -394,7 +400,9 @@
          [d (str/join ", " (for [[k v] (sort-by (comp - val) m)] (str k " ×" v)))]))
 
 ;; **E2, E3 (holis).** CAR does not evaluate its argument (nor does CDR;
-;; CONS does not either, but their evaluator hides that, see the errata),
+;; CONS does not either, but their evaluator re-evaluates the new cell,
+;; which hides that for plain arguments and loops on quoted ones; see the
+;; errata),
 ;; and LABEL is
 ;; dispatched but raises. Their paper says it leaves LABEL out, so E3 is a
 ;; leftover, not a broken claim:
@@ -404,7 +412,7 @@
        (for [r (get he "other")]
          [(kind/code (get r "program")) (get r "D") (fmt (get r "results"))]))
 
-;; **E4 (holis). The item memory grows quadratically.**
+;; **E4 (holis). The item memory adds 100 rows per item past 100.**
 ;; `SimpleCleanUp.memorize` appends 100 empty rows once it is full, but
 ;; it never raises its capacity. So past 100 items, every new item appends
 ;; another 100 rows. An empty row scores 0, so it can win a lookup only
@@ -552,7 +560,7 @@
                         (= "(CAR (CDR (a b c)))" (get % "program")))
                   (get hf "e2"))
       e3 (by (get he "other") "note" "LABEL")
-      e3f (hv "e3" "E3 removed" "(LABEL f (LAMBDA (x) x))")
+      e3f (hv "e3" "E3 as DEFINE" "(LABEL f (LAMBDA (x) x))")
       lk (fn [mode] (first (filter #(and (= 8192 (get % "D")) (= 5.5 (get % "sigma"))
                                          (= mode (get % "mode")))
                                    (get ht "lookup"))))
@@ -571,8 +579,9 @@
            (str "varies, e.g. " (get e1x "result") " (D = 2048, seed " (get e1x "seed") ")")
            (str/join ", " (for [r e1] (str (get r "wrong") " / " (get r "runs")
                                            " at D = " (get r "D"))))
-           (str/join ", " (for [r e1f] (str (get r "wrong") " / " (get r "runs")
-                                            " at D = " (get r "D"))))]
+           (str (str/join ", " (for [r e1f] (str (get r "wrong") " / " (get r "runs")
+                                                 " at D = " (get r "D"))))
+                " on this program; breaks every DEFINE, not recommended")]
           (row "R4" "residuelisp" (rp "(+ 150 100 )") (fx "R4" "(+ 150 100 )"))
           ["R5" "residuelisp" (kind/code (get r5 "source")) (get r5ok "result_seed0")
            (str (get r5 "result_seed0")) "seed 0 (lexer, no randomness)"
@@ -591,10 +600,9 @@
           ["E4" "holis" "store 800 items in SimpleCleanUp" "about 800 rows"
            (str (get g800 "matrix rows") " rows, " (get g800 "MB at D=512") " MB at D = 512") "–"
            (str (get g800f "matrix rows") " rows")]
-          ["E3" "holis" (kind/code (get e3 "program")) "an error that names LABEL, or no LABEL"
+          ["E3" "holis" (kind/code (get e3 "program")) "the lambda"
            (fmt (get e3 "results")) (str (get e3 "runs") " / " (get e3 "runs"))
-           (str (reduce + (for [[k n] (get e3f "results") :when (str/includes? k "Error")] n))
-                " / " (get e3f "runs") " (LABEL removed)")]]))
+           (str (wrong-of e3f) " (LABEL as DEFINE)")]]))
 
 ;; With each fix applied, the control programs from the start of the page
 ;; still give the right answers. holis, 10 programs at D = 512 and 2048,
@@ -641,7 +649,8 @@
 ;; - *Where.* `src/language/interpreter.py`, `equals`, lines 320–362; the
 ;;   atom comparison is line 331. The tag is added in
 ;;   `src/language/encoding.py`, `encode_rhc_integer`, lines 322–348.
-;; - *Symptom.* `(eq? 3 5 )` and `(eq? 3 1000 )` give `#t` (table above).
+;; - *Symptom.* With `RHCIntegers`, `(eq? 3 5 )` and `(eq? 3 1000 )` give
+;;   `#t` (table above).
 ;;   The trap 4 table shows the same for their test pattern: the result of
 ;;   `(+ 5 5)` "equals" 10, 7, 0 and 999. So `test_rhc_add` and
 ;;   `test_rhc_sub` in `src/tests/test_interpret.py` (lines 302–335) pass
@@ -651,12 +660,12 @@
 ;; - *Fix.* Compare integers without their tag, as `rhc_add` already
 ;;   does. Normalising the similarity is not enough: the cosine of 3 and
 ;;   5 is still about 0.5 (trap 4 table). In the "both atomic" branch of
-;;   `equals`, before line 331:
+;;   `equals`, before its `return (` on line 329:
 ;;
 ;; ```python
-;; tag = enc_env.codebook["__int"]
-;; if is_true(check_int(lhs, enc_env), enc_env) and is_true(check_int(rhs, enc_env), enc_env):
-;;     lhs, rhs = lhs - tag, rhs - tag
+;;         tag = enc_env.codebook["__int"]
+;;         if is_true(check_int(lhs, enc_env), enc_env) and is_true(check_int(rhs, enc_env), enc_env):
+;;             lhs, rhs = lhs - tag, rhs - tag
 ;; ```
 ;;
 ;;   In the tests, compare the decoded value instead. Then a wrong sum
@@ -743,17 +752,22 @@
 ;; **E1 (holis). CAR of an atom returns a random item.**
 ;;
 ;; - *Where.* Code cell 2 ("Lisp environment definitions"), `vsa_env`,
-;;   the inner `car`. `ev` calls it on atoms in two tests: "is head a
-;;   lambda expression?" (`car(head)`) and "is head a defined function?"
-;;   (`car(echo)`).
+;;   the inner `car`. It is called on non-pointers in three places: `ev`'s
+;;   "is head a lambda expression?" (`car(head)`, where `head` can be an
+;;   atom), `ev`'s "is head a defined function?" (`car(echo)`, where
+;;   `echo` is a cell bundle from the function memory), and
+;;   `ev_until_done`'s `head = car(e)` on every result.
 ;; - *Symptom.* `((LAMBDA (x) (CONS x (b c))) a)` gives a wrong list in
 ;;   some seeds (table above, and the E1 tables under "Further errata").
 ;; - *Cause.* For a probe that matches no pointer, `SimpleAssoc.recall`
 ;;   returns the probe itself, so `car` unbinds `lhs` from an atom and
 ;;   cleans up noise, which lands on an arbitrary stored item.
-;; - *Fix.* Let `car` answer NIL for anything that is not a stored
-;;   pointer. residuelisp's `car` raises in this case (line 226), which
-;;   is also fine.
+;; - *Tried, not recommended.* A guard that answers NIL for anything
+;;   that is not a stored pointer fixes the LAMBDA program but breaks
+;;   every DEFINE'd function (see *Status*); do not apply it as is.
+;;   Raising instead, as residuelisp's `car` does (line 226), would be
+;;   worse here: `ev_until_done` calls `car` on every result, so every
+;;   program with an atom as its value, DEFINE included, would raise.
 ;;
 ;; ```python
 ;; def car(c, ind=''):
@@ -761,7 +775,7 @@
 ;;     return mem.recall(assoc.recall(c) * ~env["lhs"])
 ;; ```
 ;;
-;; - *Status.* **Tested, and incomplete.** On the LAMBDA program, wrong
+;; - *Status.* **Tested; breaks DEFINE.** On the LAMBDA program, wrong
 ;;   results go to 0 of 100 at D = 512 and 2048 (E1 table), and the
 ;;   control programs all pass (regression table above). But it breaks
 ;;   every DEFINE'd function (the fizzbuzz table above, column `E1 + E4`):
@@ -923,7 +937,12 @@
 ;;   above leaves `quote` alone. Unquoted literal lists such as `(a b c)`
 ;;   keep working, because their evaluator returns a list with an unknown
 ;;   head unchanged. CONS evaluates by accident in their code: the loop
-;;   in `ev_until_done` evaluates the new cell again. Over 5 seeds:
+;;   in `ev_until_done` evaluates the new cell again. With quoted
+;;   arguments that loop never ends: their QUOTE returns `(QUOTE (x))`,
+;;   and each pass wraps it once more, so `(CONS (QUOTE a) (QUOTE (b c)))`
+;;   runs until my harness stops it ("budget": more than 300 cons cells
+;;   for one program). The two `E2` lines alone keep the loop; both QUOTE
+;;   variants end it. Over 5 seeds:
 
 ^:kindly/hide-code
 (before-after (get hf "e2") "variant"
@@ -932,14 +951,22 @@
 ;;   Here `E2` is the two lines alone (and CONS), and `E2 + unwrap QUOTE`
 ;;   is the fix shown. The control programs keep their counts with it
 ;;   (regression table above). Their fizzbuzz helpers do not all survive
-;;   it (the fizzbuzz table above, column `E2 + unwrap QUOTE + E4`): in
-;;   one of the 5 seeds, every call after the first runs into unbounded
-;;   recursion. Raising Python's recursion limit to 200 000 did not let it
-;;   finish within 15 minutes (a side run, not in the JSON files). I
-;;   suspect E1: evaluating
-;;   CAR's argument runs `ev` on more atoms, and `ev` takes CAR of an
-;;   atom. I did not confirm this, and with no working E1 fix (above) I
-;;   could not test the pair.
+;;   it (the fizzbuzz table above, column `E2 + unwrap QUOTE + E4`). In
+;;   seed 0, `divisible 3 3` runs into unbounded recursion when it
+;;   follows `countdown`, and every later call in the same environment
+;;   then fails as well, even `(and T F)`: the failed call leaves new
+;;   pointers in `SimpleAssoc`, and restoring only that memory makes
+;;   `(and T F)` pass again (restoring the item memory does not). Raising Python's recursion limit to 200 000
+;;   did not let it finish within 15 minutes. Which call fails first
+;;   depends on what ran before it: `divisible 3 3` passes on its own and
+;;   after `(and T F)` but fails after `countdown` or `take`, and
+;;   reseeding numpy's random generator after `countdown` makes it pass.
+;;   Every cons draws a fresh vector from that generator, so each call
+;;   changes the vectors the next one gets. With E4 alone, the same order
+;;   passes. (These orderings are side runs, not in the JSON files.) I
+;;   suspect E1 sets off the first failure: their internal `car` runs on
+;;   every call, and with E2 more atoms reach it. I did not confirm this,
+;;   and with no working E1 fix (above) I could not test the pair.
 ;;
 ;; ### Robustness under noise
 ;;
@@ -968,7 +995,7 @@
 ;;
 ;; ### Memory and leftovers
 ;;
-;; **E4 (holis). The item memory grows quadratically.**
+;; **E4 (holis). The item memory adds 100 rows per item past 100.**
 ;;
 ;; - *Where.* Code cell 2, `SimpleCleanUp.memorize`.
 ;; - *Symptom.* 800 stored items take 70 100 rows (table above, and the
@@ -1016,8 +1043,7 @@
 ;; - *Cause.* `ev` calls every basic function with `ind=`, and `label`
 ;;   has no such parameter. Inside, `mem.memorize(lbl, exp)` passes two
 ;;   arguments to a one-argument method, so it would fail next.
-;; - *Fix.* Remove `'LABEL'` from `basic_fs` and from `env.update`. To
-;;   keep it, let it enter the name the way DEFINE does, and return the
+;; - *Fix.* Let LABEL enter the name the way DEFINE does, and return the
 ;;   lambda:
 ;;
 ;; ```python
@@ -1026,19 +1052,26 @@
 ;;     return car(cdr(lbl_exp))
 ;; ```
 ;;
-;;   Unlike Lisp 1.5, the name is then global.
+;;   Unlike Lisp 1.5, the name is then global. Removing `'LABEL'` from
+;;   `basic_fs` and `env.update`, as the paper leaves it out, also stops
+;;   the error, but LABEL is then never applied and the form comes back
+;;   as a wrong list: their evaluator keeps the unknown head `LABEL` and
+;;   splices the evaluated lambda in, giving `(LABEL f LAMBDA (x) x)` in
+;;   4 of 5 seeds.
 ;; - *Status.* **Tested.** I first suggested keeping their `label` with an
 ;;   `ind=''` parameter and `mem.memorize(lbl)`. That stops the error, but
 ;;   recursion still fails: their helper `ll` replaces the label only at
-;;   the top level of the body, never inside it. Removing LABEL turns the
-;;   form into plain data. D = 512, 5 seeds:
+;;   the top level of the body, never inside it. With LABEL removed, it is
+;;   never applied and the form comes back as a wrong list. D = 512,
+;;   5 seeds:
 
 ^:kindly/hide-code
 (before-after (get hf "e3") "variant" ["theirs" "E3 removed" "E3 kept" "E3 as DEFINE"])
 
 ;;   `E3 kept` is the first suggestion, `E3 as DEFINE` the version above.
 ;;   Every variant keeps the control programs' counts (regression table
-;;   above).
+;;   above). The combined run there, `all but E1`, uses removal; the
+;;   DEFINE version ran with the controls on its own.
 
 ;; ## What did not reproduce
 ;;
@@ -1145,7 +1178,10 @@
 ;;
 ;; For residuelisp I also silence its debug output, stub the `decode` it
 ;; calls inside log messages while a program runs, reset its class-level
-;; RHC state per seed, and stop a run after a budget of cleanups. Under
+;; RHC state per seed, and stop a run after a budget of cleanups. holis
+;; runs stop after a budget of cons cells (300 per small program in
+;; `holis_fixes.py` and `holis_thresholds.py`, 20 000 in `holis_cells.py`) or, for the fizzbuzz
+;; calls, after 60 s. Under
 ;; noise its `tuple_to_list` loops until `car` raises, which can be never.
 ;;
 ;; ### D. Raw results

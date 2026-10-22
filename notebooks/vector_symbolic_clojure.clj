@@ -77,7 +77,7 @@
 ;; (2024) and residuelisp (2025), run at pinned commits under the same
 ;; noise: [Reproducing the Traps in the Original Code](holis/). In short:
 ;; holis has trap 3 (its fixed 0.2 caps noise at σ ≈ 5 for every D), and
-;; residuelisp has trap 4 (one tag on every integer makes any two
+;; trap 2 when a program names its role vectors; residuelisp has trap 4 (one tag on every integer makes any two
 ;; integers `eq?`). Running them also turned up eight further bugs.
 ;;
 ;; Code, tests, experiments and the paper draft:

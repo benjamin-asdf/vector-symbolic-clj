@@ -15,8 +15,8 @@ E2  CAR and CDR do not evaluate their argument: (CAR (CDR (a b c))) -> CDR.
 E3  LABEL is dispatched as a basic function but raises (the paper says LABEL
     is omitted; the notebook still lists it).
 E4  SimpleCleanUp.memorize never raises its capacity m, so past 100 items
-    each stored item appends another 100 zero rows: memory and lookup time
-    grow quadratically with the number of items.
+    each stored item appends another 100 zero rows: n items take
+    100·(n−99) rows, and every lookup and store pays for all of them.
 
     OPENBLAS_NUM_THREADS=1 .venv/bin/python holis_errata.py
 """

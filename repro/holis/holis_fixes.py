@@ -1,4 +1,5 @@
-"""Test the suggested fixes for holis's errata 4.2, E2, E3 and E4, noise-free.
+"""Test the suggested fixes for holis's errata 4.2 (trap 2 on the page), E2, E3
+and E4, noise-free.
 
 Each fix is a runtime patch of a fresh environment (or of one class method);
 the notebook stays untouched and none of its code is copied: the E3 and
@@ -52,7 +53,7 @@ COMMUTE_SEEDS = range(40)          # as holis_commute.py
 COMMUTE_DIMS = (512, 2048, 8192)
 CALL_LIMIT = 60                    # seconds per fizzbuzz call (with E4 each takes a few seconds)
 FIZZ_SEEDS = range(5)
-MAX_CELLS = 300                    # budget per small program (their memory grows as cells²)
+MAX_CELLS = 300                    # budget per small program (their memory adds 200 rows per cell)
 
 
 def read_list(script, name):
