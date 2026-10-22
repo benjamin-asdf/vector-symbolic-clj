@@ -10,24 +10,23 @@
 ;; > Generated with Claude Code, and I am not ashamed. My own blog posts of
 ;; > this kind are part of the training data and have sculpted its style.
 ;;
-;; *A companion to [A Vector-Symbolic Clojure](../). The overview found seven
+;; *A companion to [A Vector-Symbolic Clojure](../). The overview found five
 ;; traps in a vector-symbolic Lisp. This page runs each one against the
 ;; original authors' own code. October 2026.*
 ;;
-;; Our Clojure started from Tomkins-Flanagan and Kelly's "Hey Pentti, We
+;; My Clojure started from Tomkins-Flanagan and Kelly's "Hey Pentti, We
 ;; Did It!" (ICCM 2024). That paper built Lisp 1.5 out of holographic
 ;; vectors and showed that it can be done. Their follow-up with Hanley,
 ;; "Hey Pentti, We Did (More of) It!" (IJCNN 2025), added integers in
-;; residue arithmetic. Both have public code. Our seven traps came from our
-;; code. The fair question is which of them exist in theirs. Here we
-;; answer it by running their code: we fetch it at a pinned commit, add
-;; noise the way our paper does, and count. The section numbers 4.1–4.7
-;; are those of our paper draft; they are the overview's traps 1–7 in the
-;; same order.
+;; residue arithmetic. Both have public code. My five traps came from my
+;; code. The fair question is which of them exist in theirs. Here I
+;; answer it by running their code: I fetch it at a pinned commit, add
+;; noise the way my paper does, and count. The trap numbers 1–5 are those
+;; of the overview.
 ;;
 ;; Their papers are proofs of concept, and their READMEs say so. Nothing
 ;; below changes that. A proof of concept is where the next person starts,
-;; and this page lists what that next person (us) ran into.
+;; and this page lists what that next person (me) ran into.
 ;;
 ;; If you maintain or build on either codebase, go to
 ;; [Errata for the authors](#errata-for-the-authors): each defect with its
@@ -54,8 +53,6 @@
 (def rc (load-json "residuelisp_control.json"))
 ^:kindly/hide-code
 (def re (load-json "residuelisp_errata.json"))
-^:kindly/hide-code
-(def rr (load-json "residuelisp_residues.json"))
 ^:kindly/hide-code
 (def rt (load-json "residuelisp_thresholds.json"))
 ^:kindly/hide-code
@@ -131,15 +128,15 @@
 ;;   floor in its approximate equality. Its similarity is not normalised,
 ;;   though.
 ;;
-;; ## What we ran
+;; ## What I ran
 ;;
-;; Nothing of theirs is copied into our repository. A small loader
+;; Nothing of theirs is copied into my repository. A small loader
 ;; fetches each codebase at its pinned commit when a script runs. For
 ;; holis it executes the notebook's code cells as a module. The scripts in
 ;; [`repro/holis/`](https://github.com/benjamin-asdf/vector-symbolic-clj/tree/main/repro/holis)
 ;; then:
 ;;
-;; - add **probe noise** exactly as in our paper: before every cleanup,
+;; - add **probe noise** exactly as in my paper: before every cleanup,
 ;;   the probe p becomes p + σ·|p|/√D · N(0, I). Cleanups are the item
 ;;   memory, the function memory and the pointer memory;
 ;; - change at most one thing as a **control**, and say which;
@@ -154,7 +151,7 @@
        (for [r (get hc "small")]
          [(kind/code (get r "program")) (get r "D") (frac r "correct" "runs")]))
 
-;; One program misses a seed. We return to it under E1 below. The
+;; One program misses a seed. I return to it under E1 below. The
 ;; authors' own fizzbuzz helpers, verbatim from the notebook, also give
 ;; the right answers. They are slow, which is why the noise sweeps below
 ;; use smaller programs:
@@ -175,14 +172,14 @@
 ;; So both interpreters do what their papers show. What follows asks for
 ;; more than the papers claim.
 
-;; ## 4.1 Superposed cells: the paper has them, the code does not
+;; ## Trap 1: Superposed cells, which the paper has and the code does not
 ;;
 ;; **Applies?** To the paper's equation (2), cons(a, b) = ν(L⊗a + R⊗b + φ),
 ;; yes. To the code, no: both codebases put each cell behind a random
-;; pointer, as our fix does. The holis notebook gives the reason in a
+;; pointer, as my fix does. The holis notebook gives the reason in a
 ;; comment.
 ;;
-;; To see the paper's cell inside their code, we added a *paper mode*.
+;; To see the paper's cell inside their code, I added a *paper mode*.
 ;; It is two attributes on their pointer memory: a cell is stored as its
 ;; own normalised bundle, and "following" it returns it unchanged. The
 ;; evaluator, CAR, CDR and the reader stay theirs. At D = 2048, Peano
@@ -195,7 +192,7 @@
           (fmt (mean (map #(get % "cos(n,n+2)_mean") rs)))
           (count rs)]))
 
-;; **Reproduced?** Yes, noise-free, and in a way we did not expect. Their
+;; **Reproduced?** Yes, noise-free, and in a way I did not expect. Their
 ;; evaluator decides that an expression "evaluates to itself", and stops,
 ;; when the result is similar to the input: `(ee == e) > 0.2`. With
 ;; pointers, a form and its result are unrelated. With superposed cells,
@@ -209,7 +206,7 @@
           (fmt (get r "results")) (fmt (get r "cos(form, ev(form))_mean"))]))
 
 ;; In paper mode the LAMBDA program stops after the substitution and
-;; returns the body unevaluated. This is 4.1's lesson in its plainest
+;; returns the body unevaluated. This is trap 1's lesson in its plainest
 ;; form: similarity of content is not identity.
 ;;
 ;; Under noise the picture is less clean. Here numerals 1 to 8 are built,
@@ -219,20 +216,20 @@
 (pivot (get hcell "read") "sigma" #(get % "mode") #(frac % "correct" "runs") "σ")
 
 ;; With their θ = 0.2, pointer cells fail first, because of that
-;; threshold (4.5 below). With θ set relative to chance, 5/√D, the
+;; threshold (trap 3 below). With θ set relative to chance, 5/√D, the
 ;; comparison is between encodings alone. Then the curves cross: pointer
 ;; cells read more numerals right at σ = 5 and 6, superposed cells at
-;; σ = 8. So this test does not show the loss of noise tolerance we
-;; measured in our own code (§4.1 of our paper). One difference: a
+;; σ = 8. So this test does not show the loss of noise tolerance I
+;; measured in my own code (trap 1 on the overview). One difference: a
 ;; superposed cell needs no pointer lookup, so each read makes fewer noisy
 ;; cleanups. Plain argmax (θ = −1) breaks the pointer reads even at σ = 0.
-;; Their atom test needs a threshold, which we come back to in 4.5.
+;; Their atom test needs a threshold, which I come back to in trap 3.
 ;;
 ;; **Verdict.** The paper's cell causes a noise-free failure in their
 ;; code. The code's own cell does not have that problem. The extra noise
-;; sensitivity did not reproduce in our read test.
+;; sensitivity did not reproduce in my read test.
 
-;; ## 4.2 Binding commutes
+;; ## Trap 2: Binding commutes
 ;;
 ;; **Applies?** Mostly no. Neither codebase stores an unlabelled pair:
 ;; cells carry the roles lhs and rhs. holis has no environments, and
@@ -257,88 +254,10 @@
 ;; About half the reads give the wrong atom at every D. It is a tie, not
 ;; noise, so a bigger D does not help. residuelisp names its roles
 ;; `__lhs` and `__rhs`. Its lexer starts identifiers with a letter, so a
-;; program cannot name them (we read this in their lexer and did not run
+;; program cannot name them (I read this in their lexer and did not run
 ;; it).
 
-;; ## 4.3 Residue chimeras
-;;
-;; **Applies?** Not as we found it. Our chimeras came from giving each
-;; prime its own band of coordinates, so each band could match a different
-;; member of a sum. residuelisp uses Kymn et al.'s product code instead:
-;; every coordinate mixes all four moduli. We measured with their
-;; `RHC.encode` on the sum ζ(11) + ζ(12). Its 14 chimeras (integers whose
-;; residues each match 11 or 12) score like any other integer:
-
-^:kindly/hide-code
-(table ["D" "cos to 11" "cos to 12" "chimeras: mean" "chimeras: max" "others: mean |cos|" "seeds"]
-       (for [[d rs] (group-by #(get % "D") (get rr "superposition"))]
-         [d (fmt (mean (map #(get % "cos_member_11") rs)))
-          (fmt (mean (map #(get % "cos_member_12") rs)))
-          (fmt (mean (map #(get % "cos_chimera_mean") rs)))
-          (fmt (apply max (map #(get % "cos_chimera_max") rs)))
-          (fmt (mean (map #(get % "abs_cos_other_mean") rs)))
-          (count rs)]))
-
-;; Decoders tell the same story. Their interpreter decodes integers with
-;; `decode_rhc`, an argmax over the codes of 0..199. Their library also
-;; has `resonator_decoding`, the resonator network the paper describes.
-;; The interpreter does not call it, and its test is commented out. We
-;; read its output residue by residue, by magnitude, because a resonator
-;; finds each factor only up to a phase. Counts over the seeds:
-
-^:kindly/hide-code
-(let [rows (get rr "superposition")
-      chim (set (get rr "chimeras_of_11_12"))
-      cnt (fn [pred] (str (count (filter pred rows)) " / " (count rows)))]
-  (table ["readout" "of ζ(11)" "of ζ(11) + ζ(12): a member" "of ζ(11) + ζ(12): a chimera"]
-         [["decode_rhc" (cnt #(= "11" (get % "decode_rhc(11)")))
-           (cnt #(#{"11" "12"} (get % "decode_rhc(sup)")))
-           (cnt #(chim (parse-long (get % "decode_rhc(sup)"))))]
-          ["resonator_decoding" (cnt #(= 11 (get % "resonator(11)")))
-           (cnt #(#{11 12} (get % "resonator(sup)")))
-           (cnt #(get % "resonator(sup)_is_chimera"))]]))
-
-;;
-;; A residuelisp program cannot build such a sum anyway. Integers come
-;; from literals and `+` / `-` only, and cells hold them behind pointers.
-;;
-;; **Reproduced?** No. The chimeras belong to the banded encoding, which
-;; residuelisp does not use. Since October 2026 our own interpreter has
-;; used a product code too (one phase per frequency, drawn uniformly from
-;; Z_P with P = 5·7·11·13·17·19), and the chimeras are gone there as well:
-;; see trap 3 on the [overview page](../).
-
-;; ## 4.4 Zero
-;;
-;; **Applies?** No. Our zero problem had two parts, and neither carries
-;; over. On bands, an n divisible by several of the primes looked partly
-;; like zero, because each such band matched. In the product
-;; code, an n that some moduli divide is still unrelated to zero, unless
-;; all four divide it, which means n ≡ 0 mod 1155:
-
-^:kindly/hide-code
-(let [rows (get rr "zero")
-      ks (sort-by #(parse-long (re-find #"\d+(?=\)$)" %))
-                  (filter #(str/starts-with? % "cos(") (keys (first rows))))]
-  (table (cons "D" (map #(str/replace % "cos(0," "cos(ζ0, ζ") ks))
-         (for [[d rs] (group-by #(get % "D") rows)]
-           (cons d (for [k ks] (fmt (mean (map #(get % k) rs))))))))
-
-;; The wrap at 1155 is the residue range itself, so it is by design. Our
-;; second part was that B⁰ was a spike in dimension 0, so damaging that
-;; one dimension broke all arithmetic. In FHRR, zero is the all-ones
-;; vector, spread evenly. With coordinate 0 zeroed, ζ(17)·ζ(25) still
-;; reads as 42:
-
-^:kindly/hide-code
-(table ["D" "seed" "argmax over 0..199" "cos to ζ(42)"]
-       (for [r (get rr "lesion")]
-         [(get r "D") (get r "seed") (get r "argmax_0_199(lesioned 17*25)")
-          (fmt (get r "cos_to_42"))]))
-
-;; **Reproduced?** No.
-
-;; ## 4.5 Fixed thresholds cap robustness
+;; ## Trap 3: Fixed thresholds cap robustness
 ;;
 ;; **Applies?** To holis, yes. Its pointer memory accepts the nearest key
 ;; only above cosine θ = 0.2. A probe with noise σ has cosine
@@ -346,7 +265,7 @@
 ;; whatever D is.
 ;;
 ;; **Reproduced?** Yes. The control is the same code with θ = 5/√D,
-;; a threshold relative to chance, as our paper prescribes. It is one
+;; a threshold relative to chance, as my paper prescribes. It is one
 ;; attribute set on their object. Plain argmax (θ = −1) would not do:
 ;; their atom test needs the threshold to tell an atom, which matches no
 ;; pointer, from a cell. With θ = −1 even noise-free reads fail. For
@@ -403,14 +322,14 @@
 ;; at D = 8000. It roughly doubles for each 4× in D, as √D predicts. So in
 ;; residuelisp the fixed numbers do not set a cap independent of D.
 ;; Its failures are loud: every failing run raised an exception (mostly
-;; `InterpreterError`) or hit our cleanup budget, and none returned a
+;; `InterpreterError`) or hit my cleanup budget, and none returned a
 ;; wrong value (raw table in the appendix). A fixed floor has a
-;; different cost there, in 4.6.
+;; different cost there, in trap 4.
 
-;; ## 4.6 A shared field: the integer tag
+;; ## Trap 4: A shared field (the integer tag)
 ;;
 ;; **Applies?** Not to holis, which has no records. It does apply to
-;; residuelisp, in a form we did not foresee. Every integer carries the
+;; residuelisp, in a form I did not foresee. Every integer carries the
 ;; same tag, int(x) = ζ(x) + int, which is the paper's equation (11).
 ;; Atoms count as `eq?` when their unnormalised similarity exceeds 0.2,
 ;; and the tag alone contributes 1. So any two integers are equal.
@@ -435,14 +354,14 @@
          [(get r "seed") (kind/code (get r "program"))
           (fmt (get r "equals(result, encode(n))"))]))
 
-;; ## 4.7 A sum of tuples
+;; ## Trap 5: A sum of tuples
 ;;
 ;; **Applies?** No. Neither codebase builds superpositions of values, and
 ;; neither has positional vectors, so there are no joint worlds to lose.
 
 ;; ## Further errata
 ;;
-;; Running the code turned up problems that our list does not cover. All
+;; Running the code turned up problems that my list does not cover. All
 ;; are noise-free.
 ;;
 ;; **E1 (holis). CAR of an atom.** To decide "is this head a lambda
@@ -490,7 +409,7 @@
 ;; it never raises its capacity. So past 100 items, every new item appends
 ;; another 100 rows. An empty row scores 0, so it can win a lookup only
 ;; when every stored row scores below 0. Mostly it costs memory and time.
-;; It is why the fizzbuzz calls above take minutes, and why our
+;; It is why the fizzbuzz calls above take minutes, and why my
 ;; noise sweep at D = 8192 needed smaller memories to stay under 8 GB.
 ;; residuelisp's `CleanupMemory` does raise its capacity.
 
@@ -523,7 +442,7 @@
           (fmt (get r "results"))]))
 
 ;; R5: the lexer drops a `)` that directly follows an integer, so nested
-;; arithmetic parses wrongly. Our residuelisp programs put a space there.
+;; arithmetic parses wrongly. My residuelisp programs put a space there.
 
 ^:kindly/hide-code
 (table ["source" "tokens" "result (seed 0)"]
@@ -537,17 +456,17 @@
 ;; who builds on their code. Each item says where the defect is, shows a
 ;; minimal program, gives the cause in one sentence and suggests a small
 ;; fix. Line numbers are for residuelisp at `09864c7`. holis is one
-;; notebook, so for it we name the cell and the function, at `db208d7`.
+;; notebook, so for it I name the cell and the function, at `db208d7`.
 ;; Most items are slips that a proof of concept is allowed to have. They
 ;; are listed so they are quick to fix.
 ;;
-;; Every fix below is **tested**. Our harness applies it as a runtime
+;; Every fix below is **tested**. My harness applies it as a runtime
 ;; patch to their code, runs the erratum's minimal programs, and then runs
 ;; the noise-free control programs from the start of this page again
-;; (`holis_fixes.py`, `residuelisp_fixes.py`; E1 and 4.5 come from
+;; (`holis_fixes.py`, `residuelisp_fixes.py`; E1 and trap 3 come from
 ;; `holis_errata.py` and `holis_thresholds.py`). Where a suggested fix
-;; turned out wrong or incomplete, we say so. The fix shown is always the
-;; one we ran.
+;; turned out wrong or incomplete, I say so. The fix shown is always the
+;; one I ran.
 ;;
 ;; The order is by harm: wrong answers without any noise first, then
 ;; robustness under noise, then memory and leftovers. The counts below
@@ -592,12 +511,19 @@
   (filter #(= e (get % "erratum")) (get rf "errata")))
 
 ^:kindly/hide-code
+(defn label
+  "A variant name from the JSON files as shown on this page: the data
+  calls the trap 2 fix \"4.2\"."
+  [v]
+  (str/replace v "4.2" "trap 2"))
+
+^:kindly/hide-code
 (defn regression-table
   "The control programs with each fix applied."
   [regs vkey]
   (table ["fix" "programs right in every run" "runs right"]
          (for [r regs]
-           [(get r vkey)
+           [(label (get r vkey))
             (if-let [n (get r "all_seeds_correct")]
               (str n " / " (get r "programs"))
               (str (count (filter #(= (get % "correct") (get % "runs")) (get r "rows")))
@@ -635,7 +561,7 @@
       g800f (first (filter #(and (= "E4" (get % "variant")) (= 800 (get % "items stored")))
                            (get hf "e4_growth")))]
   (table ["item" "code" "program" "should give" "gives (×runs)" "wrong" "wrong with the fix"]
-         [(row "R1 (4.6)" "residuelisp" (rp "(eq? 3 5 )") (fx "R1" "(eq? 3 5 )"))
+         [(row "R1 (trap 4)" "residuelisp" (rp "(eq? 3 5 )") (fx "R1" "(eq? 3 5 )"))
           (row "R2" "residuelisp" (rp "(and #t #f)") (fx "R2" "(and #t #f)"))
           (row "R2" "residuelisp" (rp "(eq? (cons a (cons b nil)) (cons a (cons c nil)))")
                (fx "R2" "(eq? (cons a (cons b nil)) (cons a (cons c nil)))"))
@@ -650,13 +576,13 @@
           ["R5" "residuelisp" (kind/code (get r5 "source")) (get r5ok "result_seed0")
            (str (get r5 "result_seed0")) "seed 0 (lexer, no randomness)"
            (wrong-of (fx "R5" "(+ (+ 1 2) 3)"))]
-          ["4.2" "holis" (kind/code "(CAR (x . lhs))") "x"
+          ["trap 2" "holis" (kind/code "(CAR (x . lhs))") "x"
            (str/join "; " (for [r c42] (str "D = " (get r "D") ": " (fmt (get r "results")))))
            (at-d c42) (at-d c42f)]
           ["E2" "holis" (kind/code (get e2 "program")) "b" (fmt (get e2 "results"))
            (str (- (get e2 "runs") (get-in e2 ["results" "[\"b\"]"] 0)) " / " (get e2 "runs"))
            (at-d e2f)]
-          ["4.5" "holis" "CAR lookup on a stored 4-list, σ = 5.5, D = 8192" "the stored head"
+          ["trap 3" "holis" "CAR lookup on a stored 4-list, σ = 5.5, D = 8192" "the stored head"
            (str (get th "correct") " right with θ = 0.2; " (get ch "correct")
                 " right with θ = 5/√D")
            (str (- (get th "trials") (get th "correct")) " / " (get th "trials"))
@@ -682,7 +608,7 @@
 ^:kindly/hide-code
 (regression-table (get rf "regression") "fix")
 
-;; The holis control programs have no DEFINE, so we also ran their
+;; The holis control programs have no DEFINE, so I also ran their
 ;; fizzbuzz helpers: their DEFINEs, then the five calls in one
 ;; environment, D = 512, 5 seeds, each call stopped after 60 s. All these
 ;; runs use the E4 fix, which changes no answer and turns minutes into
@@ -709,13 +635,13 @@
 
 ;; ### Wrong answers without noise
 ;;
-;; **R1 (residuelisp; our 4.6). Any two integers are `eq?`.**
+;; **R1 (residuelisp; my trap 4). Any two integers are `eq?`.**
 ;;
 ;; - *Where.* `src/language/interpreter.py`, `equals`, lines 320–362; the
 ;;   atom comparison is line 331. The tag is added in
 ;;   `src/language/encoding.py`, `encode_rhc_integer`, lines 322–348.
 ;; - *Symptom.* `(eq? 3 5 )` and `(eq? 3 1000 )` give `#t` (table above).
-;;   The 4.6 table shows the same for their test pattern: the result of
+;;   The trap 4 table shows the same for their test pattern: the result of
 ;;   `(+ 5 5)` "equals" 10, 7, 0 and 999. So `test_rhc_add` and
 ;;   `test_rhc_sub` in `src/tests/test_interpret.py` (lines 302–335) pass
 ;;   whatever the arithmetic returns.
@@ -723,7 +649,7 @@
 ;;   gives a similarity of about 1, far above the 0.2 floor.
 ;; - *Fix.* Compare integers without their tag, as `rhc_add` already
 ;;   does. Normalising the similarity is not enough: the cosine of 3 and
-;;   5 is still about 0.5 (4.6 table). In the "both atomic" branch of
+;;   5 is still about 0.5 (trap 4 table). In the "both atomic" branch of
 ;;   `equals`, before line 331:
 ;;
 ;; ```python
@@ -844,7 +770,7 @@
 ;;   too (`c in assoc.A or c in assoc.A.reverse`) brings DEFINE back,
 ;;   but in one of the 5 seeds four of the five calls then run past 60 s
 ;;   (column
-;;   `E1 admitting cells + E4`). So we have no fix for E1 that we can
+;;   `E1 admitting cells + E4`). So I have no fix for E1 that I can
 ;;   recommend. The cause is that their code uses one `car` both on
 ;;   pointers and on bundles. A fix would give the function memory its
 ;;   own lookup, and let `SimpleAssoc.recall` report a miss instead of
@@ -870,7 +796,7 @@
 ;;
 ;;   Results then wrap modulo 1155, so `(- 3 5 )` decodes as 1153. Map
 ;;   the upper half to negatives if that is wanted.
-;; - *Status.* **Tested**, as shown. Our first version called
+;; - *Status.* **Tested**, as shown. My first version called
 ;;   `RHC.encode(enc_env.dim, i, RHC.moduli).data` in the loop. It gave
 ;;   the same answers, but each call builds an `RHC` object whose
 ;;   constructor recomputes the four roots, so one decode took about 20 s
@@ -933,7 +859,7 @@
 (before-after (rf-errata "combined") "fix" ["theirs" "all"])
 
 ;;
-;; **4.2 (holis). Programs can name the role vectors.**
+;; **Trap 2 (holis). Programs can name the role vectors.**
 ;;
 ;; - *Where.* Code cell 2, `vsa_env`, the `reserved` list. It puts `lhs`,
 ;;   `rhs` and `φ` into `env['lex']` and the item memory, and `make_atom`
@@ -952,14 +878,15 @@
 ;;     env[role] = HRR(N=dim)           # roles only, not in env['lex'] or mem
 ;; ```
 ;;
-;; - *Status.* **Tested.** Our harness lets `vsa_env` draw the roles as
+;; - *Status.* **Tested.** My harness lets `vsa_env` draw the roles as
 ;;   before and then deletes them from `env['lex']` and their rows from
 ;;   the item memory. That is the state the change above gives, with the
-;;   same random draws. `lhs` in a program is then a fresh atom. The 4.2
-;;   programs, 40 seeds per row:
+;;   same random draws. `lhs` in a program is then a fresh atom. The
+;;   trap 2 programs, 40 seeds per row:
 
 ^:kindly/hide-code
-(before-after (get hf "roles") "variant" ["theirs" "4.2"])
+(before-after (map #(update % "variant" label) (get hf "roles"))
+              "variant" ["theirs" "trap 2"])
 
 ;;   Nothing else reads the roles from `env['lex']`: the control programs
 ;;   give the same counts as without the fix (regression table above).
@@ -986,7 +913,7 @@
 ;; def cons(ab, ind=''): return ccons(val(car(ab), ind), val(car(cdr(ab)), ind))
 ;; ```
 ;;
-;; - *Status.* **Tested.** We first suggested only the two `ev_until_done`
+;; - *Status.* **Tested.** I first suggested only the two `ev_until_done`
 ;;   lines, and that `quote` return its argument. Both were incomplete.
 ;;   Without the unwrapping, a quoted list comes back with its wrapper,
 ;;   `(QUOTE ((a b c)))`. With `quote` returning its argument,
@@ -1007,20 +934,20 @@
 ;;   it (the fizzbuzz table above, column `E2 + unwrap QUOTE + E4`): in
 ;;   one of the 5 seeds, every call after the first runs into unbounded
 ;;   recursion. Raising Python's recursion limit to 200 000 did not let it
-;;   finish within 15 minutes (a side run, not in the JSON files). We
+;;   finish within 15 minutes (a side run, not in the JSON files). I
 ;;   suspect E1: evaluating
 ;;   CAR's argument runs `ev` on more atoms, and `ev` takes CAR of an
-;;   atom. We did not confirm this, and with no working E1 fix (above) we
+;;   atom. I did not confirm this, and with no working E1 fix (above) I
 ;;   could not test the pair.
 ;;
 ;; ### Robustness under noise
 ;;
-;; **4.5 (holis). A fixed θ = 0.2 in the pointer memory.**
+;; **Trap 3 (holis). A fixed θ = 0.2 in the pointer memory.**
 ;;
 ;; - *Where.* Code cell 2, `SimpleAssoc.__init__` (`theta=0.2`); `vsa_env`
 ;;   creates it with the default.
 ;; - *Symptom.* Under probe noise, lookups fail past σ ≈ 4.9 at any D
-;;   (table above, and the 4.5 tables).
+;;   (table above, and the trap 3 tables).
 ;; - *Cause.* A noisy probe has cosine 1/√(1 + σ²) to its key, which
 ;;   falls below 0.2 at σ = √24 whatever D is, while chance cosines
 ;;   shrink like 1/√D.
@@ -1031,8 +958,8 @@
 ;; ```
 ;;
 ;; - *Status.* **Tested**: at D = 8192 lookups stay at 200 of 200 up to
-;;   σ = 8, and the LAMBDA program keeps 8 of 10 at σ = 5 and 6 (4.5
-;;   tables). At D = 512 it changes nothing, since 5/√512 ≈ 0.22. We did
+;;   σ = 8, and the LAMBDA program keeps 8 of 10 at σ = 5 and 6
+;;   (trap 3 tables). At D = 512 it changes nothing, since 5/√512 ≈ 0.22. I did
 ;;   not change the evaluator's other 0.2 floors.
 ;;
 ;; ### Memory and leftovers
@@ -1096,7 +1023,7 @@
 ;; ```
 ;;
 ;;   Unlike Lisp 1.5, the name is then global.
-;; - *Status.* **Tested.** We first suggested keeping their `label` with an
+;; - *Status.* **Tested.** I first suggested keeping their `label` with an
 ;;   `ind=''` parameter and `mem.memorize(lbl)`. That stops the error, but
 ;;   recursion still fails: their helper `ll` replaces the label only at
 ;;   the top level of the body, never inside it. Removing LABEL turns the
@@ -1111,30 +1038,25 @@
 
 ;; ## What did not reproduce
 ;;
-;; - 4.1 does not apply to either codebase as written: both use pointer
-;;   cells. In our paper mode of holis it shows up as a noise-free
-;;   failure, but the loss of noise tolerance did not show in our read
+;; - Trap 1 does not apply to either codebase as written: both use pointer
+;;   cells. In my paper mode of holis it shows up as a noise-free
+;;   failure, but the loss of noise tolerance did not show in my read
 ;;   test.
-;; - 4.2 shows up only through role names leaking into holis's symbol
+;; - Trap 2 shows up only through role names leaking into holis's symbol
 ;;   table. The (x . y) / (y . x) controls are 40 of 40 correct.
-;; - 4.3 and 4.4 do not reproduce. residuelisp's product code has no
-;;   chimeras in its similarity and no special zero, and its programs never
-;;   superpose integers.
-;; - 4.5 does not reproduce in residuelisp in the form "a cap independent
+;; - Trap 3 does not reproduce in residuelisp in the form "a cap independent
 ;;   of D", because its similarity is unnormalised (see the table above).
-;; - 4.7 does not apply.
+;; - Trap 5 does not apply.
 ;;
 ;; ## Summary
 ;;
 ;; | trap | holis (2024) | residuelisp (2025) |
 ;; |---|---|---|
-;; | 4.1 superposed cells | code: n/a (pointers), paper mode: noise-free failure reproduced, noise margin not | n/a (pointers) |
-;; | 4.2 commuting bind | reproduced via role symbols | n/a |
-;; | 4.3 chimeras | n/a (no integers) | not reproduced |
-;; | 4.4 zero | n/a | not reproduced |
-;; | 4.5 fixed thresholds | reproduced | not reproduced (the cliff moves with √D) |
-;; | 4.6 shared field | n/a | reproduced (integer tag) |
-;; | 4.7 sum of tuples | n/a | n/a |
+;; | 1 superposed cells | code: n/a (pointers), paper mode: noise-free failure reproduced, noise margin not | n/a (pointers) |
+;; | 2 commuting bind | reproduced via role symbols | n/a |
+;; | 3 fixed thresholds | reproduced | not reproduced (the cliff moves with √D) |
+;; | 4 shared field | n/a | reproduced (integer tag) |
+;; | 5 sum of tuples | n/a | n/a |
 ;; | new | E1 car of an atom, E2, E3, E4 memory growth | R2 `and`, R3 `if`, R4 decoder range, R5 lexer |
 
 ;; ## Appendix
@@ -1154,7 +1076,6 @@
 ;; .venv/bin/python holis_cells.py
 ;; .venv/bin/python residuelisp_control.py
 ;; .venv/bin/python residuelisp_errata.py
-;; .venv/bin/python residuelisp_residues.py
 ;; .venv/bin/python residuelisp_thresholds.py
 ;; .venv/bin/python holis_fixes.py
 ;; .venv/bin/python residuelisp_fixes.py
@@ -1172,8 +1093,7 @@
        (for [[f d] [["holis_control.json" hc] ["holis_errata.json" he]
                     ["holis_commute.json" hm] ["holis_thresholds.json" ht]
                     ["holis_cells.json" hcell] ["residuelisp_control.json" rc]
-                    ["residuelisp_errata.json" re] ["residuelisp_residues.json" rr]
-                    ["residuelisp_thresholds.json" rt] ["holis_fixes.json" hf]
+                    ["residuelisp_errata.json" re] ["residuelisp_thresholds.json" rt] ["holis_fixes.json" hf]
                     ["residuelisp_fixes.json" rf]]]
          (let [m (get d "meta")]
            [f (str (get-in m ["upstream" "repo"]) " @ "
@@ -1181,10 +1101,10 @@
             (str (get m "python") " / " (get m "numpy"))
             (kind/code (json/write-str (get m "settings")))])))
 
-;; The holis notebook we ran has SHA-256
+;; The holis notebook I ran has SHA-256
 ;; `80eee8cdeed896fe1987bd9c391d3001c3e46f736227f8cac8f9784b2dd09175`.
 ;;
-;; ### C. Harness excerpts (our code)
+;; ### C. Harness excerpts (my code)
 ;;
 ;; Probe noise, wrapped around their two cleanup methods
 ;; (`holis_common.py`):
@@ -1202,7 +1122,7 @@
 ;; H.SimpleAssoc.recall   = ...  # the same, and counts theta fallbacks
 ;; ```
 ;;
-;; The 4.5 control is one attribute, `env["assoc"].theta = 5 / sqrt(D)`. The E1
+;; The trap 3 control is one attribute, `env["assoc"].theta = 5 / sqrt(D)`. The E1
 ;; control rebinds their inner `car` in the closures of `vsa_env`
 ;; (`holis_errata.py`):
 ;;
@@ -1211,7 +1131,7 @@
 ;;     return orig(c) if c in assoc.A else nil
 ;; ```
 ;;
-;; Paper mode, the 4.1 experiment, is two attributes on their pointer
+;; Paper mode, the trap 1 experiment, is two attributes on their pointer
 ;; memory (`holis_cells.py`):
 ;;
 ;; ```python
@@ -1219,14 +1139,14 @@
 ;; a.recall = lambda probe: probe
 ;; ```
 ;;
-;; For residuelisp we also silence its debug output, stub the `decode` it
+;; For residuelisp I also silence its debug output, stub the `decode` it
 ;; calls inside log messages while a program runs, reset its class-level
 ;; RHC state per seed, and stop a run after a budget of cleanups. Under
 ;; noise its `tuple_to_list` loops until `car` raises, which can be never.
 ;;
 ;; ### D. Raw results
 ;;
-;; holis, 4.5 lookups (all rows):
+;; holis, trap 3 lookups (all rows):
 
 ^:kindly/hide-code
 (table ["D" "mode" "σ" "correct" "θ fallbacks"]
@@ -1234,7 +1154,7 @@
          [(get r "D") (get r "mode") (get r "sigma") (frac r "correct" "trials")
           (get r "theta_fallbacks")]))
 
-;; holis, 4.5 program runs, with what went wrong:
+;; holis, trap 3 program runs, with what went wrong:
 
 ^:kindly/hide-code
 (table ["D" "mode" "σ" "correct" "errors" "wrong values"]
@@ -1242,22 +1162,13 @@
          [(get r "D") (get r "mode") (get r "sigma") (frac r "correct" "runs")
           (fmt (get r "errors")) (fmt (get r "wrong_values"))]))
 
-;; residuelisp, 4.5 runs, with what went wrong:
+;; residuelisp, trap 3 runs, with what went wrong:
 
 ^:kindly/hide-code
 (table ["D" "σ" "correct" "errors" "wrong values"]
        (for [r (get rt "rows")]
          [(get r "D") (get r "sigma") (frac r "correct" "runs")
           (fmt (get r "errors")) (fmt (get r "wrong_values"))]))
-
-;; residuelisp, the superposition per seed:
-
-^:kindly/hide-code
-(table ["D" "seed" "decode_rhc(11+12)" "decode_rhc(11)" "resonator(11+12)" "residues" "chimera?" "resonator(11)"]
-       (for [r (get rr "superposition")]
-         [(get r "D") (get r "seed") (get r "decode_rhc(sup)") (get r "decode_rhc(11)")
-          (get r "resonator(sup)") (str (get r "resonator(sup)_residues"))
-          (str (get r "resonator(sup)_is_chimera")) (get r "resonator(11)")]))
 
 ;; -----
 ;;

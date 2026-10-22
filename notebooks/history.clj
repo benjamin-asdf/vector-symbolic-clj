@@ -8,23 +8,26 @@
 ;;
 ;; *A companion to [A Vector-Symbolic Clojure](../), which describes the
 ;; design as it is. This page records how it got that way: what broke,
-;; roughly in the order we found it, and what changed. The overview
-;; numbers its seven traps by theme, so the numbers here differ. September–October 2026.*
+;; roughly in the order I found it, and what changed. The overview
+;; numbers its five traps by theme, so the numbers here differ. Two problems
+;; told here, the chimeras and the partial zero, belonged to an integer
+;; encoding that has since been replaced, so the overview no longer lists
+;; them. September–October 2026.*
 ;;
 ;; The starting point was the design of Tomkins-Flanagan and Kelly's "Hey
 ;; Pentti, We Did It!" (2024): list cells as bundles of their parts,
 ;; binding by circular convolution, and thresholds "a little under 1 and a
 ;; little over 0". Each section below is one place where running real
-;; programs disagreed with it, or with our own first choices. The paper
+;; programs disagreed with it, or with my own first choices. The paper
 ;; draft (§4) has the measurements, and `scripts/failure_modes.clj`
 ;; rebuilds each failure next to the current code.
 
 ;; ## 1. Bundled list cells
 ;;
-;; Our first `(fact 5)` failed with "unable to resolve symbol: a". Its list
+;; My first `(fact 5)` failed with "unable to resolve symbol: a". Its list
 ;; cells were the paper's: a cell for (a . b) was just L⊗a + R⊗b. Recursion
 ;; builds near-copies such as ((a . 5) . ()) and ((a . 4) . ()), 89%
-;; similar as bundles, so a read beat the wrong sibling by only 0.05. We
+;; similar as bundles, so a read beat the wrong sibling by only 0.05. I
 ;; did not isolate which lookup failed before replacing the cells. A
 ;; rebuild on the current code shows the same message in 3 of 3 seeds at
 ;; noise σ = 2, where cells with IDs give 120.
@@ -49,7 +52,7 @@
 ;;
 ;; In October, running Hanley et al.'s own code showed that their product
 ;; code has no chimeras: every coordinate mixes all six clocks, so two
-;; numbers agree only when they are equal. We had split the clocks into
+;; numbers agree only when they are equal. I had split the clocks into
 ;; bands for a cheap readout, and the bands made the chimeras. The
 ;; encoding moved to the product code. Its readout cannot read one clock at
 ;; a time, so it keeps a memory of the numbers the interpreter has made,
@@ -72,7 +75,7 @@
 ;;
 ;; B⁰ is the identity of convolution, a vector with all its weight in
 ;; dimension 0. Damaging that one dimension, at a lesion of 0.5%, destroyed
-;; all arithmetic. In review we also saw that 5005 = 5·7·11·13 is 4/6
+;; all arithmetic. In review I also saw that 5005 = 5·7·11·13 is 4/6
 ;; similar to zero on the banded clocks, so a threshold `zero?` would
 ;; accept it (the product code later removed that overlap too).
 ;;
@@ -122,7 +125,7 @@
 ;; ## 8. Hopfield networks
 ;;
 ;; The original paper suggests a modern Hopfield network as the cleanup
-;; memory. We tried it on unrelated items, on look-alikes and under damage:
+;; memory. I tried it on unrelated items, on look-alikes and under damage:
 ;; it ties the lookup table at best and loses on look-alikes, and a
 ;; superposition needed a different memory altogether. The overview has
 ;; the numbers.

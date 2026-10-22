@@ -7,7 +7,6 @@
    [clojure.string :as str]
    [scicloj.kindly.v4.kind :as kind]
    [vsc.core :as vsc]
-   [vsc.hdc :as h]
    [vsc.machine :as machine]
    [vsc.worlds :as w]))
 
@@ -30,7 +29,7 @@
 ;; then run until it broke. Every result below is computed live when the
 ;; page renders.
 ;;
-;; **What we learned.** Each point is measured below.
+;; **What I learned.** Each point is measured below.
 ;;
 ;; 1. **Similar is confusable.** A cleanup's margin is 1 minus the
 ;;    similarity to the nearest wrong item. Built as bundles of their parts,
@@ -45,22 +44,17 @@
 ;; 3. **Convolution commutes, so key–value pairs need direction.** Store an
 ;;    entry as k⊗Π(v), with Π a fixed random permutation, as one operation.
 ;;    A cyclic shift does not work, since it commutes with convolution too.
-;; 4. **Residue-number integers can blend into fake ones.** If each clock
-;;    of a residue number gets its own share of the vector, a superposition
-;;    of 11 and 12 matches 62 other integers exactly as well as its members.
-;;    Mix all clocks in every coordinate (the product code) and the fakes
-;;    vanish; reading a number back then needs a memory of known numbers.
-;; 5. **Stored data is robust, computation is fragile.** Lists still read
+;; 4. **Stored data is robust, computation is fragile.** Lists still read
 ;;    back with 60–80% of the dimensions dead; `(fact 4)` breaks at about
 ;;    4%, because every bind passes the damage on until the next cleanup.
-;; 6. **A Hopfield network cannot beat a lookup table at exact recall.**
+;; 5. **A Hopfield network cannot beat a lookup table at exact recall.**
 ;;    For a probe that is one stored item plus noise, picking the best match
 ;;    is already optimal. Measured: it ties at best and loses on look-alikes.
-;; 7. **Programs can compute on superpositions.** A value can be a weighted
+;; 6. **Programs can compute on superpositions.** A value can be a weighted
 ;;    mix of values, and destructors, arithmetic and `if` act on all of them
 ;;    at once. This needs a memory that keeps several matches instead of
 ;;    one; it holds about D/100 worlds. It makes no program faster.
-;; 8. **An interpreter can live in vector memory.** A CEK machine whose 35
+;; 7. **An interpreter can live in vector memory.** A CEK machine whose 35
 ;;    rules are vectors, picked by similarity, runs these programs from a
 ;;    host loop of under 50 lines that knows no Lisp.
 ;;
@@ -82,10 +76,9 @@
 ;; Which of the traps exist in the original authors' own code, holis
 ;; (2024) and residuelisp (2025), run at pinned commits under the same
 ;; noise: [Reproducing the Traps in the Original Code](holis/). In short:
-;; holis has trap 5 (its fixed 0.2 caps noise at σ ≈ 5 for every D), and
-;; residuelisp has trap 6 (one tag on every integer makes any two
-;; integers `eq?`). Neither has the chimeras or the zero trap. Running
-;; them also turned up eight further bugs.
+;; holis has trap 3 (its fixed 0.2 caps noise at σ ≈ 5 for every D), and
+;; residuelisp has trap 4 (one tag on every integer makes any two
+;; integers `eq?`). Running them also turned up eight further bugs.
 ;;
 ;; Code, tests, experiments and the paper draft:
 ;; [github.com/benjamin-asdf/vector-symbolic-clj](https://github.com/benjamin-asdf/vector-symbolic-clj).
@@ -172,6 +165,16 @@
 ;; | integer n | Bⁿ⊗Z, so `inc` is one more binding with B, and `+` binds two numbers and unbinds one Z (Bᵐ⊗Bⁿ = Bᵐ⁺ⁿ) |
 ;; | closure | p ↦ ν(L⊗form + R⊗env) |
 ;;
+;; Integers are residue numbers (Kymn et al., 2025). At each frequency, B
+;; turns by 2π·c/P, with c a random residue of P = 5·7·11·13·17·19 =
+;; 1,616,615. Bⁿ is then like six clocks read at once, mixed into every
+;; coordinate. Two different integers are unrelated vectors, so a set of
+;; integers matches only its members. To read an integer back, the
+;; interpreter keeps a memory of the integers it has made (literals and
+;; arithmetic results) and picks the nearest. A vector that matches none
+;; of them is read against all of Z_P at once, by one Fourier transform
+;; of length P (about 60 ms). Integers run from −808,307 to 808,307.
+;;
 ;; A map is a *record*: `get` is one unbind and one cleanup. Map equality
 ;; ignores key order for free, because addition commutes.
 ;;
@@ -229,7 +232,7 @@
 
 ;; ## What the algebra hides
 ;;
-;; Seven traps hide in the algebra, and each one shaped the design.
+;; Five traps hide in the algebra, and each one shaped the design.
 ;;
 ;; **1. Similar lists get confused.** In the original paper, a list cell is
 ;; just the bundle of its parts. Recursion creates many nearly equal cells,
@@ -267,65 +270,7 @@
 ;; a symmetric relation for one. They can be a second structure, built on
 ;; the plain bind.
 ;;
-;; **3. Numbers can blend into fake numbers.** An integer is stored by its
-;; remainders, like reading six clocks at once: 11 is "1 on a 5-hour clock,
-;; 4 on a 7-hour clock, 0 on an 11-hour clock", and so on up to a 19-hour
-;; clock. Residue numbers come from Kymn et al. (2025) and Hanley et al.
-;; (2025).
-;;
-;; Our first version gave each clock its own share of the vector. That
-;; makes numbers cheap to recognise: read each clock, then combine. Now
-;; put 11 and 12 into one set. The set shows both numbers' readings on
-;; every clock. A number that shows 11's reading on some clocks and 12's on
-;; the others, 13102 for example, matched the set exactly as well as 11 or
-;; 12 did. It is a *chimera*: a fake member stitched together from pieces
-;; of real ones. With six clocks there are 2⁶ − 2 = 62 of them:
-
-^:kindly/hide-code
-(figure "paper-f3-chimeras.png"
-        "Left, banded: all 62 fakes score exactly like the real members 11 and 12, and random numbers that share some residues with them score up to 0.5. Bottom row: the same 62 fakes in the product code score 0. Right, banded: each clock of the fake 13102 matches either 11 or 12.")
-
-;; The readout, asked which number the sum was, answered with a chimera.
-;;
-;; The fix is Kymn et al.'s product code. Every coordinate gets a random
-;; reading of *all* clocks at once, multiplied together. Two numbers then
-;; agree only on average over the coordinates, which is zero unless they
-;; are the same number, so a sum matches nothing but its members. Here is
-;; the sum of 11 and 12, built with the interpreter's own number encoding,
-;; against its members, the old chimera and a few ordinary numbers:
-
-^:kindly/hide-code
-(let [S (h/space 2048 1)
-      N (h/numbers S)
-      both (h/bundle S (h/num-vec N 11) (h/num-vec N 12))
-      [read-back s] (h/read-num N (h/normalize S both))]
-  (kind/table
-   {:column-names ["number" "similarity to 11 + 12"]
-    :row-vectors (concat
-                  (for [n [11 12 13102 42 777 -5000]]
-                    [(str n (when (= n 13102) " (chimera)"))
-                     (format "%.3f" (h/sim S both (h/num-vec N n)))])
-                  [[(str "readout of 11 + 12: " read-back)
-                    (format "%.3f" s)]])}))
-
-;; The price is the readout. No single clock can be read any more, so the
-;; interpreter keeps a memory of the numbers it has made (literals and
-;; arithmetic results) and recognises a number by its nearest entry. A
-;; vector that matches none of them is read against all 1.6 million
-;; numbers at once, by one Fourier transform of that length (about 60 ms).
-;;
-;; Inside sets and maps each number is still stored behind its own random
-;; ID, as the banded version needed.
-;;
-;; **4. Partly equal is not equal.** The banded clocks set a second trap:
-;; 5005 = 5·7·11·13 reads 0 on four of the six clocks, so it was 4/6
-;; similar to zero, and a test "similar enough to zero" would accept it.
-;; The product code removes the overlap, and `zero?` asks for equality
-;; anyway:
-
-(examples vsc/run '[(zero? 5005) (zero? 0)])
-
-;; **5. Fixed thresholds throw robustness away.** Bigger vectors should
+;; **3. Fixed thresholds throw robustness away.** Bigger vectors should
 ;; tolerate more noise, but a fixed "similar enough" cutoff does not grow
 ;; with them. Say a value's kind counts as recognised when its cosine
 ;; exceeds 0.5. A clean vector's cosine to its own noisy probe is
@@ -336,7 +281,7 @@
 ;; and that is how the interpreter decides. Fixed thresholds are common
 ;; practice: Nengo's associative memory defaults to 0.3 in every dimension.
 ;;
-;; **6. A shared field makes strangers similar.** If a vector stored its
+;; **4. A shared field makes strangers similar.** If a vector stored its
 ;; length inside itself, any two vectors of the same length would share
 ;; that part and look 20% alike, even with no element in common. That is
 ;; far above chance, and the superposition memory below treats anything
@@ -346,7 +291,7 @@
 ;; value is the random pointer p, so two maps of one size are as unrelated
 ;; as any two pointers.
 ;;
-;; **7. A sum of tuples forgets which values went together.** A vector is
+;; **5. A sum of tuples forgets which values went together.** A vector is
 ;; a sum over its positions, so [1 1] + [2 2] is exactly [1 2] + [2 1]. A
 ;; superposition of vectors remembers how likely each value is at each
 ;; position, but not which values occurred together. Tuples whose
@@ -426,7 +371,7 @@
 ;; generalise. That would make the interpreter a neuro-symbolic system,
 ;; exact where it cleans up and associative where it remembers. The CEK
 ;; machine below already picks its rules by similarity; a memory of its
-;; past runs would be the next step. We have not built it.
+;; past runs would be the next step. I have not built it.
 
 ;; ## The interpreter as vectors
 ;;
@@ -540,7 +485,7 @@
      {:column-names ["" "decoded from the vectors"]
       :row-vectors [["the state" (show before)]
                     ["1 · its key" (kind/code (str/join " + " (map (fn [f] (str (name f) " " (-> (str (get k f)) (str/replace #"^k-" "") (str/replace #"-fr$" ""))))
-                                                                    (filter k [:mode :kind :head :ident :frame]))))]
+                                                                   (filter k [:mode :kind :head :ident :frame]))))]
                     ["2 · the rule chosen" (kind/code (str (:rule before)))]
                     ["3 · the next state" (show after)]]})))
 
@@ -589,7 +534,6 @@
 (kind/code (with-out-str
              (doseq [r (filter #(#{'if 'if-branch} (:name %)) machine/rules)]
                (clojure.pprint/pprint r))))
-
 
 ;; **Why the most specific rule wins.** A state's key always has all five
 ;; features. A rule's key names only the features it cares about: a
@@ -699,8 +643,7 @@
 
 ;; There is no speedup: a superposed step still scans the memory. What
 ;; superposition buys is a programming model, within a capacity of about
-;; D/100 worlds, integers included. (With the banded integers, before the
-;; product code, integer worlds stopped at about 5 for every D.)
+;; D/100 worlds, integers included.
 
 ;; ## Limits
 ;;
@@ -713,13 +656,13 @@
 
 ;; ## What is new here
 ;;
-;; To our knowledge, these are new:
+;; To my knowledge, these are new:
 ;;
 ;; - **Clojure's data types as single vectors.** Earlier vector-symbolic
 ;;   Lisps encode the cons cells of Lisp 1.5, and integers. Here maps
 ;;   (with directed entries k⊗Π(v)), sets, positional vectors, closures
 ;;   and environments are each one vector too.
-;; - **A catalogue of what breaks.** Seven traps that the algebra hides,
+;; - **A catalogue of what breaks.** Five traps that the algebra hides,
 ;;   each measured and fixed. One rule covers several of them: decide by
 ;;   the best match or relative to chance, never by a fixed cutoff, and
 ;;   robustness grows with √D.
@@ -739,7 +682,7 @@
 ;;   run-time versus call-time choice is explicit. The
 ;;   semantics has precedents (Lineal; probabilistic functional
 ;;   programming), and so does probability in vectors (Furlong & Eliasmith;
-;;   Hersche et al.). We know of no language that puts them together on a
+;;   Hersche et al.). I know of no language that puts them together on a
 ;;   vector substrate, with a memory that keeps the worlds.
 ;;
 ;; ## Related work
@@ -756,9 +699,8 @@
 ;;    we did (more of) it!: A vector-symbolic Lisp with residue arithmetic.
 ;;    IJCNN 2025. [arXiv:2511.08767](https://arxiv.org/abs/2511.08767).
 ;;    [code](https://github.com/hanleyc01/residuelisp). Adds integers in
-;;    a residue number system. Its product code has no chimeras; trap 3
-;;    comes from our first, banded variant, which now uses the product
-;;    code too.
+;;    a residue number system, in Kymn et al.'s product code, which this
+;;    interpreter uses too.
 ;; 3. Kleyko, D., et al. (2022). Vector symbolic architectures as a
 ;;    computing framework for emerging hardware. *Proceedings of the IEEE*
 ;;    110(10). [doi:10.1109/JPROC.2022.3209104](https://doi.org/10.1109/JPROC.2022.3209104).
