@@ -411,6 +411,27 @@ Effect (σ₅₀ / f₅₀ before → after; "> x" = never below 0.5 up to x):
   needs a cleanup of intermediate integers. The integer readout is a
   cleanup, but it runs after the damage has compounded.
 
+## After the product code (October 2026)
+
+Commit `f842e75` moved integers from banded residue clocks to Kymn et
+al.'s product code, and `b3276b9` made 0 a remembered integer and kept
+the full length-P read off hot paths. E4 was rerun on that code
+(`specs/e4c.edn`, same seeds), and `figures/e4c.png` above now shows this
+run. E2 and E2op were not rerun, so `e2c.png`, `e2opc.png` and the probe
+and op rows of the table above still describe the banded encoding.
+
+| lesion f₅₀ | D=1024 | 2048 | 4096 |
+|---|---|---|---|
+| list16 | 0.60 | 0.78 | 0.80 |
+| set8 | 0.60 | 0.61 | 0.80 |
+| map8 | 0.26 | 0.40 | 0.56 |
+| `(+ 17 25)` | 0.41 | 0.45 | 0.60 |
+| `(fact 4)` | 0.020 | 0.034 | 0.035 |
+
+- `(+ 17 25)` at f = 0.005–0.1 is right in 300 of 300 runs again.
+- `(fact 4)` is no better: at D = 1024 it fails earlier (0.020 against
+  0.033). The (1 − f)^k loss along the chain of binds is still the limit.
+
 ## Things that did not work, or changed on the way
 
 - **Memory.** The first E1 and E2 attempts were OOM-killed by the machine's

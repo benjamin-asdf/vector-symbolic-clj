@@ -135,7 +135,7 @@
     (vsc/run '(def m {:a 1 :b 2}))
     (vsc/set-knobs! {:op-noise 2.5})
     (is (= {:a 1 :b 2} (vsc/run 'm))))
-  (testing "eq? compares identities, so integers sharing residue bands differ"
+  (testing "eq? compares identities, so 5005 is not 0"
     (vsc/init! {:prelude? false})
     (is (= [false true false] (vsc/run '[(= 0 5005) (= 5005 (+ 5000 5)) (zero? 5005)])))))
 

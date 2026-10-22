@@ -24,7 +24,7 @@ modes that the algebra hides, and I fix each one.
   set by the closest pair of stored rows it is the table, only slower;
   below that, stored look-alikes cost it most.
 - I move the interpreter into vector memory: a CEK machine whose state,
-  continuation and 35 transition rules are vectors, driven by 47 lines of
+  continuation and 35 transition rules are vectors, driven by under 50 lines of
   Lisp-free host code, with proper tail calls.
 
 **Superposition programming.** A value may be a weighted sum of *worlds*,
@@ -464,7 +464,7 @@ the dialect and run by the host evaluator.
   short keys act as defaults. The minimum winning margin over 2,380
   selections is 0.096, more than 4σ.
 - **The host loop**: fetch the key, select the nearest rule, run it,
-  collect working memory. That is 47 lines with no Lisp in them.
+  collect working memory. That is under 50 lines with no Lisp in them.
 - **Host knowledge left**, listed explicitly: argument marshalling for host
   primitives walks cons cells; two memory labels; the four empty-collection
   atoms; one `apply` helper. Vectors are not cell chains (§3), so the
