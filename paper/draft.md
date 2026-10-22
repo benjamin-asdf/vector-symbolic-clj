@@ -7,23 +7,23 @@ relative to the repo root.*
 ## Abstract
 
 Tomkins-Flanagan and Kelly (2024) expressed the elementary functions of
-Lisp 1.5 in a vector-symbolic architecture (VSA). We build a working
+Lisp 1.5 in a vector-symbolic architecture (VSA). I build a working
 language on the idea: a Clojure dialect in which every value is one
 holographic reduced representation (HRR) vector. That covers lists, maps,
 sets, integers, closures and the environment. Its tests make 390
-assertions, about 260 of them against real Clojure. Running programs exposed seven failure
-modes that the algebra hides, and we fix each one.
+assertions, about 260 of them against real Clojure. Running programs exposed five failure
+modes that the algebra hides, and I fix each one.
 
 - Cleanup follows its textbook model, and capacity is linear in the
   dimension D.
 - Stored structures survive heavy lesions (lists 60–80% of dimensions,
-  sets 57–70%, maps 23–52%); a long computation such as `(fact 4)`
-  survives about 4%.
+  sets 60–80%, maps 26–56%); a long computation such as `(fact 4)`
+  survives 2–4%.
 - A modern Hopfield network, proposed as the natural cleanup memory, cannot
-  beat a lookup table on an interpreter's probes, and we show why. At a β
+  beat a lookup table on an interpreter's probes, and I show why. At a β
   set by the closest pair of stored rows it is the table, only slower;
   below that, stored look-alikes cost it most.
-- We move the interpreter into vector memory: a CEK machine whose state,
+- I move the interpreter into vector memory: a CEK machine whose state,
   continuation and 35 transition rules are vectors, driven by 47 lines of
   Lisp-free host code, with proper tail calls.
 
@@ -49,14 +49,14 @@ represent best. A map is a record, Σ kᵢ⊗Π(vᵢ), read with one unbind and 
 cleanup, and its equality ignores key order because superposition
 commutes. Lisp 1.5 has only cons cells, which is the structure VSAs handle
 worst. Meier (2023) introduced VSAs to Clojure programmers, and her
-`vsa-clj` library implements VSA operations in Clojure. To our knowledge,
+`vsa-clj` library implements VSA operations in Clojure. To my knowledge,
 no prior work besides TK24 and its follow-ups (Hanley et al., 2025;
 Tomkins-Flanagan et al., 2025) runs a Lisp *evaluator*
 inside a VSA, and none does so for Clojure.
 
 **Contributions.**
 1. A working vector-symbolic Clojure (§3).
-2. Seven failure modes of the straightforward encoding, each with cause and
+2. Five failure modes of the straightforward encoding, each with cause and
    fix (§4).
 3. Robustness and capacity measured at three levels (primitive cleanup,
    stored structures, whole programs) under three kinds of noise (§5).
@@ -106,12 +106,12 @@ because "tuples turn out to degrade rather quickly". §4.1 quantifies why.
 | `{k v …}` | p ↦ ν(ν(Σ k⊗Π(v)) + ν(K⊗Σ k) + C⊗n) |
 | `#{x …}` | p ↦ ν(ν(Σ x) + C⊗n) |
 | closure | p ↦ ν(L⊗form + R⊗env) |
-| integer n | Bⁿ⊗Z (residue number system, §4.3) |
+| integer n | Bⁿ⊗Z (residue product code, below) |
 | environment / globals | an association list of cells / a memory F probed with L⊗sym |
 
 *Table 1. The encoding. L, R, K, C, V, N are unitary roles, Π is a fixed
 random permutation of the dimensions. Integer and vector keys, values and
-set members are boxed behind hash-consed pointers (§4.3, §4.6), and so are
+set members are boxed behind hash-consed pointers, and so are
 integer elements of vectors.*
 
 - **Pointers.** Every list, map, set and closure is a random pointer that M
@@ -132,6 +132,29 @@ integer elements of vectors.*
   row points to, not part of its content: a count term made all vectors of
   one length similar, and the *proj* memory of §8 then read unrelated
   vectors into superpositions. Integer elements are boxed, as in maps.
+- **Integers** are residue numbers in the product code of Kymn et al.
+  (2025), which the residuelisp code of Hanley et al. (2025) uses too. An
+  integer n is Bⁿ⊗Z. At each rfft frequency, B has phase 2π·c/P, with c a
+  random residue of P = 5·7·11·13·17·19 = 1,616,615 (the DC and Nyquist
+  bins have phase 0); by the CRT this is one random p-th root of unity per
+  prime, multiplied. Two different integers are near-orthogonal unless they
+  agree mod P, so a superposition of integers matches only its members.
+  Integers run from −808,307 to 808,307. Z is a random unitary vector, so
+  no integer is concentrated on one dimension (B⁰ alone is a delta at index
+  0): `(+ 17 25)` survives f₅₀ = 0.41–0.60 of dimensions lesioned
+  (`figures/e4c.png`), and with dimension 0 dead it still gives 42. `zero?` compares identities.
+- **Integer readout** keeps a memory of every integer the interpreter
+  builds or reads: literals, counts, printed values and the results of
+  `inc`, `dec`, `+`, `-`, whose values follow from their clean operands,
+  checked against the threshold (√(2 ln P) + 1)/√D. The plain cleanup
+  reads only this memory and weighs the nearest remembered integer
+  against the table by excess over chance (§4.3); the superposition
+  cleanup of §8, the printer and the worlds readout also search
+  [−1024, 1024].
+  When arithmetic's operands are not remembered, or its result fails the
+  check, the result is read exactly against all of Z_P at once by one FFT
+  of length P (about 60–85 ms) and remembered if it clears the threshold.
+  The memory makes that rare: `(fact 3)` and `(map f [1 2 3])` need it zero times.
 - **Arithmetic** is binding: `+` is (x⊗y)⊘Z, and `inc` binds with B.
 - **Kinds.** A value's kind is the label of the memory row it cleans up to.
 - **Maps and sets** store their size (C⊗n), so `count` is O(1), and
@@ -150,11 +173,11 @@ integer elements of vectors.*
 ## 4. What breaks
 
 **4.1 Superposed cells are fragile** (`figures/paper-f2-cell-confusion.png`).
-- **Symptom.** In our first implementation, which used TK24's cells, `(fact
+- **Symptom.** In my first implementation, which used TK24's cells, `(fact
   5)` failed with "unable to resolve symbol: a". Rebuilt on the current
   code (`scripts/failure_modes.clj`), the same message appears in 3 of 3
   seeds at D = 2048 and probe noise σ = 2, where pointer cells give 120 in
-  all three; noise-free both give 120. We also recorded `(reduce + 0 [1 2 3
+  all three; noise-free both give 120. I also recorded `(reduce + 0 [1 2 3
   4])` returning 15; the rebuild did not reproduce that.
 - **Cause.** Recursion creates sibling chains such as ((a . 5) . ()) and
   ((a . 4) . ()). As superpositions they have cosine 0.89 to each other. A
@@ -164,7 +187,7 @@ integer elements of vectors.*
   failure at probe noise σ ≈ 4 against ≈ 11 for pointer cells, over 256
   independent single lookups per noise level (`scripts/paper_f2.py`, a
   reconstruction).
-- **Caveat.** We did not isolate which lookup failed in the first version
+- **Caveat.** I did not isolate which lookup failed in the first version
   before replacing it.
 - **Fix.** Pointers with hash-consing, for lists, environments, closures
   and code. Vectors, including `let` bindings, parameter vectors and vector
@@ -172,7 +195,7 @@ integer elements of vectors.*
 - **Lesson.** Similarity of content is not identity. The margin of a
   cleanup is 1 minus the similarity to the nearest wrong entry, so an
   encoding that makes look-alikes similar makes them confusable by exactly
-  as much. We do not resolve this by rule. Vectors keep the similarity and
+  as much. I do not resolve this by rule. Vectors keep the similarity and
   pay for it, and lists keep the margin (§5, E2l).
 
 **4.2 Binding commutes.**
@@ -192,52 +215,7 @@ integer elements of vectors.*
   extra row of M per value. Undirected pairs remain useful (a symmetric
   relation) and can be a separate structure on the plain bind.
 
-**4.3 Banded residue integers form chimeras** (`figures/paper-f3-chimeras.png`).
-- **The encoding.** Scanning the whole integer range on every cleanup was
-  the dominant cost of our first encoding. Following Kymn et al. (2025) and
-  Hanley et al. (2025), we used residues, but split the Fourier bins into
-  one band per prime p ∈ {5, 7, 11, 13, 17, 19}. On p's band B's
-  coefficients are p-th roots of unity, so Bⁿ there depends only on n mod
-  p. Cleanup becomes algorithmic: match each band against p candidates,
-  combine by the CRT, confirm by similarity. That is 72 checks instead of
-  a scan, over a range of ±808,307.
-- **The failure.** In a superposition, every integer whose residues each
-  match *some* member matches on every band. For ν(B¹¹ + B¹²) there are 62
-  such chimeras, and at D = 2048 each has cosine 0.668 to the
-  superposition, exactly the value of the members 11 and 12. Random
-  integers score −0.002 on average, but up to 0.53 when they share
-  residues with the members.
-- **Evidence.** `scripts/paper_f3.py` rebuilds the banded encoding next
-  to the current one. The end-to-end failure never reached git: the
-  readout over integers that failed was replaced before the first commit.
-- **First fix.** Integers inside maps and sets are boxed behind pointers.
-- **Fix.** Kymn et al.'s product code, which the residuelisp code of
-  Hanley et al. also uses and which our reproduction showed has no
-  chimeras: B's phase at every bin is 2π c_k/P with c_k uniform in Z_P,
-  which by the CRT is one random p-th root of unity per prime, multiplied.
-  sim(Bˣ, Bʸ) averages to 0 unless x ≡ y (mod P). The same 62 chimeras now
-  score 0.001 on average (at most 0.042, chance at D = 2048) against
-  members at 0.712. No single clock can be read any more, so the readout
-  keeps a memory of the integers the machine has made (literals and the
-  results of `inc`, `dec`, `+`, `-`, whose values follow from their clean
-  operands) and reads anything else exactly against all P integers by one
-  FFT of length P (about 60 ms). The memory makes that rare: `(fact 3)`
-  and `(map f [1 2 3])` need it zero times, and run as fast as with the
-  bands. The boxes stay.
-
-**4.4 Zero.**
-- In the banded code, sim(B⁰, Bⁿ) ≈ (number of moduli dividing n)/6: a
-  band whose p divides n contributes 1/6, any other −1/(6(p−1)). So
-  sim(0, 5005) = 0.64 for 5005 = 5·7·11·13, and a threshold-based `zero?`
-  would report it as zero. We caught this in review. In the product code
-  it is 0.045.
-- B⁰ is also a delta at index 0, so lesioning that one dimension destroyed
-  all arithmetic, which we observed at f = 0.005.
-- **Fix.** n = Bⁿ⊗Z with a random unitary Z (commit `434b4f8`).
-  `(+ 17 25)` is then correct in 300 of 300 runs up to 10% lesion, and
-  with dimension 0 dead it still gives 42. `zero?` compares identities.
-
-**4.5 Fixed thresholds cap robustness.**
+**4.3 Fixed thresholds cap robustness.**
 - **Symptom.** Every stored structure failed at σ ≈ 1.5–1.7 for every D,
   while the underlying cleanup survives σ ≈ 17 at the size of these
   memories (about 150 rows; 14 at 1000 rows).
@@ -250,23 +228,22 @@ integer elements of vectors.*
   current code passes 10 of 10 up to σ = 3.
 - **Fix.** Decide only by argmax, or relative to the chance floor z/√D.
   Equality cleans up both sides and compares identities (commit
-  `434b4f8`). The same commit fixed a sibling: integer recognition compared
-  the residue readout's raw similarity with the table's, but a readout that
-  maximises over each band reaches ≈ 4/√D on a random probe, so a noisy
-  symbol came back as a number; both sides are now compared by their
-  excess over chance (for the product code's readout, √(2 ln P)/√D). One fixed cutoff
-  survived the fix unnoticed, in naming the primitive of a superposed call
+  `434b4f8`). Integer recognition likewise compares the integer readout
+  and the table by their excess over chance (√(2 ln n)/√D for n
+  candidates: the table's size on one side, P on the integer side, since
+  a degraded value may be any integer, even though the read searches only
+  the remembered ones), not by raw similarity. One fixed cutoff survived the fix unnoticed, in naming the primitive of a superposed call
   (§8), and is now a chance floor too; the CEK machine's own datapath (§7.2)
   still uses 0.5.
 - **Lesson.** Robustness belongs to the decisions, not to the vectors.
 - **Prior practice.** Fixed thresholds are common: Nengo's associative
   memory defaults to 0.3 for every dimension, and TK24 set θ↑, θ↓ "a little
   under 1 and a little over 0". That chance similarity scales as 1/√D is
-  standard (e.g. Thomas et al., 2021). To our knowledge, the consequence for
-  decisions has not been stated in the systems we surveyed: a fixed cutoff
+  standard (e.g. Thomas et al., 2021). To my knowledge, the consequence for
+  decisions has not been stated in the systems I surveyed: a fixed cutoff
   caps noise tolerance at a D-independent level.
 
-**4.6 A shared field makes unrelated records similar.**
+**4.4 A shared field makes unrelated records similar.**
 - **Symptom.** With vectors as positional superpositions (§3), reading a
   set of two vectors, `#{[1 2] [1 3]}`, pulled stored vectors in as members
   (in the rebuild, one of the prelude's, which then fails on its symbol
@@ -289,7 +266,7 @@ integer elements of vectors.*
   values share for structural reasons makes them similar, and similarity is
   what cleanup acts on.
 
-**4.7 A sum of tuples forgets which values went together.**
+**4.5 A sum of tuples forgets which values went together.**
 - **Symptom.** With vectors as tuples of joint worlds, the dice and
   sprinkler demos of §8 read back at total variation 0.44–0.50 and
   0.43–0.82 from the exact joints (3 seeds, D = 4096,
@@ -322,7 +299,7 @@ integer elements of vectors.*
 - Load matters little: 1000× more atoms lowers σ₅₀ from 17.8 to 10.2 at
   D = 2048.
 
-**Structures** (`figures/e2c.png`). After the fix of §4.5, the cliffs move
+**Structures** (`figures/e2c.png`). After the fix of §4.3, the cliffs move
 with √D:
 
 | σ₅₀, probe noise | D = 1024 | 2048 | 4096 |
@@ -350,7 +327,7 @@ and the weakest decides.
   √((1−s)/2) times the probe's share, not 1−s. For look-alikes that differ
   in one of n elements this is exactly half an element's share, at every
   n, so the margin alone does not explain the small cost. A likely reason,
-  which we did not isolate: the look-alikes are one decision against 15
+  which I did not isolate: the look-alikes are one decision against 15
   rows, while the n element reads each compete with every stored atom, and
   the weakest of those already sets σ₅₀.
 
@@ -364,13 +341,14 @@ and the weakest decides.
 
 **Lesions: storage degrades gracefully, computation does not**
 (`figures/e4c.png`).
-- Lists survive f₅₀ = 0.60–0.80.
-- `(fact 4)` fails at f₅₀ ≈ 0.035 at every D, because each bind re-loses
+- Lists and sets survive f₅₀ = 0.60–0.80, maps 0.26–0.56, `(+ 17 25)`
+  0.41–0.60 (D = 1024–4096).
+- `(fact 4)` fails at f₅₀ = 0.020–0.035, because each bind re-loses
   the dead dimensions: a chain of k binds keeps (1 − f)ᵏ of the signal
   until the next cleanup.
 
 **Run length, not memory size, drives failure** (`figures/e5.png`,
-`figures/e5b.png`; measured before the fix of §4.5, near the old
+`figures/e5b.png`; measured before the fix of §4.3, near the old
 threshold cliff).
 - Near the cliff, P(correct) decays geometrically with the number of
   cleanups.
@@ -380,14 +358,14 @@ threshold cliff).
 
 ## 6. Hopfield cleanup does not help
 
-We implemented the modern Hopfield network (MHN) in dense-associative form.
+I implemented the modern Hopfield network (MHN) in dense-associative form.
 Autoassociative cleanup iterates p ← Mᵀ softmax(β M p̂); pointer dereference
 is Vᵀ softmax(β K p̂), which is one attention head. It returns either the
-winning row (snap) or the blend (soft). We compared it with the lookup
+winning row (snap) or the blend (soft). I compared it with the lookup
 table and with a linear (β = 0) memory on every experiment of §5 and on the
 benchmark programs (`figures/p2-e1.png`, `figures/p2-tasks.png`).
 
-**The result is mostly forced, so we state the argument first.** The MHN
+**The result is mostly forced, so I state the argument first.** The MHN
 stores its patterns as rows, like the table, and scores them the same way.
 - Softmax is monotone, so one snap step picks the table's winner for every
   β. One snap step *is* the table.
@@ -399,7 +377,7 @@ stores its patterns as rows, like the table, and scores them the same way.
   crosstalk to what the interpreter computes next.
 - For a probe that is one stored row plus isotropic noise, argmax is the
   maximum-likelihood decision. This stays true with correlated or damaged
-  rows, so no setting of the MHN can beat the table on our probes. What the
+  rows, so no setting of the MHN can beat the table on my probes. What the
   experiments measure is what the MHN *loses*, and where.
 
 | σ₅₀, D = 2048, \|M\| = 10³ | |
@@ -448,12 +426,12 @@ rather than rows, so it is not a resource-matched comparison either.*
   the outcomes agree seed for seed in 286 of 288 cells, and the other two
   are β = 16 losing a map. The information is lost in the stored traces,
   and no cleanup of a probe recovers it.
-- **β is not a collapse knob.** We hoped small β would keep all k items of
+- **β is not a collapse knob.** I hoped small β would keep all k items of
   a superposed probe and large β would collapse to one. One step has a
   window for equal weights only (N = 1000, k = 4: β ∈ [12, 32], left edge
   ≈ √k·ln(N/k)). With 3 or 10 steps no β works in any of the 36
   configurations (`figures/p2-collapse-equal.png`).
-- **What we did not test.** An MHN with learned projections, or a Hopfield
+- **What I did not test.** An MHN with learned projections, or a Hopfield
   network with a fixed weight budget compared with a table of the same
   size. Both change the question from "a softer argmax over the same rows"
   to one whose answer is not fixed in advance.
@@ -464,7 +442,7 @@ rather than rows, so it is not a resource-matched comparison either.*
 the dialect and run by the host evaluator.
 - **Design.** Closures are tagged lists. Environments are chains of small
   VSA maps, each searched by one `contains?`; that needed 16% fewer
-  `first`/`rest` cleanups than our first frame design.
+  `first`/`rest` cleanups than my first frame design.
 - **Cost.** One level costs a constant 61–65 host steps per interpreted
   step, and a third level (a λ-calculus interpreter) 64× again, so k levels
   cost about 65^(k−1). Wall time grows about 48–131× per level, because each level grows
@@ -561,7 +539,7 @@ superposition has to survive dereferencing: M(Σ wᵢpᵢ) should be
   elements, so [1 1] + [2 2] = [1 2] + [2 1]. A superposition of vectors
   over the same positions cannot be decomposed back into its joint worlds.
   Built as vectors, the dice and sprinkler joints read back at total
-  variation 0.44–0.50 and 0.43–0.82 from the truth (§4.7). Joint worlds are therefore built
+  variation 0.44–0.50 and 0.43–0.82 from the truth (§4.5). Joint worlds are therefore built
   as lists, whose pointers are near-orthogonal.
 
 | demo | result | correct at |
@@ -582,21 +560,20 @@ ordinary code. The contribution is the language: superpositions as ordinary
 values, with destructors, lookup and function bodies lifted over all worlds.
 
 - **Failures throw** a capacity error instead of returning a wrong
-  distribution. The measured exceptions: wide-range integers at D = 8192 (3
-  of 20 silently wrong, in the banded integer encoding), one BFS run (1 of 67 nodes misplaced), and the
-  smallest world under operation noise.
+  distribution. The measured exceptions: one BFS run (1 of 67 nodes
+  misplaced), and the smallest world under operation noise.
 - **Capacity.** One memory step reads back 8, 16 and 32 worlds, and at
-  least 64, at D = 1024, 2048, 4096 and 8192. Integer worlds, read through
-  a `let` cell, reach 16, 32–48 and at least 64 from D = 4096; in the banded
-  encoding (§4.3) they stayed at about 5 for every D, because banded
-  integers are correlated (`figures/w-readout.png`).
+  least 64, at D = 1024, 2048, 4096 and 8192. Superpositions of integers
+  read back up to at least 64 worlds at every D; read through a `let`
+  cell, they reach 16 at D = 1024, 32–48 at D = 2048 (two runs) and at least 64 above
+  (`figures/w-readout.png`).
 - **Noise.** The weight error grows linearly with operation noise.
   Programs that clean up every few steps hold to σ = 0.3 at D ≥ 2048; a chain of 20
   binds with no cleanup fails from σ = 0.2 (`figures/w-lift.png`).
 - **No speedup.** A superposed step still scans memory, and the sprinkler
   query takes 1–15 s. What superposition buys is a programming model, not
   speed. Exponentially many worlds exist only in factored form, which needs
-  a resonator search to read out (Frady et al., 2020; Kent et al., 2020); we
+  a resonator search to read out (Frady et al., 2020; Kent et al., 2020); I
   did not build one.
 
 ## 9. Discussion
@@ -613,22 +590,22 @@ values, with destructors, lookup and function bodies lifted over all worlds.
   towards a group's centre that costs it look-alike recall in §6 is the
   same mechanism that would form prototypes there. The CEK machine already
   selects rules by similarity (§7.2); a memory of its past runs would make
-  it neuro-symbolic in this sense. We have not built or measured it.
+  it neuro-symbolic in this sense. I have not built or measured it.
 - **Pointers versus linearity** is the central tension. Pointers buy
   identity and lose superposition; a linear memory keeps superposition and
   crosstalks with everything stored. *proj* is linear on the detected
   worlds and snaps everywhere else. The same tension decides the sequence
   types: a list is a pointer chain, and a vector is a linear, similar,
   bounded superposition that cannot hold joint worlds.
-- **Cartesian closure is necessary, not sufficient.** We quantify TK24's
+- **Cartesian closure is necessary, not sufficient.** I quantify TK24's
   "great demands of memory":
   - a record holds about D/64 entries;
   - reliability decays with the number of cleanups;
   - memory growth, not stack depth, bounds recursion once control is in
     vectors.
 - **Graceful degradation, qualified.** Storage survives the loss of
-  23–80% of dimensions, depending on the structure; a long computation
-  about 4%, a short one such as `(+ 17 25)` about half. A brain-like VSA computer needs
+  26–80% of dimensions, depending on the structure; a long computation
+  2–4%, a short one such as `(+ 17 25)` about half. A brain-like VSA computer needs
   cleanup interleaved with computation at a fine grain.
 
 ## 10. Limitations
@@ -647,7 +624,6 @@ A Clojure made of vectors runs: records, sets, closures, and the
 interpreter's own control state. The findings are where it bends:
 - identity versus similarity;
 - symmetric binding;
-- correlated number codes;
 - thresholds;
 - signal leaking between cleanups.
 
@@ -719,7 +695,6 @@ non-softmax memory to keep the worlds apart.
     `.venv/bin/python scripts/plot*.py <name>`.
   - F1, F8: `scripts/paper_diagrams.py`.
   - F2: `scripts/paper_f2.py`.
-  - F3: `scripts/paper_f3.py`.
   - Worlds readout (`figures/w-readout.png`): `scripts/w_readout.py`.
 - Failure modes of §4, rebuilt broken next to the current code:
   `clojure -M:jvm scripts/failure_modes.clj` (about 15 min).

@@ -3991,7 +3991,7 @@
    "result": "[[[\"NIL\"]]]",
    "expected": "[[[\"NIL\"]]]",
    "correct": true,
-   "seconds": 0.3
+   "seconds": 0.4
   },
   {
    "variant": "E4",
@@ -4001,7 +4001,7 @@
    "result": "[\"T\"]",
    "expected": "[\"T\"]",
    "correct": true,
-   "seconds": 0.9
+   "seconds": 1.5
   },
   {
    "variant": "E4",
@@ -4011,7 +4011,7 @@
    "result": "[\"F\"]",
    "expected": "[\"F\"]",
    "correct": true,
-   "seconds": 2.1
+   "seconds": 3.1
   },
   {
    "variant": "E4",
@@ -4021,7 +4021,7 @@
    "result": "[\"F\"]",
    "expected": "[\"F\"]",
    "correct": true,
-   "seconds": 0.2
+   "seconds": 0.3
   },
   {
    "variant": "E4",
@@ -4031,7 +4031,7 @@
    "result": "[[\"a\", \"b\"]]",
    "expected": "[[\"a\", \"b\"]]",
    "correct": true,
-   "seconds": 0.9
+   "seconds": 2.8
   },
   {
    "variant": "E4",
@@ -4040,7 +4040,7 @@
    "result": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
    "expected": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
    "correct": true,
-   "seconds": 0.0
+   "seconds": 0.1
   },
   {
    "variant": "E4",
@@ -4050,7 +4050,7 @@
    "result": "[[[\"NIL\"]]]",
    "expected": "[[[\"NIL\"]]]",
    "correct": true,
-   "seconds": 0.3
+   "seconds": 0.8
   },
   {
    "variant": "E4",
@@ -4060,7 +4060,7 @@
    "result": "[\"T\"]",
    "expected": "[\"T\"]",
    "correct": true,
-   "seconds": 0.9
+   "seconds": 2.5
   },
   {
    "variant": "E4",
@@ -4070,7 +4070,7 @@
    "result": "[\"F\"]",
    "expected": "[\"F\"]",
    "correct": true,
-   "seconds": 2.2
+   "seconds": 3.9
   },
   {
    "variant": "E4",
@@ -4080,7 +4080,7 @@
    "result": "[\"F\"]",
    "expected": "[\"F\"]",
    "correct": true,
-   "seconds": 0.2
+   "seconds": 0.3
   },
   {
    "variant": "E4",
@@ -4090,7 +4090,7 @@
    "result": "[[\"a\", \"b\"]]",
    "expected": "[[\"a\", \"b\"]]",
    "correct": true,
-   "seconds": 0.9
+   "seconds": 1.4
   },
   {
    "variant": "E4",
@@ -4099,7 +4099,7 @@
    "result": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
    "expected": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
    "correct": true,
-   "seconds": 0.0
+   "seconds": 0.1
   },
   {
    "variant": "E4",
@@ -4109,7 +4109,7 @@
    "result": "[[[\"NIL\"]]]",
    "expected": "[[[\"NIL\"]]]",
    "correct": true,
-   "seconds": 0.3
+   "seconds": 0.5
   },
   {
    "variant": "E4",
@@ -4119,7 +4119,7 @@
    "result": "[\"T\"]",
    "expected": "[\"T\"]",
    "correct": true,
-   "seconds": 0.9
+   "seconds": 2.4
   },
   {
    "variant": "E4",
@@ -4129,7 +4129,7 @@
    "result": "[\"F\"]",
    "expected": "[\"F\"]",
    "correct": true,
-   "seconds": 2.2
+   "seconds": 7.5
   },
   {
    "variant": "E4",
@@ -4139,7 +4139,7 @@
    "result": "[\"F\"]",
    "expected": "[\"F\"]",
    "correct": true,
-   "seconds": 0.2
+   "seconds": 0.5
   },
   {
    "variant": "E4",
@@ -4149,7 +4149,7 @@
    "result": "[[\"a\", \"b\"]]",
    "expected": "[[\"a\", \"b\"]]",
    "correct": true,
-   "seconds": 0.9
+   "seconds": 1.4
   },
   {
    "variant": "E4",
@@ -4158,7 +4158,7 @@
    "result": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
    "expected": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
    "correct": true,
-   "seconds": 0.0
+   "seconds": 0.1
   },
   {
    "variant": "E4",
@@ -4168,7 +4168,7 @@
    "result": "[[[\"NIL\"]]]",
    "expected": "[[[\"NIL\"]]]",
    "correct": true,
-   "seconds": 0.3
+   "seconds": 1.2
   },
   {
    "variant": "E4",
@@ -4177,77 +4177,77 @@
    "source": "(divisible (((NIL))) (((NIL))))",
    "result": "[\"T\"]",
    "expected": "[\"T\"]",
-   "correct": true,
-   "seconds": 0.9
-  },
-  {
-   "variant": "E4",
-   "seed": 3,
-   "program": "divisible 4 3",
-   "source": "(divisible ((((NIL)))) (((NIL))))",
-   "result": "[\"F\"]",
-   "expected": "[\"F\"]",
    "correct": true,
    "seconds": 2.2
   },
   {
    "variant": "E4",
    "seed": 3,
-   "program": "and T F",
-   "source": "(and T F)",
+   "program": "divisible 4 3",
+   "source": "(divisible ((((NIL)))) (((NIL))))",
    "result": "[\"F\"]",
    "expected": "[\"F\"]",
    "correct": true,
-   "seconds": 0.2
+   "seconds": 5.8
   },
   {
    "variant": "E4",
    "seed": 3,
-   "program": "take 2 (a b c)",
-   "source": "(take ((NIL)) (a b c))",
-   "result": "[[\"a\", \"b\"]]",
-   "expected": "[[\"a\", \"b\"]]",
-   "correct": true,
-   "seconds": 0.9
-  },
-  {
-   "variant": "E4",
-   "seed": 4,
-   "program": "their fizzbuzz DEFINEs",
-   "result": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
-   "expected": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
-   "correct": true,
-   "seconds": 0.0
-  },
-  {
-   "variant": "E4",
-   "seed": 4,
-   "program": "countdown 3 1",
-   "source": "(countdown (((NIL))) (NIL))",
-   "result": "[[[\"NIL\"]]]",
-   "expected": "[[[\"NIL\"]]]",
-   "correct": true,
-   "seconds": 0.3
-  },
-  {
-   "variant": "E4",
-   "seed": 4,
-   "program": "divisible 3 3",
-   "source": "(divisible (((NIL))) (((NIL))))",
-   "result": "[\"T\"]",
-   "expected": "[\"T\"]",
+   "program": "and T F",
+   "source": "(and T F)",
+   "result": "[\"F\"]",
+   "expected": "[\"F\"]",
    "correct": true,
    "seconds": 1.0
   },
   {
    "variant": "E4",
+   "seed": 3,
+   "program": "take 2 (a b c)",
+   "source": "(take ((NIL)) (a b c))",
+   "result": "[[\"a\", \"b\"]]",
+   "expected": "[[\"a\", \"b\"]]",
+   "correct": true,
+   "seconds": 2.0
+  },
+  {
+   "variant": "E4",
+   "seed": 4,
+   "program": "their fizzbuzz DEFINEs",
+   "result": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
+   "expected": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
+   "correct": true,
+   "seconds": 0.1
+  },
+  {
+   "variant": "E4",
+   "seed": 4,
+   "program": "countdown 3 1",
+   "source": "(countdown (((NIL))) (NIL))",
+   "result": "[[[\"NIL\"]]]",
+   "expected": "[[[\"NIL\"]]]",
+   "correct": true,
+   "seconds": 0.4
+  },
+  {
+   "variant": "E4",
+   "seed": 4,
+   "program": "divisible 3 3",
+   "source": "(divisible (((NIL))) (((NIL))))",
+   "result": "[\"T\"]",
+   "expected": "[\"T\"]",
+   "correct": true,
+   "seconds": 2.9
+  },
+  {
+   "variant": "E4",
    "seed": 4,
    "program": "divisible 4 3",
    "source": "(divisible ((((NIL)))) (((NIL))))",
    "result": "[\"F\"]",
    "expected": "[\"F\"]",
    "correct": true,
-   "seconds": 2.2
+   "seconds": 3.8
   },
   {
    "variant": "E4",
@@ -4257,7 +4257,7 @@
    "result": "[\"F\"]",
    "expected": "[\"F\"]",
    "correct": true,
-   "seconds": 0.2
+   "seconds": 0.3
   },
   {
    "variant": "E4",
@@ -4267,7 +4267,7 @@
    "result": "[[\"a\", \"b\"]]",
    "expected": "[[\"a\", \"b\"]]",
    "correct": true,
-   "seconds": 0.9
+   "seconds": 1.4
   },
   {
    "variant": "E1 + E4",
@@ -4276,7 +4276,7 @@
    "result": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
    "expected": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
    "correct": true,
-   "seconds": 0.0
+   "seconds": 0.1
   },
   {
    "variant": "E1 + E4",
@@ -4286,7 +4286,7 @@
    "result": "[[\"countdown\", \"divisible\", [\"countdown\", \"LAMBDA\", [\"x\", \"n\"]], [\"x\", \"n\"]]]",
    "expected": "[[[\"NIL\"]]]",
    "correct": false,
-   "seconds": 0.2
+   "seconds": 0.9
   },
   {
    "variant": "E1 + E4",
@@ -4296,7 +4296,7 @@
    "result": "[[\"divisible\", \"divisible\", [\"countdown\", \"LAMBDA\", [\"x\", \"n\"]], [\"x\", \"n\"]]]",
    "expected": "[\"T\"]",
    "correct": false,
-   "seconds": 0.2
+   "seconds": 1.3
   },
   {
    "variant": "E1 + E4",
@@ -4306,7 +4306,7 @@
    "result": "[[\"divisible\", \"divisible\", [\"countdown\", \"LAMBDA\", [\"x\", \"n\"]], [\"x\", \"n\"]]]",
    "expected": "[\"F\"]",
    "correct": false,
-   "seconds": 0.3
+   "seconds": 1.2
   },
   {
    "variant": "E1 + E4",
@@ -4316,7 +4316,7 @@
    "result": "[[\"and\", \"T\", \"F\"]]",
    "expected": "[\"F\"]",
    "correct": false,
-   "seconds": 0.0
+   "seconds": 0.1
   },
   {
    "variant": "E1 + E4",
@@ -4326,7 +4326,7 @@
    "result": "[[\"take\", \"LAMBDA\", [\"n\"], [[\"LAMBDA\", [\"xx\"], [\"COND\", [[\"EQ\", \"xx\", \"F\"], \"F\"], [[\"EQ\", \"xx\", \"NIL\"], \"NIL\", [\"a\", \"b\", \"c\"], \"n\"], [[\"NIL\", [\"a\", \"b\", \"c\"], \"n\"], \"divisible\", \"xx\", \"n\"]]], [\"countdown\", [\"a\", \"b\", \"c\"], \"n\"]]]]",
    "expected": "[[\"a\", \"b\"]]",
    "correct": false,
-   "seconds": 0.2
+   "seconds": 1.0
   },
   {
    "variant": "E1 + E4",
@@ -4335,7 +4335,7 @@
    "result": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
    "expected": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
    "correct": true,
-   "seconds": 0.0
+   "seconds": 0.1
   },
   {
    "variant": "E1 + E4",
@@ -4385,7 +4385,7 @@
    "result": "[[\"take\", [[\"T\"]], [\"a\", \"b\", \"c\"]]]",
    "expected": "[[\"a\", \"b\"]]",
    "correct": false,
-   "seconds": 0.0
+   "seconds": 0.2
   },
   {
    "variant": "E1 + E4",
@@ -4394,7 +4394,7 @@
    "result": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
    "expected": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
    "correct": true,
-   "seconds": 0.0
+   "seconds": 0.1
   },
   {
    "variant": "E1 + E4",
@@ -4414,7 +4414,7 @@
    "result": "[[\"divisible\", \"F\"]]",
    "expected": "[\"T\"]",
    "correct": false,
-   "seconds": 0.1
+   "seconds": 0.2
   },
   {
    "variant": "E1 + E4",
@@ -4424,7 +4424,7 @@
    "result": "[[\"divisible\", \"F\"]]",
    "expected": "[\"F\"]",
    "correct": false,
-   "seconds": 0.1
+   "seconds": 0.2
   },
   {
    "variant": "E1 + E4",
@@ -4444,7 +4444,7 @@
    "result": "[[\"take\", \"LAMBDA\", [\"b\"], [\"COND\", [[\"EQ\", [\"a\", \"b\", \"c\"], \"T\"], \"COND\", [[\"EQ\", \"b\", \"T\"], \"T\"], [\"T\", \"F\"]], [\"T\", \"F\"]]]]",
    "expected": "[[\"a\", \"b\"]]",
    "correct": false,
-   "seconds": 0.1
+   "seconds": 0.2
   },
   {
    "variant": "E1 + E4",
@@ -4453,7 +4453,7 @@
    "result": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
    "expected": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
    "correct": true,
-   "seconds": 0.0
+   "seconds": 0.1
   },
   {
    "variant": "E1 + E4",
@@ -4473,7 +4473,7 @@
    "result": "[[\"divisible\", [\"fb\", \"LAMBDA\"], \"fizzesbuzzes\", \"LAMBDA\", [\"n\"], [\"COND\", [[\"EQ\", \"n\", [\"NIL\"]], [\"NIL\"]], [\"T\", [\"fb\", \"n\"], \"fizzesbuzzes\", [\"CAR\", \"n\"]]]]]",
    "expected": "[\"T\"]",
    "correct": false,
-   "seconds": 0.1
+   "seconds": 0.2
   },
   {
    "variant": "E1 + E4",
@@ -4483,7 +4483,7 @@
    "result": "[[\"divisible\", [\"fb\", \"LAMBDA\"], \"fizzesbuzzes\", \"LAMBDA\", [\"n\"], [\"COND\", [[\"EQ\", \"n\", [\"NIL\"]], [\"NIL\"]], [\"T\", [\"fb\", \"n\"], \"fizzesbuzzes\", [\"CAR\", \"n\"]]]]]",
    "expected": "[\"F\"]",
    "correct": false,
-   "seconds": 0.1
+   "seconds": 0.2
   },
   {
    "variant": "E1 + E4",
@@ -4503,7 +4503,7 @@
    "result": "[[\"take\", [\"fb\", [\"a\", \"b\", \"c\"]], \"fizzesbuzzes\", \"a\"]]",
    "expected": "[[\"a\", \"b\"]]",
    "correct": false,
-   "seconds": 0.1
+   "seconds": 0.2
   },
   {
    "variant": "E1 + E4",
@@ -4512,7 +4512,7 @@
    "result": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
    "expected": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
    "correct": true,
-   "seconds": 0.0
+   "seconds": 0.1
   },
   {
    "variant": "E1 + E4",
@@ -4532,7 +4532,7 @@
    "result": "[[\"divisible\", [\"fb\", \"LAMBDA\"], \"fizzesbuzzes\", \"LAMBDA\", [\"n\"], [\"COND\", [[\"EQ\", \"n\", [\"NIL\"]], [\"NIL\"]], [\"T\", [\"fb\", \"n\"], \"fizzesbuzzes\", [\"CAR\", \"n\"]]]]]",
    "expected": "[\"T\"]",
    "correct": false,
-   "seconds": 0.1
+   "seconds": 0.6
   },
   {
    "variant": "E1 + E4",
@@ -4542,7 +4542,7 @@
    "result": "[[\"divisible\", [\"fb\", \"LAMBDA\"], \"fizzesbuzzes\", \"LAMBDA\", [\"n\"], [\"COND\", [[\"EQ\", \"n\", [\"NIL\"]], [\"NIL\"]], [\"T\", [\"fb\", \"n\"], \"fizzesbuzzes\", [\"CAR\", \"n\"]]]]]",
    "expected": "[\"F\"]",
    "correct": false,
-   "seconds": 0.1
+   "seconds": 0.4
   },
   {
    "variant": "E1 + E4",
@@ -4562,26 +4562,26 @@
    "result": "[[\"take\", [\"fb\", [\"a\", \"b\", \"c\"]], \"fizzesbuzzes\", \"a\"]]",
    "expected": "[[\"a\", \"b\"]]",
    "correct": false,
+   "seconds": 0.3
+  },
+  {
+   "variant": "E1 admitting cells + E4",
+   "seed": 0,
+   "program": "their fizzbuzz DEFINEs",
+   "result": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
+   "expected": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
+   "correct": true,
    "seconds": 0.1
   },
   {
    "variant": "E1 admitting cells + E4",
    "seed": 0,
-   "program": "their fizzbuzz DEFINEs",
-   "result": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
-   "expected": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
-   "correct": true,
-   "seconds": 0.0
-  },
-  {
-   "variant": "E1 admitting cells + E4",
-   "seed": 0,
    "program": "countdown 3 1",
    "source": "(countdown (((NIL))) (NIL))",
    "result": "[[[\"NIL\"]]]",
    "expected": "[[[\"NIL\"]]]",
    "correct": true,
-   "seconds": 0.3
+   "seconds": 0.7
   },
   {
    "variant": "E1 admitting cells + E4",
@@ -4591,7 +4591,7 @@
    "result": "[\"T\"]",
    "expected": "[\"T\"]",
    "correct": true,
-   "seconds": 0.8
+   "seconds": 1.6
   },
   {
    "variant": "E1 admitting cells + E4",
@@ -4601,7 +4601,7 @@
    "result": "[\"F\"]",
    "expected": "[\"F\"]",
    "correct": true,
-   "seconds": 2.0
+   "seconds": 3.2
   },
   {
    "variant": "E1 admitting cells + E4",
@@ -4611,7 +4611,7 @@
    "result": "[\"F\"]",
    "expected": "[\"F\"]",
    "correct": true,
-   "seconds": 0.2
+   "seconds": 0.4
   },
   {
    "variant": "E1 admitting cells + E4",
@@ -4621,7 +4621,7 @@
    "result": "[[\"a\", \"b\"]]",
    "expected": "[[\"a\", \"b\"]]",
    "correct": true,
-   "seconds": 0.8
+   "seconds": 2.3
   },
   {
    "variant": "E1 admitting cells + E4",
@@ -4630,7 +4630,7 @@
    "result": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
    "expected": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
    "correct": true,
-   "seconds": 0.0
+   "seconds": 0.1
   },
   {
    "variant": "E1 admitting cells + E4",
@@ -4670,7 +4670,7 @@
    "result": "[\"F\"]",
    "expected": "[\"F\"]",
    "correct": true,
-   "seconds": 1.2
+   "seconds": 1.7
   },
   {
    "variant": "E1 admitting cells + E4",
@@ -4689,7 +4689,7 @@
    "result": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
    "expected": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
    "correct": true,
-   "seconds": 0.0
+   "seconds": 0.1
   },
   {
    "variant": "E1 admitting cells + E4",
@@ -4699,7 +4699,7 @@
    "result": "[[[\"NIL\"]]]",
    "expected": "[[[\"NIL\"]]]",
    "correct": true,
-   "seconds": 0.3
+   "seconds": 1.8
   },
   {
    "variant": "E1 admitting cells + E4",
@@ -4708,207 +4708,207 @@
    "source": "(divisible (((NIL))) (((NIL))))",
    "result": "[\"T\"]",
    "expected": "[\"T\"]",
+   "correct": true,
+   "seconds": 2.4
+  },
+  {
+   "variant": "E1 admitting cells + E4",
+   "seed": 2,
+   "program": "divisible 4 3",
+   "source": "(divisible ((((NIL)))) (((NIL))))",
+   "result": "[\"F\"]",
+   "expected": "[\"F\"]",
+   "correct": true,
+   "seconds": 3.8
+  },
+  {
+   "variant": "E1 admitting cells + E4",
+   "seed": 2,
+   "program": "and T F",
+   "source": "(and T F)",
+   "result": "[\"F\"]",
+   "expected": "[\"F\"]",
    "correct": true,
    "seconds": 0.9
   },
   {
    "variant": "E1 admitting cells + E4",
    "seed": 2,
-   "program": "divisible 4 3",
-   "source": "(divisible ((((NIL)))) (((NIL))))",
-   "result": "[\"F\"]",
-   "expected": "[\"F\"]",
-   "correct": true,
-   "seconds": 2.0
-  },
-  {
-   "variant": "E1 admitting cells + E4",
-   "seed": 2,
-   "program": "and T F",
-   "source": "(and T F)",
-   "result": "[\"F\"]",
-   "expected": "[\"F\"]",
-   "correct": true,
-   "seconds": 0.2
-  },
-  {
-   "variant": "E1 admitting cells + E4",
-   "seed": 2,
    "program": "take 2 (a b c)",
    "source": "(take ((NIL)) (a b c))",
    "result": "[[\"a\", \"b\"]]",
    "expected": "[[\"a\", \"b\"]]",
    "correct": true,
-   "seconds": 0.8
-  },
-  {
-   "variant": "E1 admitting cells + E4",
-   "seed": 3,
-   "program": "their fizzbuzz DEFINEs",
-   "result": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
-   "expected": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
-   "correct": true,
-   "seconds": 0.0
-  },
-  {
-   "variant": "E1 admitting cells + E4",
-   "seed": 3,
-   "program": "countdown 3 1",
-   "source": "(countdown (((NIL))) (NIL))",
-   "result": "[[[\"NIL\"]]]",
-   "expected": "[[[\"NIL\"]]]",
-   "correct": true,
-   "seconds": 0.3
-  },
-  {
-   "variant": "E1 admitting cells + E4",
-   "seed": 3,
-   "program": "divisible 3 3",
-   "source": "(divisible (((NIL))) (((NIL))))",
-   "result": "[\"T\"]",
-   "expected": "[\"T\"]",
-   "correct": true,
-   "seconds": 0.9
-  },
-  {
-   "variant": "E1 admitting cells + E4",
-   "seed": 3,
-   "program": "divisible 4 3",
-   "source": "(divisible ((((NIL)))) (((NIL))))",
-   "result": "[\"F\"]",
-   "expected": "[\"F\"]",
-   "correct": true,
-   "seconds": 2.0
-  },
-  {
-   "variant": "E1 admitting cells + E4",
-   "seed": 3,
-   "program": "and T F",
-   "source": "(and T F)",
-   "result": "[\"F\"]",
-   "expected": "[\"F\"]",
-   "correct": true,
-   "seconds": 0.2
-  },
-  {
-   "variant": "E1 admitting cells + E4",
-   "seed": 3,
-   "program": "take 2 (a b c)",
-   "source": "(take ((NIL)) (a b c))",
-   "result": "[[\"a\", \"b\"]]",
-   "expected": "[[\"a\", \"b\"]]",
-   "correct": true,
-   "seconds": 0.8
-  },
-  {
-   "variant": "E1 admitting cells + E4",
-   "seed": 4,
-   "program": "their fizzbuzz DEFINEs",
-   "result": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
-   "expected": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
-   "correct": true,
-   "seconds": 0.0
-  },
-  {
-   "variant": "E1 admitting cells + E4",
-   "seed": 4,
-   "program": "countdown 3 1",
-   "source": "(countdown (((NIL))) (NIL))",
-   "result": "[[[\"NIL\"]]]",
-   "expected": "[[[\"NIL\"]]]",
-   "correct": true,
-   "seconds": 0.3
-  },
-  {
-   "variant": "E1 admitting cells + E4",
-   "seed": 4,
-   "program": "divisible 3 3",
-   "source": "(divisible (((NIL))) (((NIL))))",
-   "result": "[\"T\"]",
-   "expected": "[\"T\"]",
-   "correct": true,
-   "seconds": 0.9
-  },
-  {
-   "variant": "E1 admitting cells + E4",
-   "seed": 4,
-   "program": "divisible 4 3",
-   "source": "(divisible ((((NIL)))) (((NIL))))",
-   "result": "[\"F\"]",
-   "expected": "[\"F\"]",
-   "correct": true,
-   "seconds": 2.0
-  },
-  {
-   "variant": "E1 admitting cells + E4",
-   "seed": 4,
-   "program": "and T F",
-   "source": "(and T F)",
-   "result": "[\"F\"]",
-   "expected": "[\"F\"]",
-   "correct": true,
-   "seconds": 0.2
-  },
-  {
-   "variant": "E1 admitting cells + E4",
-   "seed": 4,
-   "program": "take 2 (a b c)",
-   "source": "(take ((NIL)) (a b c))",
-   "result": "[[\"a\", \"b\"]]",
-   "expected": "[[\"a\", \"b\"]]",
-   "correct": true,
-   "seconds": 0.8
-  },
-  {
-   "variant": "E2 + unwrap QUOTE + E4",
-   "seed": 0,
-   "program": "their fizzbuzz DEFINEs",
-   "result": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
-   "expected": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
-   "correct": true,
-   "seconds": 0.0
-  },
-  {
-   "variant": "E2 + unwrap QUOTE + E4",
-   "seed": 0,
-   "program": "countdown 3 1",
-   "source": "(countdown (((NIL))) (NIL))",
-   "result": "[[[\"NIL\"]]]",
-   "expected": "[[[\"NIL\"]]]",
-   "correct": true,
-   "seconds": 0.3
-  },
-  {
-   "variant": "E2 + unwrap QUOTE + E4",
-   "seed": 0,
-   "program": "divisible 3 3",
-   "source": "(divisible (((NIL))) (((NIL))))",
-   "result": "RecursionError",
-   "expected": "[\"T\"]",
-   "correct": false,
-   "seconds": 2.5
-  },
-  {
-   "variant": "E2 + unwrap QUOTE + E4",
-   "seed": 0,
-   "program": "divisible 4 3",
-   "source": "(divisible ((((NIL)))) (((NIL))))",
-   "result": "RecursionError",
-   "expected": "[\"F\"]",
-   "correct": false,
-   "seconds": 1.9
-  },
-  {
-   "variant": "E2 + unwrap QUOTE + E4",
-   "seed": 0,
-   "program": "and T F",
-   "source": "(and T F)",
-   "result": "RecursionError",
-   "expected": "[\"F\"]",
-   "correct": false,
    "seconds": 2.1
   },
   {
+   "variant": "E1 admitting cells + E4",
+   "seed": 3,
+   "program": "their fizzbuzz DEFINEs",
+   "result": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
+   "expected": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
+   "correct": true,
+   "seconds": 0.1
+  },
+  {
+   "variant": "E1 admitting cells + E4",
+   "seed": 3,
+   "program": "countdown 3 1",
+   "source": "(countdown (((NIL))) (NIL))",
+   "result": "[[[\"NIL\"]]]",
+   "expected": "[[[\"NIL\"]]]",
+   "correct": true,
+   "seconds": 0.3
+  },
+  {
+   "variant": "E1 admitting cells + E4",
+   "seed": 3,
+   "program": "divisible 3 3",
+   "source": "(divisible (((NIL))) (((NIL))))",
+   "result": "[\"T\"]",
+   "expected": "[\"T\"]",
+   "correct": true,
+   "seconds": 2.0
+  },
+  {
+   "variant": "E1 admitting cells + E4",
+   "seed": 3,
+   "program": "divisible 4 3",
+   "source": "(divisible ((((NIL)))) (((NIL))))",
+   "result": "[\"F\"]",
+   "expected": "[\"F\"]",
+   "correct": true,
+   "seconds": 3.7
+  },
+  {
+   "variant": "E1 admitting cells + E4",
+   "seed": 3,
+   "program": "and T F",
+   "source": "(and T F)",
+   "result": "[\"F\"]",
+   "expected": "[\"F\"]",
+   "correct": true,
+   "seconds": 0.2
+  },
+  {
+   "variant": "E1 admitting cells + E4",
+   "seed": 3,
+   "program": "take 2 (a b c)",
+   "source": "(take ((NIL)) (a b c))",
+   "result": "[[\"a\", \"b\"]]",
+   "expected": "[[\"a\", \"b\"]]",
+   "correct": true,
+   "seconds": 2.3
+  },
+  {
+   "variant": "E1 admitting cells + E4",
+   "seed": 4,
+   "program": "their fizzbuzz DEFINEs",
+   "result": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
+   "expected": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
+   "correct": true,
+   "seconds": 0.1
+  },
+  {
+   "variant": "E1 admitting cells + E4",
+   "seed": 4,
+   "program": "countdown 3 1",
+   "source": "(countdown (((NIL))) (NIL))",
+   "result": "[[[\"NIL\"]]]",
+   "expected": "[[[\"NIL\"]]]",
+   "correct": true,
+   "seconds": 0.4
+  },
+  {
+   "variant": "E1 admitting cells + E4",
+   "seed": 4,
+   "program": "divisible 3 3",
+   "source": "(divisible (((NIL))) (((NIL))))",
+   "result": "[\"T\"]",
+   "expected": "[\"T\"]",
+   "correct": true,
+   "seconds": 1.3
+  },
+  {
+   "variant": "E1 admitting cells + E4",
+   "seed": 4,
+   "program": "divisible 4 3",
+   "source": "(divisible ((((NIL)))) (((NIL))))",
+   "result": "[\"F\"]",
+   "expected": "[\"F\"]",
+   "correct": true,
+   "seconds": 3.6
+  },
+  {
+   "variant": "E1 admitting cells + E4",
+   "seed": 4,
+   "program": "and T F",
+   "source": "(and T F)",
+   "result": "[\"F\"]",
+   "expected": "[\"F\"]",
+   "correct": true,
+   "seconds": 0.5
+  },
+  {
+   "variant": "E1 admitting cells + E4",
+   "seed": 4,
+   "program": "take 2 (a b c)",
+   "source": "(take ((NIL)) (a b c))",
+   "result": "[[\"a\", \"b\"]]",
+   "expected": "[[\"a\", \"b\"]]",
+   "correct": true,
+   "seconds": 1.4
+  },
+  {
+   "variant": "E2 + unwrap QUOTE + E4",
+   "seed": 0,
+   "program": "their fizzbuzz DEFINEs",
+   "result": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
+   "expected": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
+   "correct": true,
+   "seconds": 0.1
+  },
+  {
+   "variant": "E2 + unwrap QUOTE + E4",
+   "seed": 0,
+   "program": "countdown 3 1",
+   "source": "(countdown (((NIL))) (NIL))",
+   "result": "[[[\"NIL\"]]]",
+   "expected": "[[[\"NIL\"]]]",
+   "correct": true,
+   "seconds": 0.4
+  },
+  {
+   "variant": "E2 + unwrap QUOTE + E4",
+   "seed": 0,
+   "program": "divisible 3 3",
+   "source": "(divisible (((NIL))) (((NIL))))",
+   "result": "RecursionError",
+   "expected": "[\"T\"]",
+   "correct": false,
+   "seconds": 5.5
+  },
+  {
+   "variant": "E2 + unwrap QUOTE + E4",
+   "seed": 0,
+   "program": "divisible 4 3",
+   "source": "(divisible ((((NIL)))) (((NIL))))",
+   "result": "RecursionError",
+   "expected": "[\"F\"]",
+   "correct": false,
+   "seconds": 3.8
+  },
+  {
+   "variant": "E2 + unwrap QUOTE + E4",
+   "seed": 0,
+   "program": "and T F",
+   "source": "(and T F)",
+   "result": "RecursionError",
+   "expected": "[\"F\"]",
+   "correct": false,
+   "seconds": 3.3
+  },
+  {
    "variant": "E2 + unwrap QUOTE + E4",
    "seed": 0,
    "program": "take 2 (a b c)",
@@ -4916,7 +4916,7 @@
    "result": "RecursionError",
    "expected": "[[\"a\", \"b\"]]",
    "correct": false,
-   "seconds": 2.2
+   "seconds": 5.0
   },
   {
    "variant": "E2 + unwrap QUOTE + E4",
@@ -4925,7 +4925,7 @@
    "result": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
    "expected": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
    "correct": true,
-   "seconds": 0.0
+   "seconds": 0.1
   },
   {
    "variant": "E2 + unwrap QUOTE + E4",
@@ -4935,7 +4935,7 @@
    "result": "[[[\"NIL\"]]]",
    "expected": "[[[\"NIL\"]]]",
    "correct": true,
-   "seconds": 0.3
+   "seconds": 0.4
   },
   {
    "variant": "E2 + unwrap QUOTE + E4",
@@ -4945,7 +4945,7 @@
    "result": "[\"T\"]",
    "expected": "[\"T\"]",
    "correct": true,
-   "seconds": 1.0
+   "seconds": 8.3
   },
   {
    "variant": "E2 + unwrap QUOTE + E4",
@@ -4954,185 +4954,185 @@
    "source": "(divisible ((((NIL)))) (((NIL))))",
    "result": "[\"F\"]",
    "expected": "[\"F\"]",
+   "correct": true,
+   "seconds": 18.9
+  },
+  {
+   "variant": "E2 + unwrap QUOTE + E4",
+   "seed": 1,
+   "program": "and T F",
+   "source": "(and T F)",
+   "result": "[\"F\"]",
+   "expected": "[\"F\"]",
+   "correct": true,
+   "seconds": 1.4
+  },
+  {
+   "variant": "E2 + unwrap QUOTE + E4",
+   "seed": 1,
+   "program": "take 2 (a b c)",
+   "source": "(take ((NIL)) (a b c))",
+   "result": "[[\"a\", \"b\"]]",
+   "expected": "[[\"a\", \"b\"]]",
+   "correct": true,
+   "seconds": 6.9
+  },
+  {
+   "variant": "E2 + unwrap QUOTE + E4",
+   "seed": 2,
+   "program": "their fizzbuzz DEFINEs",
+   "result": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
+   "expected": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
+   "correct": true,
+   "seconds": 0.1
+  },
+  {
+   "variant": "E2 + unwrap QUOTE + E4",
+   "seed": 2,
+   "program": "countdown 3 1",
+   "source": "(countdown (((NIL))) (NIL))",
+   "result": "[[[\"NIL\"]]]",
+   "expected": "[[[\"NIL\"]]]",
+   "correct": true,
+   "seconds": 1.7
+  },
+  {
+   "variant": "E2 + unwrap QUOTE + E4",
+   "seed": 2,
+   "program": "divisible 3 3",
+   "source": "(divisible (((NIL))) (((NIL))))",
+   "result": "[\"T\"]",
+   "expected": "[\"T\"]",
+   "correct": true,
+   "seconds": 5.9
+  },
+  {
+   "variant": "E2 + unwrap QUOTE + E4",
+   "seed": 2,
+   "program": "divisible 4 3",
+   "source": "(divisible ((((NIL)))) (((NIL))))",
+   "result": "[\"F\"]",
+   "expected": "[\"F\"]",
+   "correct": true,
+   "seconds": 13.3
+  },
+  {
+   "variant": "E2 + unwrap QUOTE + E4",
+   "seed": 2,
+   "program": "and T F",
+   "source": "(and T F)",
+   "result": "[\"F\"]",
+   "expected": "[\"F\"]",
+   "correct": true,
+   "seconds": 1.5
+  },
+  {
+   "variant": "E2 + unwrap QUOTE + E4",
+   "seed": 2,
+   "program": "take 2 (a b c)",
+   "source": "(take ((NIL)) (a b c))",
+   "result": "[[\"a\", \"b\"]]",
+   "expected": "[[\"a\", \"b\"]]",
+   "correct": true,
+   "seconds": 6.1
+  },
+  {
+   "variant": "E2 + unwrap QUOTE + E4",
+   "seed": 3,
+   "program": "their fizzbuzz DEFINEs",
+   "result": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
+   "expected": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
+   "correct": true,
+   "seconds": 0.1
+  },
+  {
+   "variant": "E2 + unwrap QUOTE + E4",
+   "seed": 3,
+   "program": "countdown 3 1",
+   "source": "(countdown (((NIL))) (NIL))",
+   "result": "[[[\"NIL\"]]]",
+   "expected": "[[[\"NIL\"]]]",
+   "correct": true,
+   "seconds": 1.8
+  },
+  {
+   "variant": "E2 + unwrap QUOTE + E4",
+   "seed": 3,
+   "program": "divisible 3 3",
+   "source": "(divisible (((NIL))) (((NIL))))",
+   "result": "[\"T\"]",
+   "expected": "[\"T\"]",
+   "correct": true,
+   "seconds": 13.3
+  },
+  {
+   "variant": "E2 + unwrap QUOTE + E4",
+   "seed": 3,
+   "program": "divisible 4 3",
+   "source": "(divisible ((((NIL)))) (((NIL))))",
+   "result": "[\"F\"]",
+   "expected": "[\"F\"]",
+   "correct": true,
+   "seconds": 12.2
+  },
+  {
+   "variant": "E2 + unwrap QUOTE + E4",
+   "seed": 3,
+   "program": "and T F",
+   "source": "(and T F)",
+   "result": "[\"F\"]",
+   "expected": "[\"F\"]",
+   "correct": true,
+   "seconds": 0.3
+  },
+  {
+   "variant": "E2 + unwrap QUOTE + E4",
+   "seed": 3,
+   "program": "take 2 (a b c)",
+   "source": "(take ((NIL)) (a b c))",
+   "result": "[[\"a\", \"b\"]]",
+   "expected": "[[\"a\", \"b\"]]",
+   "correct": true,
+   "seconds": 4.6
+  },
+  {
+   "variant": "E2 + unwrap QUOTE + E4",
+   "seed": 4,
+   "program": "their fizzbuzz DEFINEs",
+   "result": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
+   "expected": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
+   "correct": true,
+   "seconds": 0.1
+  },
+  {
+   "variant": "E2 + unwrap QUOTE + E4",
+   "seed": 4,
+   "program": "countdown 3 1",
+   "source": "(countdown (((NIL))) (NIL))",
+   "result": "[[[\"NIL\"]]]",
+   "expected": "[[[\"NIL\"]]]",
+   "correct": true,
+   "seconds": 1.7
+  },
+  {
+   "variant": "E2 + unwrap QUOTE + E4",
+   "seed": 4,
+   "program": "divisible 3 3",
+   "source": "(divisible (((NIL))) (((NIL))))",
+   "result": "[\"T\"]",
+   "expected": "[\"T\"]",
    "correct": true,
    "seconds": 2.3
   },
   {
    "variant": "E2 + unwrap QUOTE + E4",
-   "seed": 1,
-   "program": "and T F",
-   "source": "(and T F)",
-   "result": "[\"F\"]",
-   "expected": "[\"F\"]",
-   "correct": true,
-   "seconds": 0.2
-  },
-  {
-   "variant": "E2 + unwrap QUOTE + E4",
-   "seed": 1,
-   "program": "take 2 (a b c)",
-   "source": "(take ((NIL)) (a b c))",
-   "result": "[[\"a\", \"b\"]]",
-   "expected": "[[\"a\", \"b\"]]",
-   "correct": true,
-   "seconds": 1.0
-  },
-  {
-   "variant": "E2 + unwrap QUOTE + E4",
-   "seed": 2,
-   "program": "their fizzbuzz DEFINEs",
-   "result": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
-   "expected": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
-   "correct": true,
-   "seconds": 0.0
-  },
-  {
-   "variant": "E2 + unwrap QUOTE + E4",
-   "seed": 2,
-   "program": "countdown 3 1",
-   "source": "(countdown (((NIL))) (NIL))",
-   "result": "[[[\"NIL\"]]]",
-   "expected": "[[[\"NIL\"]]]",
-   "correct": true,
-   "seconds": 0.3
-  },
-  {
-   "variant": "E2 + unwrap QUOTE + E4",
-   "seed": 2,
-   "program": "divisible 3 3",
-   "source": "(divisible (((NIL))) (((NIL))))",
-   "result": "[\"T\"]",
-   "expected": "[\"T\"]",
-   "correct": true,
-   "seconds": 1.0
-  },
-  {
-   "variant": "E2 + unwrap QUOTE + E4",
-   "seed": 2,
-   "program": "divisible 4 3",
-   "source": "(divisible ((((NIL)))) (((NIL))))",
-   "result": "[\"F\"]",
-   "expected": "[\"F\"]",
-   "correct": true,
-   "seconds": 2.3
-  },
-  {
-   "variant": "E2 + unwrap QUOTE + E4",
-   "seed": 2,
-   "program": "and T F",
-   "source": "(and T F)",
-   "result": "[\"F\"]",
-   "expected": "[\"F\"]",
-   "correct": true,
-   "seconds": 0.2
-  },
-  {
-   "variant": "E2 + unwrap QUOTE + E4",
-   "seed": 2,
-   "program": "take 2 (a b c)",
-   "source": "(take ((NIL)) (a b c))",
-   "result": "[[\"a\", \"b\"]]",
-   "expected": "[[\"a\", \"b\"]]",
-   "correct": true,
-   "seconds": 1.0
-  },
-  {
-   "variant": "E2 + unwrap QUOTE + E4",
-   "seed": 3,
-   "program": "their fizzbuzz DEFINEs",
-   "result": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
-   "expected": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
-   "correct": true,
-   "seconds": 0.0
-  },
-  {
-   "variant": "E2 + unwrap QUOTE + E4",
-   "seed": 3,
-   "program": "countdown 3 1",
-   "source": "(countdown (((NIL))) (NIL))",
-   "result": "[[[\"NIL\"]]]",
-   "expected": "[[[\"NIL\"]]]",
-   "correct": true,
-   "seconds": 0.3
-  },
-  {
-   "variant": "E2 + unwrap QUOTE + E4",
-   "seed": 3,
-   "program": "divisible 3 3",
-   "source": "(divisible (((NIL))) (((NIL))))",
-   "result": "[\"T\"]",
-   "expected": "[\"T\"]",
-   "correct": true,
-   "seconds": 1.0
-  },
-  {
-   "variant": "E2 + unwrap QUOTE + E4",
-   "seed": 3,
-   "program": "divisible 4 3",
-   "source": "(divisible ((((NIL)))) (((NIL))))",
-   "result": "[\"F\"]",
-   "expected": "[\"F\"]",
-   "correct": true,
-   "seconds": 2.4
-  },
-  {
-   "variant": "E2 + unwrap QUOTE + E4",
-   "seed": 3,
-   "program": "and T F",
-   "source": "(and T F)",
-   "result": "[\"F\"]",
-   "expected": "[\"F\"]",
-   "correct": true,
-   "seconds": 0.2
-  },
-  {
-   "variant": "E2 + unwrap QUOTE + E4",
-   "seed": 3,
-   "program": "take 2 (a b c)",
-   "source": "(take ((NIL)) (a b c))",
-   "result": "[[\"a\", \"b\"]]",
-   "expected": "[[\"a\", \"b\"]]",
-   "correct": true,
-   "seconds": 1.0
-  },
-  {
-   "variant": "E2 + unwrap QUOTE + E4",
-   "seed": 4,
-   "program": "their fizzbuzz DEFINEs",
-   "result": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
-   "expected": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
-   "correct": true,
-   "seconds": 0.0
-  },
-  {
-   "variant": "E2 + unwrap QUOTE + E4",
-   "seed": 4,
-   "program": "countdown 3 1",
-   "source": "(countdown (((NIL))) (NIL))",
-   "result": "[[[\"NIL\"]]]",
-   "expected": "[[[\"NIL\"]]]",
-   "correct": true,
-   "seconds": 0.3
-  },
-  {
-   "variant": "E2 + unwrap QUOTE + E4",
-   "seed": 4,
-   "program": "divisible 3 3",
-   "source": "(divisible (((NIL))) (((NIL))))",
-   "result": "[\"T\"]",
-   "expected": "[\"T\"]",
-   "correct": true,
-   "seconds": 1.0
-  },
-  {
-   "variant": "E2 + unwrap QUOTE + E4",
    "seed": 4,
    "program": "divisible 4 3",
    "source": "(divisible ((((NIL)))) (((NIL))))",
    "result": "[\"F\"]",
    "expected": "[\"F\"]",
    "correct": true,
-   "seconds": 2.4
+   "seconds": 3.4
   },
   {
    "variant": "E2 + unwrap QUOTE + E4",
@@ -5142,7 +5142,7 @@
    "result": "[\"F\"]",
    "expected": "[\"F\"]",
    "correct": true,
-   "seconds": 0.2
+   "seconds": 0.3
   },
   {
    "variant": "E2 + unwrap QUOTE + E4",
@@ -5152,7 +5152,7 @@
    "result": "[[\"a\", \"b\"]]",
    "expected": "[[\"a\", \"b\"]]",
    "correct": true,
-   "seconds": 1.0
+   "seconds": 1.3
   }
  ]
 }

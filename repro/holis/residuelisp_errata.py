@@ -4,9 +4,9 @@ R1  Every integer carries the same tag: int(x) = zeta(x) + __int (their
     encode_rhc_integer, eq. 11 of the paper). eq? on atoms is
     |sim(x, y)| > 0.2 with their unnormalised FHRR similarity, so any two
     integers are eq?: the tag alone contributes sim(__int, __int) = 1.
-    This is our 4.6 (a shared field makes unrelated values similar).
+    This is my trap 4 (a shared field makes unrelated values similar).
     Their test oracle for arithmetic, equals(result, encode(expected)),
-    inherits it: we evaluate (+ 5 5) and compare it with 7.
+    inherits it: I evaluate (+ 5 5) and compare it with 7.
 R2  _and_ tests its left argument twice and never the right one:
     (and #t #f) -> #t. Structural eq? on lists combines car and cdr with
     _and_, so it compares only the cars.

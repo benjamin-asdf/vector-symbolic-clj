@@ -1,8 +1,9 @@
 """Test the suggested fixes for holis's errata 4.2, E2, E3 and E4, noise-free.
 
 Each fix is a runtime patch of a fresh environment (or of one class method);
-the notebook stays untouched and none of its code is copied. For each fix
-we run
+the notebook stays untouched and none of its code is copied: the E3 and
+E4 fixes wrap their functions. For each fix
+I run
   (a) the erratum's minimal programs, with and without the fix;
   (b) the noise-free small control programs of holis_control.py with the
       fix applied (regression), and their fizzbuzz helpers (D = 512, seeds
@@ -16,7 +17,7 @@ a non-pointer: the function memory holds cell bundles, not pointers.
 
 The fixes, as suggested in the notebook's "Errata for the authors":
   4.2  keep the roles lhs, rhs, φ out of the lexicon and the item memory.
-       vsa_env draws them as before; we then delete them from env['lex']
+       vsa_env draws them as before; I then delete them from env['lex']
        and their rows from mem. The state is the one the suggested
        `reserved` change gives: the same random draws, the roles only in
        env[...].
@@ -49,13 +50,13 @@ SEEDS = range(5)
 DIMS = (512, 2048)
 COMMUTE_SEEDS = range(40)          # as holis_commute.py
 COMMUTE_DIMS = (512, 2048, 8192)
-CALL_LIMIT = 60                    # seconds per fizzbuzz call (with E4 each takes < 3 s)
+CALL_LIMIT = 60                    # seconds per fizzbuzz call (with E4 each takes a few seconds)
 FIZZ_SEEDS = range(5)
 MAX_CELLS = 300                    # budget per small program (their memory grows as cells²)
 
 
 def read_list(script, name):
-    """A literal list assigned in one of our scripts, read without running it."""
+    """A literal list assigned in one of my scripts, read without running it."""
     tree = ast.parse(open(os.path.join(HERE, script)).read())
     for node in tree.body:
         if isinstance(node, ast.Assign) and getattr(node.targets[0], "id", None) == name:
@@ -184,12 +185,17 @@ def fix_e3_remove(env):
 
 
 def fix_e3_keep(env):
-    car, cdr, mem, ll = C.inner(env, "car"), C.inner(env, "cdr"), env["mem"], find(env, "ll")
+    """Their LABEL, called without the evaluator's `ind` argument and with
+    the item memory's memorize taking one argument, as it does."""
+    theirs, mem = env["LABEL"], env["mem"]
 
     def label(lbl_exp, ind=""):
-        lbl, exp = car(lbl_exp), car(cdr(lbl_exp))
-        mem.memorize(lbl)
-        return ll(lbl, exp, exp)
+        one = mem.memorize
+        mem.memorize = lambda hrr, *rest: one(hrr)
+        try:
+            return theirs(lbl_exp)
+        finally:
+            del mem.memorize
     env["LABEL"] = label
 
 
@@ -209,13 +215,12 @@ _ORIG_MEMORIZE = H.SimpleCleanUp.memorize
 
 
 def memorize_e4(self, hrr):
-    """E4: their memorize, plus raising m when the matrix grows."""
-    if self.i >= self.m:
-        self.M = np.concatenate([self.M, np.zeros((self.k, self.n))], axis=0)
+    """E4: their memorize, then raising m when it grew the matrix."""
+    grows = self.i >= self.m
+    out = _ORIG_MEMORIZE(self, hrr)
+    if grows:
         self.m += self.k
-    self.M[self.i, :] = hrr.v
-    self.i = self.i + 1
-    return hrr
+    return out
 
 
 @contextlib.contextmanager

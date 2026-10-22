@@ -58,23 +58,8 @@
   #(do (c/init!) (p "undirected entries:" (try-run (fn [] (c/run '(get {1 2 2 3} 2)))))))
 
 ;; ---------------------------------------------------------------------------
-(p "\n== 4.3 residue chimeras (integers unboxed in sets)")
-(p "Not reproducible end to end: the readout that failed is gone.")
-(p "The mechanism, banded vs the product code now used: python3 scripts/paper_f3.py")
-(c/init! {:prelude? false})
-(p "fixed: (contains? #{11 12} 13102) =" (c/run '(contains? #{11 12} 13102))
-   " (contains? #{11 12} 12) =" (c/run '(contains? #{11 12} 12)))
-(with-redefs-fn {#'vsc.core/slot (fn [x] x)}
-  #(do (c/init! {:prelude? false})
-       (p "unboxed: (contains? #{11 12} 13102) =" (try-run (fn [] (c/run '(contains? #{11 12} 13102)))))))
-
-;; ---------------------------------------------------------------------------
-(p "\n== 4.4 zero")
+(p "\n== integers (paper §3): Z spreads 0 over every dimension")
 (c/init!)
-(let [s (h/sim (c/space) (c/eval-form 0) (c/eval-form 5005))]
-  (p "sim(0, 5005) =" (format "%.3f" s) "in the product code (banded: 0.64, scripts/paper_f3.py)"
-     "-> a zero? thresholded at 0.5 says" (> s 0.5)
-     "| fixed: (zero? 5005) =" (c/run '(zero? 5005)) " (zero? 0) =" (c/run '(zero? 0))))
 ;; dimension 0 dead: the old 0 was B^0, a delta at index 0
 (let [sp (c/space)
       np (py/import-module "numpy")
@@ -91,7 +76,7 @@
   (py/set-attr! sp "mask" nil))
 
 ;; ---------------------------------------------------------------------------
-(p "\n== 4.5 fixed thresholds (kind recognised at cos > 0.5)")
+(p "\n== 4.3 fixed thresholds (kind recognised at cos > 0.5)")
 (def broken-45
   {#'vsc.core/kind (fn [v]
                      (let [[label i s] (h/recognize (m* :C) v)
@@ -110,7 +95,7 @@
      "| threshold 0.5:" (with-redefs-fn broken-45 #(count (filter true? (map (fn [s] (roundtrip sigma s)) (range 10))))) "/10"))
 
 ;; ---------------------------------------------------------------------------
-(p "\n== 4.6 a shared field (the count inside the vector)")
+(p "\n== 4.4 a shared field (the count inside the vector)")
 (defn header-variant [role-k weight]
   {#'vsc.core/mk-vec-plain
    (fn [xs]
@@ -136,7 +121,7 @@
             (budgeted (fn [] (w/run '(quote [[:a [:x]] [:b [:y :z]]]))))))))
 
 ;; ---------------------------------------------------------------------------
-(p "\n== 4.7 a sum of tuples forgets the joint (TV to the exact joint)")
+(p "\n== 4.5 a sum of tuples forgets the joint (TV to the exact joint)")
 (def die [1 2 3 4])
 (def dice-exact (into {} (for [a die b die] [[a (+ a b)] (/ 1.0 16)])))
 (defn sprinkler-exact []

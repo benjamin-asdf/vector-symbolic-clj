@@ -1,7 +1,7 @@
-"""F3: residue-integer chimeras (paper §4.3).
+"""Residue-integer chimeras of the old banded encoding (history page, §2).
 
 x = nu(B^11 + B^12). In the banded encoding (one band of Fourier bins per
-prime, our first version, rebuilt below as `Banded`), every integer m whose
+prime, my first version, rebuilt below as `Banded`), every integer m whose
 residue mod each prime p equals either 11 mod p or 12 mod p matches x on
 every band: 2^6 = 64 such m in [0, P), two of them true members, 62
 chimeras. Left panel: cos(x, B^m) for the true members, the chimeras and

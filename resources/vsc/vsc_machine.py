@@ -285,7 +285,7 @@ class Work:
         i, s = self.W.nearest(p)
         if s > 0.9:
             return self.wparts[i]
-        if self.nums.read(p)[1] > 0.9:
+        if self.nums.read_known(p)[1] > 0.9:
             e = Parts(np.zeros(self.d // 2 + 1, complex))
         else:
             self.stats["scan"] += 1
@@ -320,7 +320,7 @@ class Work:
         i, s = self.W.nearest(v)
         if s > ACCEPT:
             return WCELL, i, s, self.W.key(i)
-        n, sn = self.nums.read(v)
+        n, sn = self.nums.read_known(v)
         if sn > NUM_ACCEPT:
             return NUM, n, sn, self.nums.vec(n)
         self.stats["scan"] += 1

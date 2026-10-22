@@ -1,4 +1,4 @@
-"""Errata in holis that our list did not cover, all noise-free.
+"""Errata in holis that my list did not cover, all noise-free.
 
 E1  CAR of an atom.  Their evaluator decides "is this head a lambda
     expression?" by (car(head) == LAMBDA) > 0.2, and "is it a defined

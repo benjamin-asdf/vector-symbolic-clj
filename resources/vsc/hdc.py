@@ -350,8 +350,11 @@ class Numbers:
     numbers that share residues partly alike; docs/ISSUE-FINDINGS 4.3, 4.4.)
 
     Readout: the integers the space has made (every `vec(n)`) are kept in a
-    small memory and are read by one matrix product. A probe that matches none
-    of them is read exactly against all P integers at once: binning its
+    small memory and are read by one matrix product; the plain cleanup reads
+    only that, and the superposition cleanup (ProjCleanup), the printer and
+    the worlds readout also search [-1024, 1024] (`range_matrix`). Where arithmetic's operands are not remembered, or its
+    result fails the check (`made`), the result is read exactly against all
+    P integers at once: binning its
     spectrum by c_k turns the P similarities into one FFT of length P
     (`read_all`, tens of milliseconds)."""
 
@@ -393,8 +396,8 @@ class Numbers:
         return self.space._made("num_vec", np.fft.irfft(self._spec(1), n=self.space.dim))
 
     def offset(self):
-        """Z, the vector of 0 (= B^0 ⊗ Z)."""
-        return self.space._made("num_vec", np.fft.irfft(self.zspec, n=self.space.dim))
+        """Z, the vector of 0 (= B^0 ⊗ Z), remembered like any other integer."""
+        return self.vec(0)
 
     def vec(self, n):
         n = int(n)
@@ -449,9 +452,10 @@ class Numbers:
 
     def _read(self, v, full=True):
         """Remembered integers first; with `full`, a probe none of them
-        explains is read against all of Z_P. Without it, such a probe reads
-        as no integer: [0, best similarity] (the cleanup's path, where new
-        integers can only come from `made`)."""
+        explains is read against all of Z_P. Without it, the nearest
+        remembered integer and its similarity, for the caller to weigh
+        against its chance level (the cleanup's path, where new integers
+        can only come from `made`)."""
         self.space.tick("num_read")
         x = np.asarray(v, dtype=np.float64)
         nx = np.linalg.norm(x)
@@ -880,7 +884,10 @@ class Cleanup:
     NUM = 4
     # Chance levels, in units of 1/√D, are the expected maximum of n
     # unrelated similarities, ≈ √(2 ln n): for the table n is its size, for
-    # the integer readout P (nums.null), since it maximises over all of Z_P.
+    # integers P (nums.null). The read below searches only the remembered
+    # integers, but a degraded value may be any of the P, so a smaller
+    # chance level would snap it to a wrong remembered integer instead of
+    # failing visibly.
 
     def __init__(self, space, mem, nums, theta=0.9):
         self.space, self.mem, self.nums, self.theta = space, mem, nums, theta
@@ -1338,10 +1345,10 @@ def readout(cleanup, v, int_lo=-1024, int_hi=1024, margin=1.0, kmax=64):
         i = int(np.argmax(a))
         if a[i] > 0.999999:
             return [[[int(mem.labels[i]), i, 1.0]], 0.0]
-    n, sn = nums._read(x)
+    n, sn = nums._read(x, full=False)
     if sn > 0.999999:
         return [[[Cleanup.NUM, int(n), 1.0]], 0.0]
-    # one integer, possibly outside [int_lo, int_hi], plus noise
+    # one remembered integer, possibly outside [int_lo, int_hi], plus noise
     top = float(a.max()) if mem.n else 0.0
     if sn > max(top, 0.25) and not more_ints(nums, x, n, int_lo, int_hi):
         return [[[Cleanup.NUM, int(n), 1.0]], float(1.0 - sn * sn)]

@@ -1,4 +1,4 @@
-"""4.5 Fixed thresholds cap robustness, in holis.
+"""Trap 3 (paper §4.3): fixed thresholds cap robustness, in holis.
 
 Their pointer memory SimpleAssoc.recall dereferences a pointer by exact key,
 and otherwise by the nearest key, but only if its cosine to the probe exceeds
@@ -8,7 +8,7 @@ sigma > sqrt(24) = 4.90, whatever D is.
 
 Control: the same code with theta = 5/sqrt(D), a threshold relative to the
 chance level of cosines between unrelated vectors (sd 1/sqrt(D)); this is
-the fix our paper prescribes. One attribute set on their object; everything
+the fix my paper prescribes. One attribute set on their object; everything
 else, including their item memory, is theirs. (Pure argmax, theta = -1, is
 not a usable control: their atomic() relies on the threshold to tell an
 atom, which matches no pointer, from a cell; with theta = -1 every atom

@@ -45,8 +45,8 @@
 ;;    entry as k⊗Π(v), with Π a fixed random permutation, as one operation.
 ;;    A cyclic shift does not work, since it commutes with convolution too.
 ;; 4. **Stored data is robust, computation is fragile.** Lists still read
-;;    back with 60–80% of the dimensions dead; `(fact 4)` breaks at about
-;;    4%, because every bind passes the damage on until the next cleanup.
+;;    back with 60–80% of the dimensions dead; `(fact 4)` breaks at 2–4%,
+;;    because every bind passes the damage on until the next cleanup.
 ;; 5. **A Hopfield network cannot beat a lookup table at exact recall.**
 ;;    For a probe that is one stored item plus noise, picking the best match
 ;;    is already optimal. Measured: it ties at best and loses on look-alikes.
@@ -170,10 +170,12 @@
 ;; 1,616,615. Bⁿ is then like six clocks read at once, mixed into every
 ;; coordinate. Two different integers are unrelated vectors, so a set of
 ;; integers matches only its members. To read an integer back, the
-;; interpreter keeps a memory of the integers it has made (literals and
-;; arithmetic results) and picks the nearest. A vector that matches none
-;; of them is read against all of Z_P at once, by one Fourier transform
-;; of length P (about 60 ms). Integers run from −808,307 to 808,307.
+;; interpreter keeps a memory of every integer it builds or reads
+;; (literals, counts, printed values, arithmetic results) and picks the
+;; nearest. When arithmetic gets operands the memory does not recognise,
+;; or a result that fails its check, the result is read against all of
+;; Z_P at once, by one Fourier transform of length P (about 60–85 ms).
+;; Integers run from −808,307 to 808,307.
 ;;
 ;; A map is a *record*: `get` is one unbind and one cleanup. Map equality
 ;; ignores key order for free, because addition commutes.
@@ -315,8 +317,8 @@
 (figure "e3.png" "Lookups against the number of entries.")
 
 ;; Stored structures survive heavy damage: lists still read back with 60–80%
-;; of the dimensions dead, sets with 57–70%, maps with 23–52%. A long
-;; computation such as `(fact 4)` survives about 4%, because every bind
+;; of the dimensions dead, sets with 60–80%, maps with 26–56%. A long
+;; computation such as `(fact 4)` survives 2–4%, because every bind
 ;; re-loses the dead dimensions until the next cleanup. A short one,
 ;; `(+ 17 25)`, survives about half.
 

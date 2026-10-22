@@ -108,6 +108,9 @@
   (vsc/init! {:prelude? false :dim 2048})
   (testing "0 is a dense vector"
     (is (< 2000 (nonzeros (vsc/encode 0)))))
+  (testing "a bare 0 that no literal made still reads as 0"
+    (vsc/init! {:prelude? false :dim 2048})
+    (is (= [0 0 0] (vsc/run '[(count ()) (+) (count {})]))))
   (let [k (dead-dim-0-seed 0.005)]
     (vsc/init! {:prelude? false :dim 2048})
     (vsc/run '(defn mul [a b] (if (zero? b) 0 (+ a (mul a (dec b))))))

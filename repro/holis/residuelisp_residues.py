@@ -1,8 +1,8 @@
-"""4.3 residue chimeras and 4.4 zero, against residuelisp's own RHC code.
+"""My old 4.3 (residue chimeras) and 4.4 (zero), against residuelisp's own RHC code.
 
 Their integer code is Kymn et al.'s product encoding: zeta(x) is the
 elementwise product over moduli m of z_m**x, each z_m a vector of random
-m-th roots of unity. Every coordinate therefore mixes all moduli. Our
+m-th roots of unity. Every coordinate therefore mixes all moduli. My first
 encoding gave each modulus its own band of coordinates, and the chimeras
 and the zero problem came from those bands. This script measures, with
 their RHC.encode, decode_rhc (the interpreter's decoder) and
@@ -14,8 +14,8 @@ resonator_decoding (in their library; the interpreter does not call it):
   * what decode_rhc and resonator_decoding read from that superposition,
     and from a single integer as control;
   * cos(zeta(0), zeta(n)) for n divisible by some of the moduli;
-  * (+ 17 25) through their algebra with coordinate 0 zeroed (our 4.4
-    lesion: in our time-domain HRR, B^0 was a delta at index 0).
+  * (+ 17 25) through their algebra with coordinate 0 zeroed (my old 4.4
+    lesion: in my time-domain HRR, B^0 was a delta at index 0).
 
 Superposed integers never arise inside a residuelisp program: integers are
 built only from literals and + / -, and cells hold them behind pointers.

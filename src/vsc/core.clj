@@ -24,8 +24,10 @@
                    is n = Z; B's phase at every frequency is a random
                    multiple of 2π/P, P the product of the moduli (product
                    code of a residue number system), so distinct integers
-                   are unrelated; they clean up against the integers the
-                   machine has made, or by one exact readout over all P
+                   are unrelated; they clean up against every integer
+                   the machine builds or reads (arithmetic whose operands
+                   it cannot name, or whose result fails its check, reads
+                   the result once over all P)
     ()  []  {}  #{}  = dedicated atoms
 
   Every value is one unit vector. Symbols, keywords and strings are random
@@ -502,9 +504,9 @@
   1024)
 
 (defn- num-value
-  "[W1] A clean integer by its residues (full ±range); a superposed one
-  (similarity to its best single integer below 0.99) by a bounded-range
-  readout, as #worlds {n weight} when it holds more than one world."
+  "[W1] A clean integer by cleanup against the remembered integers; a
+  superposed one (similarity to its best single integer below 0.99) by a
+  bounded-range readout, as #worlds {n weight} when it holds more than one world."
   [v]
   (let [[_ n s] (h/recognize (m :C) v)
         r int-print-range]

@@ -118,15 +118,17 @@ implementation.
    and Kymn et al. (2025). B's phase at every Fourier bin is a random
    multiple of 2π/P, P = 5·7·11·13·17·19, so every bin mixes all six clocks
    and two integers are unrelated unless they are equal: a superposition of
-   integers matches no "chimera" numbers. Readout: the integers the machine
-   has made (literals, `inc`, `dec`, `+`, `-`) are kept in a small memory;
-   anything else is read exactly against all of ±808,307 by one FFT of
-   length P (about 60 ms). An earlier version split the bins into one band
-   per prime, which made the readout 72 cheap checks but let numbers that
-   share residues look alike (11 + 12 matched 62 chimeras).
-3. **Integers are boxed inside superpositions.** The banded encoding needed
-   this; it is kept. Integer (and vector) map keys, map values and set
-   members are boxed behind hash-consed pointers, which are near-orthogonal.
+   integers matches only its members. Readout: every integer the machine
+   builds or reads (literals, counts, printed values, results of `inc`,
+   `dec`, `+`, `-`) is kept in a small memory, which the plain cleanup
+   reads; the superposition cleanup, the printer and the worlds readout
+   also search [−1024, 1024]. Arithmetic
+   whose operands are not remembered, or whose result fails its check,
+   reads the result exactly against all of ±808,307 by one FFT of length P
+   (about 60–85 ms).
+3. **Integers are boxed inside superpositions.** Integer (and vector) map
+   keys, map values and set members are boxed behind hash-consed pointers,
+   which are near-orthogonal.
 4. **Map entries are directed.** Binding commutes, so the entry 1⊗2 = 2⊗1
    answers the probe 2 with 1 at full strength: `(get {1 2 2 3} 2)`
    returned 1. An entry is k⊗Π(v), with Π the fixed random permutation; a

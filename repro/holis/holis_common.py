@@ -1,9 +1,9 @@
-"""Shared helpers for the holis harnesses: our code only.
+"""Shared helpers for the holis harnesses: my code only.
 
 Instrumentation of their notebook is limited to:
   * probe noise: before every cleanup (SimpleCleanUp.recall, used for the
     item memory `mem` and the function memory `func`, and SimpleAssoc.recall,
-    the pointer memory), add Gaussian noise of norm sigma * |probe|, as in our
+    the pointer memory), add Gaussian noise of norm sigma * |probe|, as in my
     paper (scripts/paper_f2.py): p + sigma*|p|/sqrt(D) * N(0, I);
   * a budget on cons cells, so a run that noise sends into runaway
     evaluation stops and counts as a failure;
@@ -92,7 +92,7 @@ def new_env(dim, seed, theta=None, max_cells=None):
 
 def inner(env, name):
     """One of vsa_env's inner functions (car, cdr, ccons, atomic, ...), taken
-    from the closure of an exposed one, so we call their code, not a copy."""
+    from the closure of an exposed one, so I call their code, not a copy."""
     seen, todo = set(), [env["CAR"], env["evall"], env["holo"]]
     while todo:
         f = todo.pop()

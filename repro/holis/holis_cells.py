@@ -4,7 +4,7 @@ The paper (eq. 2) defines cons(a, b) = nu(L*a + R*b + phi): the cell is its
 own content. The notebook does not do that: ccons() stores the bundle behind
 a fresh random pointer in SimpleAssoc, "because tuples turn out to degrade
 rather quickly". So 4.1 does not apply to their code as written. To see the
-paper's cell inside their code we add a "paper mode", two instance
+paper's cell inside their code I add a "paper mode", two instance
 attributes on their SimpleAssoc object:
 
   memorize(probe, trace) -> (nu(trace), nu(trace))   the cell is its bundle

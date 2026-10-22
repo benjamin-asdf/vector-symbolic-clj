@@ -1,4 +1,4 @@
-"""Shared helpers for the residuelisp harnesses: our code only.
+"""Shared helpers for the residuelisp harnesses: my code only.
 
 Instrumentation of their package is limited to:
   * silencing their debug output: the module-level print in syntax.parser,

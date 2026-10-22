@@ -1,8 +1,8 @@
 """Load the authors' own code at pinned commits, at run time.
 
 Nothing of theirs is copied into this repository. holis (AGPL-3.0) is one
-Jupyter notebook; we read its JSON and exec its code cells into a fresh
-module namespace. residuelisp (MIT) is a Python package; we unpack its
+Jupyter notebook; I read its JSON and exec its code cells into a fresh
+module namespace. residuelisp (MIT) is a Python package; I unpack its
 source tree from the pinned commit and put src/ on sys.path.
 
 Sources, in order:
@@ -67,7 +67,7 @@ def load_holis():
     """Exec the notebook's code cells into a module and return it.
 
     Code cells, in order: 0 HRR classes, 1 vsa_env, 2 lispy (builds a
-    global_env at dim 512), 3 the fizzbuzz definitions (we take only the
+    global_env at dim 512), 3 the fizzbuzz definitions (I take only the
     program string; its run() call is suppressed), 4 repl() (skipped).
     """
     cells = holis_cells()

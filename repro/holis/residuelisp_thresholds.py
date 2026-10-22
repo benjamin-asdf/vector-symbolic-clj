@@ -1,11 +1,11 @@
-"""4.5 Fixed thresholds, checked in residuelisp.
+"""Trap 3 (paper §4.3): fixed thresholds, checked in residuelisp.
 
 residuelisp keeps holis's fixed numbers (AssociativeMemory theta = 0.2,
 is_approx_eq floor = 0.2), but compares them with an unnormalised FHRR
 similarity, Re(x^H y)/D. A noisy probe keeps similarity ~1 to its own key,
 whatever sigma is; what grows is the spread of everything else,
 ~sqrt((1 + sigma^2)/(2D)). So a fixed 0.2 is crossed by chance at a sigma
-that grows like sqrt(D), and we expect the noise cliff to move with D,
+that grows like sqrt(D), and I expect the noise cliff to move with D,
 unlike holis.
 
 Program (no integers, so runs are fast):

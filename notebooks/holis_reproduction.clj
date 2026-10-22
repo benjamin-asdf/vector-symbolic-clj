@@ -461,10 +461,11 @@
 ;; are listed so they are quick to fix.
 ;;
 ;; Every fix below is **tested**. My harness applies it as a runtime
-;; patch to their code, runs the erratum's minimal programs, and then runs
-;; the noise-free control programs from the start of this page again
-;; (`holis_fixes.py`, `residuelisp_fixes.py`; E1 and trap 3 come from
-;; `holis_errata.py` and `holis_thresholds.py`). Where a suggested fix
+;; patch to their code and runs the erratum's minimal programs. Every fix
+;; except trap 3's then also runs the noise-free control programs from the
+;; start of this page again (`holis_fixes.py`, `residuelisp_fixes.py`;
+;; E1's own control is in `holis_errata.py`). The trap 3 fix is tested
+;; only in `holis_thresholds.py`: lookups, reads and the LAMBDA program. Where a suggested fix
 ;; turned out wrong or incomplete, I say so. The fix shown is always the
 ;; one I ran.
 ;;
@@ -960,7 +961,10 @@
 ;; - *Status.* **Tested**: at D = 8192 lookups stay at 200 of 200 up to
 ;;   σ = 8, and the LAMBDA program keeps 8 of 10 at σ = 5 and 6
 ;;   (trap 3 tables). At D = 512 it changes nothing, since 5/√512 ≈ 0.22. I did
-;;   not change the evaluator's other 0.2 floors.
+;;   not change the evaluator's other 0.2 floors, and I did not run the
+;;   fix on the other control programs. Without noise the LAMBDA program
+;;   gives the same counts as with θ = 0.2 (9 of 10 at D = 512 and 2048,
+;;   7 of 10 at D = 8192).
 ;;
 ;; ### Memory and leftovers
 ;;

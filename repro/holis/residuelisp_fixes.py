@@ -1,7 +1,7 @@
 """Test the suggested fixes for residuelisp's errata R1-R5, noise-free.
 
 Each fix is a runtime patch of one function in their modules (their files
-stay untouched). For each fix we run
+stay untouched). For each fix I run
   (a) the erratum's minimal programs, with and without the fix;
   (b) the noise-free control programs of residuelisp_control.py with the
       fix applied (regression);
