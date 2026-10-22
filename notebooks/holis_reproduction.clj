@@ -411,9 +411,10 @@
        (for [r (get he "other")]
          [(kind/code (get r "program")) (get r "D") (fmt (get r "results"))]))
 
-;; **E5 (holis).** A function name or a lambda inside a list is applied
-;; to what follows it: `(a CAR (b c))` gives `(a b)` in every seed. Their
-;; own `take` relies on it (see the errata).
+;; **E5 (holis), a question.** For a list whose head is no function, the
+;; code evaluates the tail as a call, where the paper says to leave the
+;; list unevaluated. So `(a CAR (b c))` gives the pair `(a . b)`. Their
+;; programs rely on this, so it may well be intended (see the errata).
 ;;
 ;; **E4 (holis). The item memory adds 100 rows per item past 100.**
 ;; `SimpleCleanUp.memorize` appends 100 empty rows once it is full, but
@@ -571,11 +572,7 @@
       ch (lk "chance floor (theta=5/sqrt(D))")
       g800 (by (get he "memory_growth") "items stored" 800)
       g800f (first (filter #(and (= "E4" (get % "variant")) (= 800 (get % "items stored")))
-                           (get hf "e4_growth")))
-      e5 (filter #(and (= "theirs" (get % "variant")) (= "(a CAR (b c))" (get % "program")))
-                 (get htail "programs"))
-      e5f (filter #(and (= "E5" (get % "variant")) (= "(a CAR (b c))" (get % "program")))
-                  (get htail "programs"))]
+                           (get hf "e4_growth")))]
   (table ["item" "code" "program" "should give" "gives (×runs)" "wrong" "wrong with the fix"]
          [(row "R1 (trap 4)" "residuelisp" (rp "(eq? 3 5 )") (fx "R1" "(eq? 3 5 )"))
           (row "R2" "residuelisp" (rp "(and #t #f)") (fx "R2" "(and #t #f)"))
@@ -607,9 +604,6 @@
           ["E4" "holis" "store 800 items in SimpleCleanUp" "about 800 rows"
            (str (get g800 "matrix rows") " rows, " (get g800 "MB at D=512") " MB at D = 512") "–"
            (str (get g800f "matrix rows") " rows")]
-          ["E5" "holis" (kind/code "(a CAR (b c))") "(a CAR (b c))"
-           (fmt (get (first e5) "results")) (at-d e5)
-           (str (at-d e5f) "; needs E2, or `take` breaks")]
           ["E3" "holis" (kind/code (get e3 "program")) "the lambda"
            (fmt (get e3 "results")) (str (get e3 "runs") " / " (get e3 "runs"))
            (str (wrong-of e3f) " (LABEL as DEFINE)")]]))
@@ -947,8 +941,9 @@
 ;;   `ev_until_done` evaluates the argument again, so `(QUOTE (CDR a))`
 ;;   runs `CDR` on an atom (E1) and gives a random item. The version
 ;;   above leaves `quote` alone. Unquoted literal lists such as `(a b c)`
-;;   keep working, because their evaluator returns a list with an unknown
-;;   head unchanged (unless it holds a function name or a lambda, E5). CONS evaluates by accident in their code: the loop
+;;   keep working, because their evaluator keeps an atom that is no
+;;   function, at the head and after it (a function name or a lambda
+;;   after the head is applied instead, E5). CONS evaluates by accident in their code: the loop
 ;;   in `ev_until_done` evaluates the new cell again. With quoted
 ;;   arguments that loop never ends: their QUOTE returns `(QUOTE (x))`,
 ;;   and each pass wraps it once more, so `(CONS (QUOTE a) (QUOTE (b c)))`
@@ -980,25 +975,39 @@
 ;;   every call, and with E2 more atoms reach it. I did not confirm this,
 ;;   and with no working E1 fix (above) I could not test the pair.
 ;;
-;; **E5 (holis). A function name or lambda inside a list is applied to
-;; what follows it.**
+;; ### A question about the semantics
+;;
+;; **E5 (holis). A question rather than an erratum: code and paper differ
+;; on lists whose head is no function.**
 ;;
 ;; - *Where.* Code cell 2, `vsa_env`: the last line of `ev`,
 ;;   `ccons(ev(head), ev(tail))`, and in `ev_until_done` the branch
 ;;   `ccons(head, ev_until_done(cdr(e)))`.
-;; - *Symptom.* `(a CAR (b c))` gives `(a b)`, `(a (LAMBDA (x) x) b)`
-;;   gives `(a b)`, and `(g (LAMBDA (x) x))` gives `(g LAMBDA (x) x)`,
-;;   without noise and in every seed (table below). The E3 result with
-;;   LABEL removed is this effect too.
-;; - *Cause.* For a list whose head is no function, both lines evaluate
-;;   the tail as one expression instead of element by element. So the
-;;   second element becomes the head of a call. Their programs rely on
-;;   this: `take` writes `(CONS (CAR l) (take (CAR n) (CDR l)))`, and
-;;   since CONS does not evaluate its arguments (E2), the recursive call
-;;   runs only because the tail of the new cell is evaluated as a call.
-;;   `fizzesbuzzes` builds its list as `((fb n) . (fizzesbuzzes (CAR n)))`
-;;   for the same reason.
-;; - *Fix,* together with E2. Evaluate the tail element by element:
+;; - *The paper* says "the interpreter should leave the list including f
+;;   as an unevaluated expression if f is not in the function namespace";
+;;   in its eq. (11) such an f gives `cons(f, a)`.
+;; - *The code* evaluates the tail as one expression: `ev` evaluates the
+;;   head and then the tail, and `ev_until_done` keeps the head and
+;;   evaluates the tail ("otherwise, just leave it and evaluate the
+;;   tail"). Since `(x f y)` is `(x . (f y))`, a function name or lambda
+;;   after the head is then applied to what follows it: `(a CAR (b c))` gives the pair `(a . b)`
+;;   and `(g (LAMBDA (x) x))` gives `(g LAMBDA (x) x)` (table below,
+;;   which prints the pair `(a . b)` as `["a", "b"]`). The E3 result with
+;;   LABEL removed is this effect.
+;; - *Their programs rely on it.* `fizzesbuzzes` and
+;;   `fizzingbuzzing` cons onto their recursive call as
+;;   `((fb n) . (fizzesbuzzes (CAR n)))`, where both the head `(fb n)`
+;;   and the tail are evaluated, and the recursive call in
+;;   `take`, `(CONS (CAR l) (take (CAR n) (CDR l)))`, runs only this way,
+;;   because CONS does not evaluate its arguments (E2). To keep a function
+;;   name in data, quote it: `(QUOTE (a CAR (b c)))` keeps the list inside
+;;   its QUOTE wrapper (a side run).
+;; - *The question.* Is evaluating the tail meant as the language's
+;;   semantics? Then the paper could say so. The paper's rule taken
+;;   literally, returning the list as it is, would also stop `(fb n)` and
+;;   `(CAR (b c))` inside a list from running; I did not test it. A third
+;;   option keeps the head evaluation and evaluates each element of the
+;;   tail on its own. This is what it takes:
 ;;
 ;; ```python
 ;; def each(t, f, ind=''):
@@ -1007,37 +1016,57 @@
 ;;     return ccons(f(car(t), ind=ind), each(cdr(t), f, ind=ind))
 ;; ```
 ;;
-;;   and end `ev` with `return ccons(ev(head, ind=ind+'  '), each(tail,
-;;   ev, ind+'  '))` and that branch of `ev_until_done` with
-;;   `return ccons(head, each(cdr(e), ev_until_done, ind))`. Lists built
-;;   as `(x . (f …))`, as in `fizzesbuzzes`, then need `CONS` instead.
+;;   inside `vsa_env`, and end `ev` with `return ccons(ev(head,
+;;   ind=ind+'  '), each(tail, ev, ind+'  '))` and that branch of
+;;   `ev_until_done` with `return ccons(head, each(cdr(e), ev_until_done,
+;;   ind))`. It needs E2, and `fizzesbuzzes` and `fizzingbuzzing` would
+;;   have to use `CONS`.
 ;;
-;; - *Status.* **Tested** (`holis_tail.py`, applied as a wrapper around
-;;   their `ev` and `ev_until_done`). Over 5 seeds:
+;; - *Tested* (`holis_tail.py`, as a wrapper around their `ev` and
+;;   `ev_until_done`; column `elementwise`). Results over 5 seeds:
 
 ^:kindly/hide-code
-(before-after (get htail "programs") "variant" ["theirs" "E5"])
-
-;;   The single misses at D = 2048 happen with and without the fix, with
-;;   the same wrong result; I did not trace them. With LABEL removed (E3),
-;;   `(LABEL f (LAMBDA (x) x))` comes back as written with the fix, in 4
-;;   of 5 seeds:
+(defn side-by-side
+  "One line per program (and D), the results of each variant."
+  [rows variants]
+  (let [k (juxt #(get % "program") #(get % "D"))
+        pick (fn [kk v] (first (filter #(and (= kk (k %)) (= v (get % "variant"))) rows)))]
+    (table (concat ["program" "D"] variants)
+           (for [kk (distinct (map k rows))]
+             (concat [(kind/code (first kk)) (second kk)]
+                     (for [v variants] (fmt (get (pick kk v) "results"))))))))
 
 ^:kindly/hide-code
-(before-after (get htail "label") "variant" ["E3 removed" "E3 removed + E5"])
+(side-by-side (get htail "programs") ["theirs" "elementwise"])
 
-;;   The control programs, without and with the fix (the two misses
-;;   without it are the LAMBDA program of E1):
+;;   The single odd results at D = 2048 happen in both columns, the same
+;;   in each; I did not trace them. With LABEL removed (E3),
+;;   `(LABEL f (LAMBDA (x) x))` comes back as written with the
+;;   alternative, in 4 of 5 seeds:
+
+^:kindly/hide-code
+(side-by-side (get htail "label") ["E3 removed" "E3 removed + elementwise"])
+
+;;   The control programs, with their code and with the alternative:
 
 ^:kindly/hide-code
 (table ["variant" "right"]
        (for [r (get htail "regression")]
          [(get r "variant") (frac r "correct" "runs")]))
 
+;;   The two misses with their code are the LAMBDA program of E1. There
+;;   `car` of an atom reads back LAMBDA (E1), and the atom sits at the
+;;   head of a call only because a tail such as `(b c)` is evaluated as a
+;;   call. The alternative removes that path in these seeds; the misread
+;;   still happens but does no harm. It does not replace the E1 guard:
+;;   over 100 seeds the alternative still misses 2 at D = 512 and 4 at
+;;   D = 2048, where the misread hits the lambda's argument list, and the
+;;   guard gets all 200 right (a side run).
+;;
 ;;   Their fizzbuzz helpers, right per call over 5 seeds (D = 512, with
-;;   E4). Alone, the fix breaks `take`, which then returns its recursive
-;;   call as data; with E2 it works again, and only seed 0 fails, as with
-;;   E2 alone. I could not run `fizzesbuzzes` itself to the end: even
+;;   E4). Alone, the alternative breaks `take`, which then returns its
+;;   recursive call as data; with E2 it works again, and only seed 0
+;;   fails, as with E2 alone. I could not run `fizzesbuzzes` itself to the end: even
 ;;   with their code and E4, `(fizzesbuzzes 3)` did not finish within
 ;;   120 s (a side run).
 
@@ -1050,7 +1079,8 @@
                                                rows)]]
                      (str (count (filter #(get % "correct") rs)) " / " (count rs)))))))
 
-;;   So I would apply it only with E2.
+;;   So keeping list elements is a design change, not a fix: it needs E2
+;;   and rewritten programs.
 ;;
 ;; ### Robustness under noise
 ;;
@@ -1179,7 +1209,7 @@
 ;; | 3 fixed thresholds | reproduced | not reproduced (the cliff moves with √D) |
 ;; | 4 shared field | n/a | reproduced (integer tag) |
 ;; | 5 sum of tuples | n/a | n/a |
-;; | new | E1 car of an atom, E2, E3, E4 memory growth, E5 list tails | R2 `and`, R3 `if`, R4 decoder range, R5 lexer |
+;; | new | E1 car of an atom, E2, E3, E4 memory growth; E5 a question (list tails) | R2 `and`, R3 `if`, R4 decoder range, R5 lexer |
 
 ;; ## Appendix
 ;;

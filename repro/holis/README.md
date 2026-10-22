@@ -48,7 +48,7 @@ ulimit -v 8000000
 .venv/bin/python residuelisp_residues.py   # integer sums, zero      ~15 min
 .venv/bin/python residuelisp_thresholds.py # trap 3                  ~10 min
 .venv/bin/python holis_fixes.py            # fixes trap 2, E1-E4     ~12 min
-.venv/bin/python holis_tail.py             # E5 and its fix          ~20 min
+.venv/bin/python holis_tail.py             # E5 and the alternative  ~20 min
 .venv/bin/python residuelisp_fixes.py      # fixes R1-R5             ~10 min
 ```
 
@@ -95,7 +95,7 @@ ulimit -v 8000000
 | `residuelisp_residues.json` | integer superpositions and zero against their RHC code (not on the page) |
 | `residuelisp_thresholds.json` | trap 3 noise sweep |
 | `holis_fixes.json` | fixes for trap 2, E2, E3, E4 (and E1 rechecked): erratum programs before and after, control programs with each fix, fizzbuzz helpers over 5 seeds with E1, E2 and E4 |
-| `holis_tail.json` | E5 list tails: erratum programs before and after, LABEL with E3, control programs, fizzbuzz helpers with E5 alone and with E2 |
+| `holis_tail.json` | E5 list tails (a question, not an erratum): programs with their code and with element-wise tails, LABEL with E3, control programs, fizzbuzz helpers with elementwise tails alone and with E2 |
 | `residuelisp_fixes.json` | fixes for R1-R5: erratum programs before and after, control programs with each fix, R1 test pattern, R5 lexer |
 
 Every JSON file records the upstream commit, Python and numpy versions,

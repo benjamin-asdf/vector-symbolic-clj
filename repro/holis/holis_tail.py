@@ -1,22 +1,23 @@
-"""E5 (holis): a list that is not a call evaluates its tail as a call.
+"""E5 (holis): a list whose head is no function has its tail evaluated as a call.
 
 For a list whose head is no function, `ev` returns
-ccons(ev(head), ev(tail)), and `ev_until_done` returns
+ccons(ev(head), ev(tail)) (evaluating the head too), and `ev_until_done` returns
 ccons(head, ev_until_done(cdr(e))). Both evaluate the tail as one
 expression, so an element that is a function name or a lambda is applied
-to the elements after it: (a CAR (b c)) gives (a b), and
-(g (LAMBDA (x) x)) gives (g LAMBDA (x) x). Noise-free, every seed.
+to the elements after it: (a CAR (b c)) gives the pair (a . b), and
+(g (LAMBDA (x) x)) gives (g LAMBDA (x) x). Noise-free. The paper says to
+leave such a list unevaluated; their programs rely on the tail evaluation.
 
-The fix evaluates the tail element by element. As a runtime patch, without
+The alternative tested here evaluates the tail element by element. As a runtime patch, without
 copying their code: `ev` and `ev_until_done` are rebound, in every closure
 of vsa_env, to wrappers that call theirs, except where theirs is about to
 evaluate such a tail (recognised from the calling frame); that tail is
 evaluated one element at a time instead.
 
-I run the erratum's programs with and without the fix (D = 512, 2048,
-seeds 0-4), the E3 program with LABEL removed, the noise-free control
+I run the programs with their code and with the alternative (D = 512,
+2048, seeds 0-4), the E3 program with LABEL removed, the noise-free control
 programs (regression), and their fizzbuzz helpers (with E4, as in
-holis_fixes.py), with E5 alone and with E2. Their `take` builds its list
+holis_fixes.py), with the alternative alone and with E2. Their `take` builds its list
 with (CONS (CAR l) (take ...)); CONS does not evaluate its arguments (E2),
 so the recursive call runs only because the tail is evaluated as a call.
 
@@ -31,8 +32,9 @@ import holis_fixes as F
 FLOOR = 0.2                     # their floor
 
 
-def fix_e5(env):
-    """E5: the tail of a list that is not a call is evaluated per element."""
+def elementwise(env):
+    """The alternative to E5: the tail of a list that is not a call is
+    evaluated per element (the head still by their ev)."""
     ev, evud = F.find(env, "ev"), F.find(env, "ev_until_done")
     car, cdr = C.inner(env, "car"), C.inner(env, "cdr")
     ccons, atomic, T = F.find(env, "ccons"), F.find(env, "atomic"), env["T"]
@@ -60,10 +62,10 @@ def fix_e5(env):
 
 
 F.VARIANTS.update({
-    "E5": [fix_e5],
-    "E5 + E4": [fix_e5],
-    "E3 removed + E5": [F.fix_e3_remove, fix_e5],
-    "E2 + unwrap QUOTE + E5 + E4": [lambda e: F.fix_e2(e, quote="unwrap"), fix_e5],
+    "elementwise": [elementwise],
+    "elementwise + E4": [elementwise],
+    "E3 removed + elementwise": [F.fix_e3_remove, elementwise],
+    "E2 + unwrap QUOTE + elementwise + E4": [lambda e: F.fix_e2(e, quote="unwrap"), elementwise],
 })
 
 PROGRAMS = [
@@ -83,17 +85,17 @@ def main():
         "fizzbuzz": {"D": 512, "seeds": list(F.FIZZ_SEEDS), "call_limit_s": F.CALL_LIMIT},
         "max_cells": F.MAX_CELLS}),
         "programs": [], "label": [], "regression": [], "fizzbuzz": []}
-    for variant in ("theirs", "E5"):
+    for variant in ("theirs", "elementwise"):
         for src, want in PROGRAMS:
             out["programs"] += F.tally(src, want, variant)
-    for variant in ("E3 removed", "E3 removed + E5"):
+    for variant in ("E3 removed", "E3 removed + elementwise"):
         out["label"] += F.tally(*LABEL, variant, dims=(512,))
-    for variant in ("theirs", "E5"):
+    for variant in ("theirs", "elementwise"):
         reg = F.regression(variant)
         out["regression"].append(reg)
         print("regression", variant, reg["correct"], "/", reg["runs"], flush=True)
         C.write("holis_tail.json", out)
-    for variant in ("E4", "E5 + E4", "E2 + unwrap QUOTE + E5 + E4"):
+    for variant in ("E4", "elementwise + E4", "E2 + unwrap QUOTE + elementwise + E4"):
         for seed in F.FIZZ_SEEDS:
             out["fizzbuzz"] += F.fizzbuzz(variant, seed)
         C.write("holis_tail.json", out)
