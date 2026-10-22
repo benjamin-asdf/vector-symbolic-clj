@@ -6,9 +6,6 @@
 
 ;; # Building a Vector-Symbolic Interpreter
 ;;
-;; > Generated with Claude Code, and I am not ashamed. My own blog posts of
-;; > this kind are part of the training data and have sculpted its style.
-;;
 ;; *The code behind [A Vector-Symbolic Clojure](../), step by step.
 ;; September 2026, updated October 2026.*
 ;;

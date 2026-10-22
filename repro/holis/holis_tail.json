@@ -1,0 +1,1641 @@
+{
+ "meta": {
+  "script": "holis_tail.py",
+  "upstream": {
+   "repo": "https://github.com/eilene-ftf/holis",
+   "commit": "db208d782863febfb50ec46b25a3700369f5cfea",
+   "file": "holis.ipynb",
+   "sha256": "80eee8cdeed896fe1987bd9c391d3001c3e46f736227f8cac8f9784b2dd09175"
+  },
+  "python": "3.12.11",
+  "numpy": "2.5.3",
+  "date": "2026-10-22",
+  "settings": {
+   "seeds": 5,
+   "dims": [
+    512,
+    2048
+   ],
+   "sigma": 0,
+   "fizzbuzz": {
+    "D": 512,
+    "seeds": [
+     0,
+     1,
+     2,
+     3,
+     4
+    ],
+    "call_limit_s": 60
+   },
+   "max_cells": 300
+  }
+ },
+ "programs": [
+  {
+   "program": "(a CAR (b c))",
+   "variant": "theirs",
+   "D": 512,
+   "expected": "[[\"a\", \"CAR\", [\"b\", \"c\"]]]",
+   "correct": 0,
+   "runs": 5,
+   "results": {
+    "[[\"a\", \"b\"]]": 5
+   }
+  },
+  {
+   "program": "(a CAR (b c))",
+   "variant": "theirs",
+   "D": 2048,
+   "expected": "[[\"a\", \"CAR\", [\"b\", \"c\"]]]",
+   "correct": 0,
+   "runs": 5,
+   "results": {
+    "[[\"a\", \"b\"]]": 5
+   }
+  },
+  {
+   "program": "(g (LAMBDA (x) x))",
+   "variant": "theirs",
+   "D": 512,
+   "expected": "[[\"g\", [\"LAMBDA\", [\"x\"], \"x\"]]]",
+   "correct": 0,
+   "runs": 5,
+   "results": {
+    "[[\"g\", \"LAMBDA\", [\"x\"], \"x\"]]": 5
+   }
+  },
+  {
+   "program": "(g (LAMBDA (x) x))",
+   "variant": "theirs",
+   "D": 2048,
+   "expected": "[[\"g\", [\"LAMBDA\", [\"x\"], \"x\"]]]",
+   "correct": 0,
+   "runs": 5,
+   "results": {
+    "[[\"g\", \"LAMBDA\", [\"x\"], \"x\"]]": 4,
+    "[[\"LAMBDA\", [\"x\"], \"x\"]]": 1
+   }
+  },
+  {
+   "program": "(a (LAMBDA (x) x) b)",
+   "variant": "theirs",
+   "D": 512,
+   "expected": "[[\"a\", [\"LAMBDA\", [\"x\"], \"x\"], \"b\"]]",
+   "correct": 0,
+   "runs": 5,
+   "results": {
+    "[[\"a\", \"b\"]]": 5
+   }
+  },
+  {
+   "program": "(a (LAMBDA (x) x) b)",
+   "variant": "theirs",
+   "D": 2048,
+   "expected": "[[\"a\", [\"LAMBDA\", [\"x\"], \"x\"], \"b\"]]",
+   "correct": 0,
+   "runs": 5,
+   "results": {
+    "[[\"a\", \"b\"]]": 4,
+    "budget": 1
+   }
+  },
+  {
+   "program": "(a (CAR (b c)) d)",
+   "variant": "theirs",
+   "D": 512,
+   "expected": "[[\"a\", \"b\", \"d\"]]",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "[[\"a\", \"b\", \"d\"]]": 5
+   }
+  },
+  {
+   "program": "(a (CAR (b c)) d)",
+   "variant": "theirs",
+   "D": 2048,
+   "expected": "[[\"a\", \"b\", \"d\"]]",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "[[\"a\", \"b\", \"d\"]]": 5
+   }
+  },
+  {
+   "program": "(a b c)",
+   "variant": "theirs",
+   "D": 512,
+   "expected": "[[\"a\", \"b\", \"c\"]]",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "[[\"a\", \"b\", \"c\"]]": 5
+   }
+  },
+  {
+   "program": "(a b c)",
+   "variant": "theirs",
+   "D": 2048,
+   "expected": "[[\"a\", \"b\", \"c\"]]",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "[[\"a\", \"b\", \"c\"]]": 5
+   }
+  },
+  {
+   "program": "(a CAR (b c))",
+   "variant": "E5",
+   "D": 512,
+   "expected": "[[\"a\", \"CAR\", [\"b\", \"c\"]]]",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "[[\"a\", \"CAR\", [\"b\", \"c\"]]]": 5
+   }
+  },
+  {
+   "program": "(a CAR (b c))",
+   "variant": "E5",
+   "D": 2048,
+   "expected": "[[\"a\", \"CAR\", [\"b\", \"c\"]]]",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "[[\"a\", \"CAR\", [\"b\", \"c\"]]]": 5
+   }
+  },
+  {
+   "program": "(g (LAMBDA (x) x))",
+   "variant": "E5",
+   "D": 512,
+   "expected": "[[\"g\", [\"LAMBDA\", [\"x\"], \"x\"]]]",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "[[\"g\", [\"LAMBDA\", [\"x\"], \"x\"]]]": 5
+   }
+  },
+  {
+   "program": "(g (LAMBDA (x) x))",
+   "variant": "E5",
+   "D": 2048,
+   "expected": "[[\"g\", [\"LAMBDA\", [\"x\"], \"x\"]]]",
+   "correct": 4,
+   "runs": 5,
+   "results": {
+    "[[\"g\", [\"LAMBDA\", [\"x\"], \"x\"]]]": 4,
+    "[[\"LAMBDA\", [\"x\"], \"x\"]]": 1
+   }
+  },
+  {
+   "program": "(a (LAMBDA (x) x) b)",
+   "variant": "E5",
+   "D": 512,
+   "expected": "[[\"a\", [\"LAMBDA\", [\"x\"], \"x\"], \"b\"]]",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "[[\"a\", [\"LAMBDA\", [\"x\"], \"x\"], \"b\"]]": 5
+   }
+  },
+  {
+   "program": "(a (LAMBDA (x) x) b)",
+   "variant": "E5",
+   "D": 2048,
+   "expected": "[[\"a\", [\"LAMBDA\", [\"x\"], \"x\"], \"b\"]]",
+   "correct": 4,
+   "runs": 5,
+   "results": {
+    "[[\"a\", [\"LAMBDA\", [\"x\"], \"x\"], \"b\"]]": 4,
+    "budget": 1
+   }
+  },
+  {
+   "program": "(a (CAR (b c)) d)",
+   "variant": "E5",
+   "D": 512,
+   "expected": "[[\"a\", \"b\", \"d\"]]",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "[[\"a\", \"b\", \"d\"]]": 5
+   }
+  },
+  {
+   "program": "(a (CAR (b c)) d)",
+   "variant": "E5",
+   "D": 2048,
+   "expected": "[[\"a\", \"b\", \"d\"]]",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "[[\"a\", \"b\", \"d\"]]": 5
+   }
+  },
+  {
+   "program": "(a b c)",
+   "variant": "E5",
+   "D": 512,
+   "expected": "[[\"a\", \"b\", \"c\"]]",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "[[\"a\", \"b\", \"c\"]]": 5
+   }
+  },
+  {
+   "program": "(a b c)",
+   "variant": "E5",
+   "D": 2048,
+   "expected": "[[\"a\", \"b\", \"c\"]]",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "[[\"a\", \"b\", \"c\"]]": 5
+   }
+  }
+ ],
+ "label": [
+  {
+   "program": "(LABEL f (LAMBDA (x) x))",
+   "variant": "E3 removed",
+   "D": 512,
+   "expected": "[[\"LABEL\", \"f\", [\"LAMBDA\", [\"x\"], \"x\"]]]",
+   "correct": 0,
+   "runs": 5,
+   "results": {
+    "[[\"LABEL\", \"f\", \"LAMBDA\", [\"x\"], \"x\"]]": 4,
+    "[[\"LAMBDA\", \"LAMBDA\", \"x\"]]": 1
+   }
+  },
+  {
+   "program": "(LABEL f (LAMBDA (x) x))",
+   "variant": "E3 removed + E5",
+   "D": 512,
+   "expected": "[[\"LABEL\", \"f\", [\"LAMBDA\", [\"x\"], \"x\"]]]",
+   "correct": 4,
+   "runs": 5,
+   "results": {
+    "[[\"LABEL\", \"f\", [\"LAMBDA\", [\"x\"], \"x\"]]]": 4,
+    "[[\"LAMBDA\", [\"f\"], \"f\"]]": 1
+   }
+  }
+ ],
+ "regression": [
+  {
+   "variant": "theirs",
+   "programs": 10,
+   "dims": [
+    512,
+    2048
+   ],
+   "correct": 98,
+   "runs": 100,
+   "rows": [
+    {
+     "program": "(CAR (a b c))",
+     "variant": "theirs",
+     "D": 512,
+     "expected": "[\"a\"]",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "[\"a\"]": 5
+     }
+    },
+    {
+     "program": "(CAR (a b c))",
+     "variant": "theirs",
+     "D": 2048,
+     "expected": "[\"a\"]",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "[\"a\"]": 5
+     }
+    },
+    {
+     "program": "(CDR (a b c))",
+     "variant": "theirs",
+     "D": 512,
+     "expected": "[[\"b\", \"c\"]]",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "[[\"b\", \"c\"]]": 5
+     }
+    },
+    {
+     "program": "(CDR (a b c))",
+     "variant": "theirs",
+     "D": 2048,
+     "expected": "[[\"b\", \"c\"]]",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "[[\"b\", \"c\"]]": 5
+     }
+    },
+    {
+     "program": "(CONS a (b c))",
+     "variant": "theirs",
+     "D": 512,
+     "expected": "[[\"a\", \"b\", \"c\"]]",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "[[\"a\", \"b\", \"c\"]]": 5
+     }
+    },
+    {
+     "program": "(CONS a (b c))",
+     "variant": "theirs",
+     "D": 2048,
+     "expected": "[[\"a\", \"b\", \"c\"]]",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "[[\"a\", \"b\", \"c\"]]": 5
+     }
+    },
+    {
+     "program": "(EQ a a)",
+     "variant": "theirs",
+     "D": 512,
+     "expected": "[\"T\"]",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "[\"T\"]": 5
+     }
+    },
+    {
+     "program": "(EQ a a)",
+     "variant": "theirs",
+     "D": 2048,
+     "expected": "[\"T\"]",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "[\"T\"]": 5
+     }
+    },
+    {
+     "program": "(EQ a b)",
+     "variant": "theirs",
+     "D": 512,
+     "expected": "[\"F\"]",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "[\"F\"]": 5
+     }
+    },
+    {
+     "program": "(EQ a b)",
+     "variant": "theirs",
+     "D": 2048,
+     "expected": "[\"F\"]",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "[\"F\"]": 5
+     }
+    },
+    {
+     "program": "(ATOM a)",
+     "variant": "theirs",
+     "D": 512,
+     "expected": "[\"T\"]",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "[\"T\"]": 5
+     }
+    },
+    {
+     "program": "(ATOM a)",
+     "variant": "theirs",
+     "D": 2048,
+     "expected": "[\"T\"]",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "[\"T\"]": 5
+     }
+    },
+    {
+     "program": "(ATOM (a b))",
+     "variant": "theirs",
+     "D": 512,
+     "expected": "[\"F\"]",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "[\"F\"]": 5
+     }
+    },
+    {
+     "program": "(ATOM (a b))",
+     "variant": "theirs",
+     "D": 2048,
+     "expected": "[\"F\"]",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "[\"F\"]": 5
+     }
+    },
+    {
+     "program": "(COND ((EQ a a) . yes) (T . no))",
+     "variant": "theirs",
+     "D": 512,
+     "expected": "[\"yes\"]",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "[\"yes\"]": 5
+     }
+    },
+    {
+     "program": "(COND ((EQ a a) . yes) (T . no))",
+     "variant": "theirs",
+     "D": 2048,
+     "expected": "[\"yes\"]",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "[\"yes\"]": 5
+     }
+    },
+    {
+     "program": "(COND ((EQ a b) . yes) (T . no))",
+     "variant": "theirs",
+     "D": 512,
+     "expected": "[\"no\"]",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "[\"no\"]": 5
+     }
+    },
+    {
+     "program": "(COND ((EQ a b) . yes) (T . no))",
+     "variant": "theirs",
+     "D": 2048,
+     "expected": "[\"no\"]",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "[\"no\"]": 5
+     }
+    },
+    {
+     "program": "((LAMBDA (x) (CONS x (b c))) a)",
+     "variant": "theirs",
+     "D": 512,
+     "expected": "[[\"a\", \"b\", \"c\"]]",
+     "correct": 4,
+     "runs": 5,
+     "results": {
+      "[[\"a\", \"b\", \"c\"]]": 4,
+      "[[\"a\", \"b\", \"LAMBDA\", \"x\", [\"CONS\", \"a\", [\"b\", \"c\"]]]]": 1
+     }
+    },
+    {
+     "program": "((LAMBDA (x) (CONS x (b c))) a)",
+     "variant": "theirs",
+     "D": 2048,
+     "expected": "[[\"a\", \"b\", \"c\"]]",
+     "correct": 4,
+     "runs": 5,
+     "results": {
+      "[[\"a\", \"b\", \"c\"]]": 4,
+      "[[\"a\", \"LAMBDA\", [\"c\"], \"LAMBDA\"]]": 1
+     }
+    }
+   ]
+  },
+  {
+   "variant": "E5",
+   "programs": 10,
+   "dims": [
+    512,
+    2048
+   ],
+   "correct": 100,
+   "runs": 100,
+   "rows": [
+    {
+     "program": "(CAR (a b c))",
+     "variant": "E5",
+     "D": 512,
+     "expected": "[\"a\"]",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "[\"a\"]": 5
+     }
+    },
+    {
+     "program": "(CAR (a b c))",
+     "variant": "E5",
+     "D": 2048,
+     "expected": "[\"a\"]",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "[\"a\"]": 5
+     }
+    },
+    {
+     "program": "(CDR (a b c))",
+     "variant": "E5",
+     "D": 512,
+     "expected": "[[\"b\", \"c\"]]",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "[[\"b\", \"c\"]]": 5
+     }
+    },
+    {
+     "program": "(CDR (a b c))",
+     "variant": "E5",
+     "D": 2048,
+     "expected": "[[\"b\", \"c\"]]",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "[[\"b\", \"c\"]]": 5
+     }
+    },
+    {
+     "program": "(CONS a (b c))",
+     "variant": "E5",
+     "D": 512,
+     "expected": "[[\"a\", \"b\", \"c\"]]",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "[[\"a\", \"b\", \"c\"]]": 5
+     }
+    },
+    {
+     "program": "(CONS a (b c))",
+     "variant": "E5",
+     "D": 2048,
+     "expected": "[[\"a\", \"b\", \"c\"]]",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "[[\"a\", \"b\", \"c\"]]": 5
+     }
+    },
+    {
+     "program": "(EQ a a)",
+     "variant": "E5",
+     "D": 512,
+     "expected": "[\"T\"]",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "[\"T\"]": 5
+     }
+    },
+    {
+     "program": "(EQ a a)",
+     "variant": "E5",
+     "D": 2048,
+     "expected": "[\"T\"]",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "[\"T\"]": 5
+     }
+    },
+    {
+     "program": "(EQ a b)",
+     "variant": "E5",
+     "D": 512,
+     "expected": "[\"F\"]",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "[\"F\"]": 5
+     }
+    },
+    {
+     "program": "(EQ a b)",
+     "variant": "E5",
+     "D": 2048,
+     "expected": "[\"F\"]",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "[\"F\"]": 5
+     }
+    },
+    {
+     "program": "(ATOM a)",
+     "variant": "E5",
+     "D": 512,
+     "expected": "[\"T\"]",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "[\"T\"]": 5
+     }
+    },
+    {
+     "program": "(ATOM a)",
+     "variant": "E5",
+     "D": 2048,
+     "expected": "[\"T\"]",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "[\"T\"]": 5
+     }
+    },
+    {
+     "program": "(ATOM (a b))",
+     "variant": "E5",
+     "D": 512,
+     "expected": "[\"F\"]",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "[\"F\"]": 5
+     }
+    },
+    {
+     "program": "(ATOM (a b))",
+     "variant": "E5",
+     "D": 2048,
+     "expected": "[\"F\"]",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "[\"F\"]": 5
+     }
+    },
+    {
+     "program": "(COND ((EQ a a) . yes) (T . no))",
+     "variant": "E5",
+     "D": 512,
+     "expected": "[\"yes\"]",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "[\"yes\"]": 5
+     }
+    },
+    {
+     "program": "(COND ((EQ a a) . yes) (T . no))",
+     "variant": "E5",
+     "D": 2048,
+     "expected": "[\"yes\"]",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "[\"yes\"]": 5
+     }
+    },
+    {
+     "program": "(COND ((EQ a b) . yes) (T . no))",
+     "variant": "E5",
+     "D": 512,
+     "expected": "[\"no\"]",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "[\"no\"]": 5
+     }
+    },
+    {
+     "program": "(COND ((EQ a b) . yes) (T . no))",
+     "variant": "E5",
+     "D": 2048,
+     "expected": "[\"no\"]",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "[\"no\"]": 5
+     }
+    },
+    {
+     "program": "((LAMBDA (x) (CONS x (b c))) a)",
+     "variant": "E5",
+     "D": 512,
+     "expected": "[[\"a\", \"b\", \"c\"]]",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "[[\"a\", \"b\", \"c\"]]": 5
+     }
+    },
+    {
+     "program": "((LAMBDA (x) (CONS x (b c))) a)",
+     "variant": "E5",
+     "D": 2048,
+     "expected": "[[\"a\", \"b\", \"c\"]]",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "[[\"a\", \"b\", \"c\"]]": 5
+     }
+    }
+   ]
+  }
+ ],
+ "fizzbuzz": [
+  {
+   "variant": "E4",
+   "seed": 0,
+   "program": "their fizzbuzz DEFINEs",
+   "result": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
+   "expected": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
+   "correct": true,
+   "seconds": 0.0
+  },
+  {
+   "variant": "E4",
+   "seed": 0,
+   "program": "countdown 3 1",
+   "source": "(countdown (((NIL))) (NIL))",
+   "result": "[[[\"NIL\"]]]",
+   "expected": "[[[\"NIL\"]]]",
+   "correct": true,
+   "seconds": 0.3
+  },
+  {
+   "variant": "E4",
+   "seed": 0,
+   "program": "divisible 3 3",
+   "source": "(divisible (((NIL))) (((NIL))))",
+   "result": "[\"T\"]",
+   "expected": "[\"T\"]",
+   "correct": true,
+   "seconds": 1.1
+  },
+  {
+   "variant": "E4",
+   "seed": 0,
+   "program": "divisible 4 3",
+   "source": "(divisible ((((NIL)))) (((NIL))))",
+   "result": "[\"F\"]",
+   "expected": "[\"F\"]",
+   "correct": true,
+   "seconds": 2.8
+  },
+  {
+   "variant": "E4",
+   "seed": 0,
+   "program": "and T F",
+   "source": "(and T F)",
+   "result": "[\"F\"]",
+   "expected": "[\"F\"]",
+   "correct": true,
+   "seconds": 0.3
+  },
+  {
+   "variant": "E4",
+   "seed": 0,
+   "program": "take 2 (a b c)",
+   "source": "(take ((NIL)) (a b c))",
+   "result": "[[\"a\", \"b\"]]",
+   "expected": "[[\"a\", \"b\"]]",
+   "correct": true,
+   "seconds": 1.2
+  },
+  {
+   "variant": "E4",
+   "seed": 1,
+   "program": "their fizzbuzz DEFINEs",
+   "result": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
+   "expected": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
+   "correct": true,
+   "seconds": 0.0
+  },
+  {
+   "variant": "E4",
+   "seed": 1,
+   "program": "countdown 3 1",
+   "source": "(countdown (((NIL))) (NIL))",
+   "result": "[[[\"NIL\"]]]",
+   "expected": "[[[\"NIL\"]]]",
+   "correct": true,
+   "seconds": 0.3
+  },
+  {
+   "variant": "E4",
+   "seed": 1,
+   "program": "divisible 3 3",
+   "source": "(divisible (((NIL))) (((NIL))))",
+   "result": "[\"T\"]",
+   "expected": "[\"T\"]",
+   "correct": true,
+   "seconds": 1.1
+  },
+  {
+   "variant": "E4",
+   "seed": 1,
+   "program": "divisible 4 3",
+   "source": "(divisible ((((NIL)))) (((NIL))))",
+   "result": "[\"F\"]",
+   "expected": "[\"F\"]",
+   "correct": true,
+   "seconds": 2.7
+  },
+  {
+   "variant": "E4",
+   "seed": 1,
+   "program": "and T F",
+   "source": "(and T F)",
+   "result": "[\"F\"]",
+   "expected": "[\"F\"]",
+   "correct": true,
+   "seconds": 0.2
+  },
+  {
+   "variant": "E4",
+   "seed": 1,
+   "program": "take 2 (a b c)",
+   "source": "(take ((NIL)) (a b c))",
+   "result": "[[\"a\", \"b\"]]",
+   "expected": "[[\"a\", \"b\"]]",
+   "correct": true,
+   "seconds": 1.1
+  },
+  {
+   "variant": "E4",
+   "seed": 2,
+   "program": "their fizzbuzz DEFINEs",
+   "result": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
+   "expected": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
+   "correct": true,
+   "seconds": 0.0
+  },
+  {
+   "variant": "E4",
+   "seed": 2,
+   "program": "countdown 3 1",
+   "source": "(countdown (((NIL))) (NIL))",
+   "result": "[[[\"NIL\"]]]",
+   "expected": "[[[\"NIL\"]]]",
+   "correct": true,
+   "seconds": 0.3
+  },
+  {
+   "variant": "E4",
+   "seed": 2,
+   "program": "divisible 3 3",
+   "source": "(divisible (((NIL))) (((NIL))))",
+   "result": "[\"T\"]",
+   "expected": "[\"T\"]",
+   "correct": true,
+   "seconds": 1.1
+  },
+  {
+   "variant": "E4",
+   "seed": 2,
+   "program": "divisible 4 3",
+   "source": "(divisible ((((NIL)))) (((NIL))))",
+   "result": "[\"F\"]",
+   "expected": "[\"F\"]",
+   "correct": true,
+   "seconds": 2.8
+  },
+  {
+   "variant": "E4",
+   "seed": 2,
+   "program": "and T F",
+   "source": "(and T F)",
+   "result": "[\"F\"]",
+   "expected": "[\"F\"]",
+   "correct": true,
+   "seconds": 0.3
+  },
+  {
+   "variant": "E4",
+   "seed": 2,
+   "program": "take 2 (a b c)",
+   "source": "(take ((NIL)) (a b c))",
+   "result": "[[\"a\", \"b\"]]",
+   "expected": "[[\"a\", \"b\"]]",
+   "correct": true,
+   "seconds": 1.1
+  },
+  {
+   "variant": "E4",
+   "seed": 3,
+   "program": "their fizzbuzz DEFINEs",
+   "result": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
+   "expected": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
+   "correct": true,
+   "seconds": 0.0
+  },
+  {
+   "variant": "E4",
+   "seed": 3,
+   "program": "countdown 3 1",
+   "source": "(countdown (((NIL))) (NIL))",
+   "result": "[[[\"NIL\"]]]",
+   "expected": "[[[\"NIL\"]]]",
+   "correct": true,
+   "seconds": 0.3
+  },
+  {
+   "variant": "E4",
+   "seed": 3,
+   "program": "divisible 3 3",
+   "source": "(divisible (((NIL))) (((NIL))))",
+   "result": "[\"T\"]",
+   "expected": "[\"T\"]",
+   "correct": true,
+   "seconds": 1.1
+  },
+  {
+   "variant": "E4",
+   "seed": 3,
+   "program": "divisible 4 3",
+   "source": "(divisible ((((NIL)))) (((NIL))))",
+   "result": "[\"F\"]",
+   "expected": "[\"F\"]",
+   "correct": true,
+   "seconds": 2.8
+  },
+  {
+   "variant": "E4",
+   "seed": 3,
+   "program": "and T F",
+   "source": "(and T F)",
+   "result": "[\"F\"]",
+   "expected": "[\"F\"]",
+   "correct": true,
+   "seconds": 0.3
+  },
+  {
+   "variant": "E4",
+   "seed": 3,
+   "program": "take 2 (a b c)",
+   "source": "(take ((NIL)) (a b c))",
+   "result": "[[\"a\", \"b\"]]",
+   "expected": "[[\"a\", \"b\"]]",
+   "correct": true,
+   "seconds": 1.2
+  },
+  {
+   "variant": "E4",
+   "seed": 4,
+   "program": "their fizzbuzz DEFINEs",
+   "result": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
+   "expected": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
+   "correct": true,
+   "seconds": 0.0
+  },
+  {
+   "variant": "E4",
+   "seed": 4,
+   "program": "countdown 3 1",
+   "source": "(countdown (((NIL))) (NIL))",
+   "result": "[[[\"NIL\"]]]",
+   "expected": "[[[\"NIL\"]]]",
+   "correct": true,
+   "seconds": 0.3
+  },
+  {
+   "variant": "E4",
+   "seed": 4,
+   "program": "divisible 3 3",
+   "source": "(divisible (((NIL))) (((NIL))))",
+   "result": "[\"T\"]",
+   "expected": "[\"T\"]",
+   "correct": true,
+   "seconds": 1.1
+  },
+  {
+   "variant": "E4",
+   "seed": 4,
+   "program": "divisible 4 3",
+   "source": "(divisible ((((NIL)))) (((NIL))))",
+   "result": "[\"F\"]",
+   "expected": "[\"F\"]",
+   "correct": true,
+   "seconds": 2.9
+  },
+  {
+   "variant": "E4",
+   "seed": 4,
+   "program": "and T F",
+   "source": "(and T F)",
+   "result": "[\"F\"]",
+   "expected": "[\"F\"]",
+   "correct": true,
+   "seconds": 0.3
+  },
+  {
+   "variant": "E4",
+   "seed": 4,
+   "program": "take 2 (a b c)",
+   "source": "(take ((NIL)) (a b c))",
+   "result": "[[\"a\", \"b\"]]",
+   "expected": "[[\"a\", \"b\"]]",
+   "correct": true,
+   "seconds": 1.2
+  },
+  {
+   "variant": "E5 + E4",
+   "seed": 0,
+   "program": "their fizzbuzz DEFINEs",
+   "result": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
+   "expected": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
+   "correct": true,
+   "seconds": 0.0
+  },
+  {
+   "variant": "E5 + E4",
+   "seed": 0,
+   "program": "countdown 3 1",
+   "source": "(countdown (((NIL))) (NIL))",
+   "result": "[[[\"NIL\"]]]",
+   "expected": "[[[\"NIL\"]]]",
+   "correct": true,
+   "seconds": 0.3
+  },
+  {
+   "variant": "E5 + E4",
+   "seed": 0,
+   "program": "divisible 3 3",
+   "source": "(divisible (((NIL))) (((NIL))))",
+   "result": "[\"T\"]",
+   "expected": "[\"T\"]",
+   "correct": true,
+   "seconds": 1.0
+  },
+  {
+   "variant": "E5 + E4",
+   "seed": 0,
+   "program": "divisible 4 3",
+   "source": "(divisible ((((NIL)))) (((NIL))))",
+   "result": "[\"F\"]",
+   "expected": "[\"F\"]",
+   "correct": true,
+   "seconds": 2.1
+  },
+  {
+   "variant": "E5 + E4",
+   "seed": 0,
+   "program": "and T F",
+   "source": "(and T F)",
+   "result": "[\"F\"]",
+   "expected": "[\"F\"]",
+   "correct": true,
+   "seconds": 0.2
+  },
+  {
+   "variant": "E5 + E4",
+   "seed": 0,
+   "program": "take 2 (a b c)",
+   "source": "(take ((NIL)) (a b c))",
+   "result": "[[\"a\", \"take\", [\"NIL\"], [\"b\", \"c\"]]]",
+   "expected": "[[\"a\", \"b\"]]",
+   "correct": false,
+   "seconds": 0.3
+  },
+  {
+   "variant": "E5 + E4",
+   "seed": 1,
+   "program": "their fizzbuzz DEFINEs",
+   "result": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
+   "expected": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
+   "correct": true,
+   "seconds": 0.0
+  },
+  {
+   "variant": "E5 + E4",
+   "seed": 1,
+   "program": "countdown 3 1",
+   "source": "(countdown (((NIL))) (NIL))",
+   "result": "[[[\"NIL\"]]]",
+   "expected": "[[[\"NIL\"]]]",
+   "correct": true,
+   "seconds": 0.3
+  },
+  {
+   "variant": "E5 + E4",
+   "seed": 1,
+   "program": "divisible 3 3",
+   "source": "(divisible (((NIL))) (((NIL))))",
+   "result": "[\"T\"]",
+   "expected": "[\"T\"]",
+   "correct": true,
+   "seconds": 0.9
+  },
+  {
+   "variant": "E5 + E4",
+   "seed": 1,
+   "program": "divisible 4 3",
+   "source": "(divisible ((((NIL)))) (((NIL))))",
+   "result": "[\"F\"]",
+   "expected": "[\"F\"]",
+   "correct": true,
+   "seconds": 2.1
+  },
+  {
+   "variant": "E5 + E4",
+   "seed": 1,
+   "program": "and T F",
+   "source": "(and T F)",
+   "result": "[\"F\"]",
+   "expected": "[\"F\"]",
+   "correct": true,
+   "seconds": 0.2
+  },
+  {
+   "variant": "E5 + E4",
+   "seed": 1,
+   "program": "take 2 (a b c)",
+   "source": "(take ((NIL)) (a b c))",
+   "result": "[[\"a\", \"take\", [\"NIL\"], [\"b\", \"c\"]]]",
+   "expected": "[[\"a\", \"b\"]]",
+   "correct": false,
+   "seconds": 0.3
+  },
+  {
+   "variant": "E5 + E4",
+   "seed": 2,
+   "program": "their fizzbuzz DEFINEs",
+   "result": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
+   "expected": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
+   "correct": true,
+   "seconds": 0.0
+  },
+  {
+   "variant": "E5 + E4",
+   "seed": 2,
+   "program": "countdown 3 1",
+   "source": "(countdown (((NIL))) (NIL))",
+   "result": "[[[\"NIL\"]]]",
+   "expected": "[[[\"NIL\"]]]",
+   "correct": true,
+   "seconds": 0.3
+  },
+  {
+   "variant": "E5 + E4",
+   "seed": 2,
+   "program": "divisible 3 3",
+   "source": "(divisible (((NIL))) (((NIL))))",
+   "result": "[\"T\"]",
+   "expected": "[\"T\"]",
+   "correct": true,
+   "seconds": 0.9
+  },
+  {
+   "variant": "E5 + E4",
+   "seed": 2,
+   "program": "divisible 4 3",
+   "source": "(divisible ((((NIL)))) (((NIL))))",
+   "result": "[\"F\"]",
+   "expected": "[\"F\"]",
+   "correct": true,
+   "seconds": 2.1
+  },
+  {
+   "variant": "E5 + E4",
+   "seed": 2,
+   "program": "and T F",
+   "source": "(and T F)",
+   "result": "[\"F\"]",
+   "expected": "[\"F\"]",
+   "correct": true,
+   "seconds": 0.2
+  },
+  {
+   "variant": "E5 + E4",
+   "seed": 2,
+   "program": "take 2 (a b c)",
+   "source": "(take ((NIL)) (a b c))",
+   "result": "[[\"a\", \"take\", [\"NIL\"], [\"b\", \"c\"]]]",
+   "expected": "[[\"a\", \"b\"]]",
+   "correct": false,
+   "seconds": 0.3
+  },
+  {
+   "variant": "E5 + E4",
+   "seed": 3,
+   "program": "their fizzbuzz DEFINEs",
+   "result": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
+   "expected": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
+   "correct": true,
+   "seconds": 0.0
+  },
+  {
+   "variant": "E5 + E4",
+   "seed": 3,
+   "program": "countdown 3 1",
+   "source": "(countdown (((NIL))) (NIL))",
+   "result": "[[[\"NIL\"]]]",
+   "expected": "[[[\"NIL\"]]]",
+   "correct": true,
+   "seconds": 0.3
+  },
+  {
+   "variant": "E5 + E4",
+   "seed": 3,
+   "program": "divisible 3 3",
+   "source": "(divisible (((NIL))) (((NIL))))",
+   "result": "[\"T\"]",
+   "expected": "[\"T\"]",
+   "correct": true,
+   "seconds": 0.9
+  },
+  {
+   "variant": "E5 + E4",
+   "seed": 3,
+   "program": "divisible 4 3",
+   "source": "(divisible ((((NIL)))) (((NIL))))",
+   "result": "[\"F\"]",
+   "expected": "[\"F\"]",
+   "correct": true,
+   "seconds": 2.1
+  },
+  {
+   "variant": "E5 + E4",
+   "seed": 3,
+   "program": "and T F",
+   "source": "(and T F)",
+   "result": "[\"F\"]",
+   "expected": "[\"F\"]",
+   "correct": true,
+   "seconds": 0.2
+  },
+  {
+   "variant": "E5 + E4",
+   "seed": 3,
+   "program": "take 2 (a b c)",
+   "source": "(take ((NIL)) (a b c))",
+   "result": "[[\"a\", \"take\", [\"NIL\"], [\"b\", \"c\"]]]",
+   "expected": "[[\"a\", \"b\"]]",
+   "correct": false,
+   "seconds": 0.3
+  },
+  {
+   "variant": "E5 + E4",
+   "seed": 4,
+   "program": "their fizzbuzz DEFINEs",
+   "result": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
+   "expected": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
+   "correct": true,
+   "seconds": 0.0
+  },
+  {
+   "variant": "E5 + E4",
+   "seed": 4,
+   "program": "countdown 3 1",
+   "source": "(countdown (((NIL))) (NIL))",
+   "result": "[[[\"NIL\"]]]",
+   "expected": "[[[\"NIL\"]]]",
+   "correct": true,
+   "seconds": 0.3
+  },
+  {
+   "variant": "E5 + E4",
+   "seed": 4,
+   "program": "divisible 3 3",
+   "source": "(divisible (((NIL))) (((NIL))))",
+   "result": "[\"T\"]",
+   "expected": "[\"T\"]",
+   "correct": true,
+   "seconds": 0.9
+  },
+  {
+   "variant": "E5 + E4",
+   "seed": 4,
+   "program": "divisible 4 3",
+   "source": "(divisible ((((NIL)))) (((NIL))))",
+   "result": "[\"F\"]",
+   "expected": "[\"F\"]",
+   "correct": true,
+   "seconds": 2.1
+  },
+  {
+   "variant": "E5 + E4",
+   "seed": 4,
+   "program": "and T F",
+   "source": "(and T F)",
+   "result": "[\"F\"]",
+   "expected": "[\"F\"]",
+   "correct": true,
+   "seconds": 0.2
+  },
+  {
+   "variant": "E5 + E4",
+   "seed": 4,
+   "program": "take 2 (a b c)",
+   "source": "(take ((NIL)) (a b c))",
+   "result": "[[\"a\", \"take\", [\"NIL\"], [\"b\", \"c\"]]]",
+   "expected": "[[\"a\", \"b\"]]",
+   "correct": false,
+   "seconds": 0.3
+  },
+  {
+   "variant": "E2 + unwrap QUOTE + E5 + E4",
+   "seed": 0,
+   "program": "their fizzbuzz DEFINEs",
+   "result": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
+   "expected": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
+   "correct": true,
+   "seconds": 0.0
+  },
+  {
+   "variant": "E2 + unwrap QUOTE + E5 + E4",
+   "seed": 0,
+   "program": "countdown 3 1",
+   "source": "(countdown (((NIL))) (NIL))",
+   "result": "[[[\"NIL\"]]]",
+   "expected": "[[[\"NIL\"]]]",
+   "correct": true,
+   "seconds": 0.3
+  },
+  {
+   "variant": "E2 + unwrap QUOTE + E5 + E4",
+   "seed": 0,
+   "program": "divisible 3 3",
+   "source": "(divisible (((NIL))) (((NIL))))",
+   "result": "RecursionError",
+   "expected": "[\"T\"]",
+   "correct": false,
+   "seconds": 2.4
+  },
+  {
+   "variant": "E2 + unwrap QUOTE + E5 + E4",
+   "seed": 0,
+   "program": "divisible 4 3",
+   "source": "(divisible ((((NIL)))) (((NIL))))",
+   "result": "RecursionError",
+   "expected": "[\"F\"]",
+   "correct": false,
+   "seconds": 2.0
+  },
+  {
+   "variant": "E2 + unwrap QUOTE + E5 + E4",
+   "seed": 0,
+   "program": "and T F",
+   "source": "(and T F)",
+   "result": "RecursionError",
+   "expected": "[\"F\"]",
+   "correct": false,
+   "seconds": 1.4
+  },
+  {
+   "variant": "E2 + unwrap QUOTE + E5 + E4",
+   "seed": 0,
+   "program": "take 2 (a b c)",
+   "source": "(take ((NIL)) (a b c))",
+   "result": "RecursionError",
+   "expected": "[[\"a\", \"b\"]]",
+   "correct": false,
+   "seconds": 2.4
+  },
+  {
+   "variant": "E2 + unwrap QUOTE + E5 + E4",
+   "seed": 1,
+   "program": "their fizzbuzz DEFINEs",
+   "result": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
+   "expected": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
+   "correct": true,
+   "seconds": 0.0
+  },
+  {
+   "variant": "E2 + unwrap QUOTE + E5 + E4",
+   "seed": 1,
+   "program": "countdown 3 1",
+   "source": "(countdown (((NIL))) (NIL))",
+   "result": "[[[\"NIL\"]]]",
+   "expected": "[[[\"NIL\"]]]",
+   "correct": true,
+   "seconds": 0.3
+  },
+  {
+   "variant": "E2 + unwrap QUOTE + E5 + E4",
+   "seed": 1,
+   "program": "divisible 3 3",
+   "source": "(divisible (((NIL))) (((NIL))))",
+   "result": "[\"T\"]",
+   "expected": "[\"T\"]",
+   "correct": true,
+   "seconds": 1.1
+  },
+  {
+   "variant": "E2 + unwrap QUOTE + E5 + E4",
+   "seed": 1,
+   "program": "divisible 4 3",
+   "source": "(divisible ((((NIL)))) (((NIL))))",
+   "result": "[\"F\"]",
+   "expected": "[\"F\"]",
+   "correct": true,
+   "seconds": 2.8
+  },
+  {
+   "variant": "E2 + unwrap QUOTE + E5 + E4",
+   "seed": 1,
+   "program": "and T F",
+   "source": "(and T F)",
+   "result": "[\"F\"]",
+   "expected": "[\"F\"]",
+   "correct": true,
+   "seconds": 0.3
+  },
+  {
+   "variant": "E2 + unwrap QUOTE + E5 + E4",
+   "seed": 1,
+   "program": "take 2 (a b c)",
+   "source": "(take ((NIL)) (a b c))",
+   "result": "[[\"a\", \"b\"]]",
+   "expected": "[[\"a\", \"b\"]]",
+   "correct": true,
+   "seconds": 1.0
+  },
+  {
+   "variant": "E2 + unwrap QUOTE + E5 + E4",
+   "seed": 2,
+   "program": "their fizzbuzz DEFINEs",
+   "result": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
+   "expected": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
+   "correct": true,
+   "seconds": 0.0
+  },
+  {
+   "variant": "E2 + unwrap QUOTE + E5 + E4",
+   "seed": 2,
+   "program": "countdown 3 1",
+   "source": "(countdown (((NIL))) (NIL))",
+   "result": "[[[\"NIL\"]]]",
+   "expected": "[[[\"NIL\"]]]",
+   "correct": true,
+   "seconds": 0.3
+  },
+  {
+   "variant": "E2 + unwrap QUOTE + E5 + E4",
+   "seed": 2,
+   "program": "divisible 3 3",
+   "source": "(divisible (((NIL))) (((NIL))))",
+   "result": "[\"T\"]",
+   "expected": "[\"T\"]",
+   "correct": true,
+   "seconds": 0.9
+  },
+  {
+   "variant": "E2 + unwrap QUOTE + E5 + E4",
+   "seed": 2,
+   "program": "divisible 4 3",
+   "source": "(divisible ((((NIL)))) (((NIL))))",
+   "result": "[\"F\"]",
+   "expected": "[\"F\"]",
+   "correct": true,
+   "seconds": 2.2
+  },
+  {
+   "variant": "E2 + unwrap QUOTE + E5 + E4",
+   "seed": 2,
+   "program": "and T F",
+   "source": "(and T F)",
+   "result": "[\"F\"]",
+   "expected": "[\"F\"]",
+   "correct": true,
+   "seconds": 0.2
+  },
+  {
+   "variant": "E2 + unwrap QUOTE + E5 + E4",
+   "seed": 2,
+   "program": "take 2 (a b c)",
+   "source": "(take ((NIL)) (a b c))",
+   "result": "[[\"a\", \"b\"]]",
+   "expected": "[[\"a\", \"b\"]]",
+   "correct": true,
+   "seconds": 0.9
+  },
+  {
+   "variant": "E2 + unwrap QUOTE + E5 + E4",
+   "seed": 3,
+   "program": "their fizzbuzz DEFINEs",
+   "result": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
+   "expected": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
+   "correct": true,
+   "seconds": 0.0
+  },
+  {
+   "variant": "E2 + unwrap QUOTE + E5 + E4",
+   "seed": 3,
+   "program": "countdown 3 1",
+   "source": "(countdown (((NIL))) (NIL))",
+   "result": "[[[\"NIL\"]]]",
+   "expected": "[[[\"NIL\"]]]",
+   "correct": true,
+   "seconds": 0.3
+  },
+  {
+   "variant": "E2 + unwrap QUOTE + E5 + E4",
+   "seed": 3,
+   "program": "divisible 3 3",
+   "source": "(divisible (((NIL))) (((NIL))))",
+   "result": "[\"T\"]",
+   "expected": "[\"T\"]",
+   "correct": true,
+   "seconds": 0.9
+  },
+  {
+   "variant": "E2 + unwrap QUOTE + E5 + E4",
+   "seed": 3,
+   "program": "divisible 4 3",
+   "source": "(divisible ((((NIL)))) (((NIL))))",
+   "result": "[\"F\"]",
+   "expected": "[\"F\"]",
+   "correct": true,
+   "seconds": 2.1
+  },
+  {
+   "variant": "E2 + unwrap QUOTE + E5 + E4",
+   "seed": 3,
+   "program": "and T F",
+   "source": "(and T F)",
+   "result": "[\"F\"]",
+   "expected": "[\"F\"]",
+   "correct": true,
+   "seconds": 0.2
+  },
+  {
+   "variant": "E2 + unwrap QUOTE + E5 + E4",
+   "seed": 3,
+   "program": "take 2 (a b c)",
+   "source": "(take ((NIL)) (a b c))",
+   "result": "[[\"a\", \"b\"]]",
+   "expected": "[[\"a\", \"b\"]]",
+   "correct": true,
+   "seconds": 0.9
+  },
+  {
+   "variant": "E2 + unwrap QUOTE + E5 + E4",
+   "seed": 4,
+   "program": "their fizzbuzz DEFINEs",
+   "result": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
+   "expected": "[\"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\", \"NIL\"]",
+   "correct": true,
+   "seconds": 0.0
+  },
+  {
+   "variant": "E2 + unwrap QUOTE + E5 + E4",
+   "seed": 4,
+   "program": "countdown 3 1",
+   "source": "(countdown (((NIL))) (NIL))",
+   "result": "[[[\"NIL\"]]]",
+   "expected": "[[[\"NIL\"]]]",
+   "correct": true,
+   "seconds": 0.3
+  },
+  {
+   "variant": "E2 + unwrap QUOTE + E5 + E4",
+   "seed": 4,
+   "program": "divisible 3 3",
+   "source": "(divisible (((NIL))) (((NIL))))",
+   "result": "[\"T\"]",
+   "expected": "[\"T\"]",
+   "correct": true,
+   "seconds": 1.0
+  },
+  {
+   "variant": "E2 + unwrap QUOTE + E5 + E4",
+   "seed": 4,
+   "program": "divisible 4 3",
+   "source": "(divisible ((((NIL)))) (((NIL))))",
+   "result": "[\"F\"]",
+   "expected": "[\"F\"]",
+   "correct": true,
+   "seconds": 2.8
+  },
+  {
+   "variant": "E2 + unwrap QUOTE + E5 + E4",
+   "seed": 4,
+   "program": "and T F",
+   "source": "(and T F)",
+   "result": "[\"F\"]",
+   "expected": "[\"F\"]",
+   "correct": true,
+   "seconds": 0.3
+  },
+  {
+   "variant": "E2 + unwrap QUOTE + E5 + E4",
+   "seed": 4,
+   "program": "take 2 (a b c)",
+   "source": "(take ((NIL)) (a b c))",
+   "result": "[[\"a\", \"b\"]]",
+   "expected": "[[\"a\", \"b\"]]",
+   "correct": true,
+   "seconds": 1.1
+  }
+ ]
+}

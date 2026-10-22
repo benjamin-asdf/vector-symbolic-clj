@@ -7,9 +7,6 @@
 
 ;; # Reproducing the Traps in the Original Code
 ;;
-;; > Generated with Claude Code, and I am not ashamed. My own blog posts of
-;; > this kind are part of the training data and have sculpted its style.
-;;
 ;; *A companion to [A Vector-Symbolic Clojure](../). The overview found five
 ;; traps in a vector-symbolic Lisp. This page runs each one against the
 ;; original authors' own code. October 2026.*
@@ -49,6 +46,8 @@
 (def ht (load-json "holis_thresholds.json"))
 ^:kindly/hide-code
 (def hcell (load-json "holis_cells.json"))
+^:kindly/hide-code
+(def htail (load-json "holis_tail.json"))
 ^:kindly/hide-code
 (def rc (load-json "residuelisp_control.json"))
 ^:kindly/hide-code
@@ -412,6 +411,10 @@
        (for [r (get he "other")]
          [(kind/code (get r "program")) (get r "D") (fmt (get r "results"))]))
 
+;; **E5 (holis).** A function name or a lambda inside a list is applied
+;; to what follows it: `(a CAR (b c))` gives `(a b)` in every seed. Their
+;; own `take` relies on it (see the errata).
+;;
 ;; **E4 (holis). The item memory adds 100 rows per item past 100.**
 ;; `SimpleCleanUp.memorize` appends 100 empty rows once it is full, but
 ;; it never raises its capacity. So past 100 items, every new item appends
@@ -568,7 +571,11 @@
       ch (lk "chance floor (theta=5/sqrt(D))")
       g800 (by (get he "memory_growth") "items stored" 800)
       g800f (first (filter #(and (= "E4" (get % "variant")) (= 800 (get % "items stored")))
-                           (get hf "e4_growth")))]
+                           (get hf "e4_growth")))
+      e5 (filter #(and (= "theirs" (get % "variant")) (= "(a CAR (b c))" (get % "program")))
+                 (get htail "programs"))
+      e5f (filter #(and (= "E5" (get % "variant")) (= "(a CAR (b c))" (get % "program")))
+                  (get htail "programs"))]
   (table ["item" "code" "program" "should give" "gives (×runs)" "wrong" "wrong with the fix"]
          [(row "R1 (trap 4)" "residuelisp" (rp "(eq? 3 5 )") (fx "R1" "(eq? 3 5 )"))
           (row "R2" "residuelisp" (rp "(and #t #f)") (fx "R2" "(and #t #f)"))
@@ -600,6 +607,9 @@
           ["E4" "holis" "store 800 items in SimpleCleanUp" "about 800 rows"
            (str (get g800 "matrix rows") " rows, " (get g800 "MB at D=512") " MB at D = 512") "–"
            (str (get g800f "matrix rows") " rows")]
+          ["E5" "holis" (kind/code "(a CAR (b c))") "(a CAR (b c))"
+           (fmt (get (first e5) "results")) (at-d e5)
+           (str (at-d e5f) "; needs E2, or `take` breaks")]
           ["E3" "holis" (kind/code (get e3 "program")) "the lambda"
            (fmt (get e3 "results")) (str (get e3 "runs") " / " (get e3 "runs"))
            (str (wrong-of e3f) " (LABEL as DEFINE)")]]))
@@ -720,6 +730,7 @@
 ;;
 ;;   Their `test_and` and `test_and_comp` only use true arguments, so a
 ;;   test of `(and #t #f)` would have caught it.
+;;
 ;; - *Status.* **Tested**, as shown. Structural `eq?` now compares the
 ;;   cdrs too, and the control programs still pass:
 
@@ -811,6 +822,7 @@
 ;;
 ;;   Results then wrap modulo 1155, so `(- 3 5 )` decodes as 1153. Map
 ;;   the upper half to negatives if that is wanted.
+;;
 ;; - *Status.* **Tested**, as shown. My first version called
 ;;   `RHC.encode(enc_env.dim, i, RHC.moduli).data` in the loop. It gave
 ;;   the same answers, but each call builds an `RHC` object whose
@@ -936,7 +948,7 @@
 ;;   runs `CDR` on an atom (E1) and gives a random item. The version
 ;;   above leaves `quote` alone. Unquoted literal lists such as `(a b c)`
 ;;   keep working, because their evaluator returns a list with an unknown
-;;   head unchanged. CONS evaluates by accident in their code: the loop
+;;   head unchanged (unless it holds a function name or a lambda, E5). CONS evaluates by accident in their code: the loop
 ;;   in `ev_until_done` evaluates the new cell again. With quoted
 ;;   arguments that loop never ends: their QUOTE returns `(QUOTE (x))`,
 ;;   and each pass wraps it once more, so `(CONS (QUOTE a) (QUOTE (b c)))`
@@ -967,6 +979,78 @@
 ;;   suspect E1 sets off the first failure: their internal `car` runs on
 ;;   every call, and with E2 more atoms reach it. I did not confirm this,
 ;;   and with no working E1 fix (above) I could not test the pair.
+;;
+;; **E5 (holis). A function name or lambda inside a list is applied to
+;; what follows it.**
+;;
+;; - *Where.* Code cell 2, `vsa_env`: the last line of `ev`,
+;;   `ccons(ev(head), ev(tail))`, and in `ev_until_done` the branch
+;;   `ccons(head, ev_until_done(cdr(e)))`.
+;; - *Symptom.* `(a CAR (b c))` gives `(a b)`, `(a (LAMBDA (x) x) b)`
+;;   gives `(a b)`, and `(g (LAMBDA (x) x))` gives `(g LAMBDA (x) x)`,
+;;   without noise and in every seed (table below). The E3 result with
+;;   LABEL removed is this effect too.
+;; - *Cause.* For a list whose head is no function, both lines evaluate
+;;   the tail as one expression instead of element by element. So the
+;;   second element becomes the head of a call. Their programs rely on
+;;   this: `take` writes `(CONS (CAR l) (take (CAR n) (CDR l)))`, and
+;;   since CONS does not evaluate its arguments (E2), the recursive call
+;;   runs only because the tail of the new cell is evaluated as a call.
+;;   `fizzesbuzzes` builds its list as `((fb n) . (fizzesbuzzes (CAR n)))`
+;;   for the same reason.
+;; - *Fix,* together with E2. Evaluate the tail element by element:
+;;
+;; ```python
+;; def each(t, f, ind=''):
+;;     if (atomic(t) == env['T']) > floor:
+;;         return t
+;;     return ccons(f(car(t), ind=ind), each(cdr(t), f, ind=ind))
+;; ```
+;;
+;;   and end `ev` with `return ccons(ev(head, ind=ind+'  '), each(tail,
+;;   ev, ind+'  '))` and that branch of `ev_until_done` with
+;;   `return ccons(head, each(cdr(e), ev_until_done, ind))`. Lists built
+;;   as `(x . (f …))`, as in `fizzesbuzzes`, then need `CONS` instead.
+;;
+;; - *Status.* **Tested** (`holis_tail.py`, applied as a wrapper around
+;;   their `ev` and `ev_until_done`). Over 5 seeds:
+
+^:kindly/hide-code
+(before-after (get htail "programs") "variant" ["theirs" "E5"])
+
+;;   The single misses at D = 2048 happen with and without the fix, with
+;;   the same wrong result; I did not trace them. With LABEL removed (E3),
+;;   `(LABEL f (LAMBDA (x) x))` comes back as written with the fix, in 4
+;;   of 5 seeds:
+
+^:kindly/hide-code
+(before-after (get htail "label") "variant" ["E3 removed" "E3 removed + E5"])
+
+;;   The control programs, without and with the fix (the two misses
+;;   without it are the LAMBDA program of E1):
+
+^:kindly/hide-code
+(table ["variant" "right"]
+       (for [r (get htail "regression")]
+         [(get r "variant") (frac r "correct" "runs")]))
+
+;;   Their fizzbuzz helpers, right per call over 5 seeds (D = 512, with
+;;   E4). Alone, the fix breaks `take`, which then returns its recursive
+;;   call as data; with E2 it works again, and only seed 0 fails, as with
+;;   E2 alone. I could not run `fizzesbuzzes` itself to the end: even
+;;   with their code and E4, `(fizzesbuzzes 3)` did not finish within
+;;   120 s (a side run).
+
+^:kindly/hide-code
+(let [rows (get htail "fizzbuzz")
+      vs (distinct (map #(get % "variant") rows))]
+  (table (cons "call" vs)
+         (for [p (distinct (map #(get % "program") rows))]
+           (cons p (for [v vs :let [rs (filter #(and (= p (get % "program")) (= v (get % "variant")))
+                                               rows)]]
+                     (str (count (filter #(get % "correct") rs)) " / " (count rs)))))))
+
+;;   So I would apply it only with E2.
 ;;
 ;; ### Robustness under noise
 ;;
@@ -1056,8 +1140,9 @@
 ;;   `basic_fs` and `env.update`, as the paper leaves it out, also stops
 ;;   the error, but LABEL is then never applied and the form comes back
 ;;   as a wrong list: their evaluator keeps the unknown head `LABEL` and
-;;   splices the evaluated lambda in, giving `(LABEL f LAMBDA (x) x)` in
+;;   splices the evaluated lambda in (E5), giving `(LABEL f LAMBDA (x) x)` in
 ;;   4 of 5 seeds.
+;;
 ;; - *Status.* **Tested.** I first suggested keeping their `label` with an
 ;;   `ind=''` parameter and `mem.memorize(lbl)`. That stops the error, but
 ;;   recursion still fails: their helper `ll` replaces the label only at
@@ -1094,7 +1179,7 @@
 ;; | 3 fixed thresholds | reproduced | not reproduced (the cliff moves with √D) |
 ;; | 4 shared field | n/a | reproduced (integer tag) |
 ;; | 5 sum of tuples | n/a | n/a |
-;; | new | E1 car of an atom, E2, E3, E4 memory growth | R2 `and`, R3 `if`, R4 decoder range, R5 lexer |
+;; | new | E1 car of an atom, E2, E3, E4 memory growth, E5 list tails | R2 `and`, R3 `if`, R4 decoder range, R5 lexer |
 
 ;; ## Appendix
 ;;
@@ -1115,6 +1200,7 @@
 ;; .venv/bin/python residuelisp_errata.py
 ;; .venv/bin/python residuelisp_thresholds.py
 ;; .venv/bin/python holis_fixes.py
+;; .venv/bin/python holis_tail.py
 ;; .venv/bin/python residuelisp_fixes.py
 ;; ```
 ;;
