@@ -44,6 +44,8 @@ ulimit -v 8000000
 .venv/bin/python residuelisp_errata.py     # R1-R5, noise-free       ~1 min
 .venv/bin/python residuelisp_residues.py   # 4.3, 4.4                ~15 min
 .venv/bin/python residuelisp_thresholds.py # 4.5                     ~10 min
+.venv/bin/python holis_fixes.py            # fixes 4.2, E1-E4        ~12 min
+.venv/bin/python residuelisp_fixes.py      # fixes R1-R5             ~10 min
 ```
 
 ## What the instrumentation changes
@@ -58,6 +60,14 @@ ulimit -v 8000000
   argmax, breaks their atom test, see `holis_cells.py`), holis's inner `car`
   answering NIL for non-pointers (`holis_errata.py`), holis's cell stored
   as its own bundle, the paper's eq. 2 (`holis_cells.py`).
+- **Fixes**: `holis_fixes.py` and `residuelisp_fixes.py` test the fixes
+  suggested in the notebook's "Errata for the authors". Each fix is a
+  runtime patch: for residuelisp, one module function replaced by our
+  version; for holis, a fresh environment changed after `vsa_env` builds
+  it (closure variables, `env` entries, lexicon and item memory) or, for
+  E4, one class method. No upstream file changes and no holis code is
+  copied. Each script runs the erratum's programs with and without the fix,
+  then the noise-free control programs with the fix.
 - **Budget**: a holis run that builds more than a fixed number of cells,
   or a residuelisp run that makes more than a fixed number of cleanups, is
   stopped and counted as a failure.
@@ -80,6 +90,8 @@ ulimit -v 8000000
 | `residuelisp_errata.json` | R1 integer tag (4.6), R2 `and`, R3 `if`, R4 decoder range, R5 lexer |
 | `residuelisp_residues.json` | 4.3 chimeras and 4.4 zero against their RHC code |
 | `residuelisp_thresholds.json` | 4.5 noise sweep |
+| `holis_fixes.json` | fixes for 4.2, E2, E3, E4 (and E1 rechecked): erratum programs before and after, control programs with each fix, fizzbuzz helpers over 5 seeds with E1, E2 and E4 |
+| `residuelisp_fixes.json` | fixes for R1-R5: erratum programs before and after, control programs with each fix, R1 test pattern, R5 lexer |
 
 Every JSON file records the upstream commit, Python and numpy versions,
 and the settings it ran with.

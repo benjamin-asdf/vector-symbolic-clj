@@ -58,6 +58,10 @@
 (def rr (load-json "residuelisp_residues.json"))
 ^:kindly/hide-code
 (def rt (load-json "residuelisp_thresholds.json"))
+^:kindly/hide-code
+(def hf (load-json "holis_fixes.json"))
+^:kindly/hide-code
+(def rf (load-json "residuelisp_fixes.json"))
 
 ^:kindly/hide-code
 (defn table
@@ -299,7 +303,10 @@
 ;; from literals and `+` / `-` only, and cells hold them behind pointers.
 ;;
 ;; **Reproduced?** No. The chimeras belong to the banded encoding, which
-;; residuelisp does not use.
+;; residuelisp does not use. Since October 2026 our own interpreter has
+;; used a product code too (one phase per frequency, drawn uniformly from
+;; Z_P with P = 5·7·11·13·17·19), and the chimeras are gone there as well:
+;; see trap 3 on the [overview page](../).
 
 ;; ## 4.4 Zero
 ;;
@@ -467,8 +474,9 @@
        (for [[d m] (get he "car_of_a_spread")]
          [d (str/join ", " (for [[k v] (sort-by (comp - val) m)] (str k " ×" v)))]))
 
-;; **E2, E3 (holis).** CAR does not evaluate its argument (by reading
-;; their code, CDR and CONS do not either), and LABEL is
+;; **E2, E3 (holis).** CAR does not evaluate its argument (nor does CDR;
+;; CONS does not either, but their evaluator hides that, see the errata),
+;; and LABEL is
 ;; dispatched but raises. Their paper says it leaves LABEL out, so E3 is a
 ;; leftover, not a broken claim:
 
@@ -533,9 +541,13 @@
 ;; Most items are slips that a proof of concept is allowed to have. They
 ;; are listed so they are quick to fix.
 ;;
-;; A fix marked **tested** is the control that our harness ran, with the
-;; result shown. A fix marked **untested** is our suggestion from reading
-;; the code. We did not run it.
+;; Every fix below is **tested**. Our harness applies it as a runtime
+;; patch to their code, runs the erratum's minimal programs, and then runs
+;; the noise-free control programs from the start of this page again
+;; (`holis_fixes.py`, `residuelisp_fixes.py`; E1 and 4.5 come from
+;; `holis_errata.py` and `holis_thresholds.py`). Where a suggested fix
+;; turned out wrong or incomplete, we say so. The fix shown is always the
+;; one we ran.
 ;;
 ;; The order is by harm: wrong answers without any noise first, then
 ;; robustness under noise, then memory and leftovers. The counts below
@@ -554,48 +566,146 @@
   (str (- (get r "runs") (get r "correct")) " / " (get r "runs")))
 
 ^:kindly/hide-code
+(defn cell
+  "\"right / runs: results\" for a result row, or – if there is none."
+  [r]
+  (if r (str (frac r "correct" "runs") " right: " (fmt (get r "results"))) "–"))
+
+^:kindly/hide-code
+(defn before-after
+  "The rows of one erratum side by side: one line per program (and D),
+  one column per variant. `vkey` names the variant field of a row."
+  [rows vkey variants]
+  (let [k (juxt #(get % "program") #(get % "D"))
+        has-d (some #(get % "D") rows)
+        pick (fn [kk v] (first (filter #(and (= kk (k %)) (= v (get % vkey))) rows)))]
+    (table (concat ["program"] (when has-d ["D"]) ["should give"] variants)
+           (for [kk (distinct (map k rows))]
+             (concat [(kind/code (first kk))] (when has-d [(second kk)])
+                     [(get (some #(pick kk %) variants) "expected")]
+                     (for [v variants] (cell (pick kk v))))))))
+
+^:kindly/hide-code
+(defn rf-errata
+  "residuelisp_fixes rows for one erratum."
+  [e]
+  (filter #(= e (get % "erratum")) (get rf "errata")))
+
+^:kindly/hide-code
+(defn regression-table
+  "The control programs with each fix applied."
+  [regs vkey]
+  (table ["fix" "programs right in every run" "runs right"]
+         (for [r regs]
+           [(get r vkey)
+            (if-let [n (get r "all_seeds_correct")]
+              (str n " / " (get r "programs"))
+              (str (count (filter #(= (get % "correct") (get % "runs")) (get r "rows")))
+                   " / " (count (get r "rows")) " (program × D)"))
+            (frac r "correct" "runs")])))
+
+^:kindly/hide-code
 (let [rp (fn [p] (by (get re "programs") "program" p))
-      row (fn [id code r]
+      fx (fn [e p] (by (filter #(not= "theirs" (get % "fix")) (rf-errata e)) "program" p))
+      hv (fn [k v p] (first (filter #(and (= v (get % "variant")) (= p (get % "program"))) (get hf k))))
+      at-d (fn [rs] (str/join ", " (for [r rs] (str (wrong-of r) " at D = " (get r "D")))))
+      row (fn [id code r f]
             [id code (kind/code (get r "program")) (get r "expected")
-             (fmt (get r "results")) (wrong-of r)])
+             (fmt (get r "results")) (wrong-of r) (wrong-of f)])
       e1 (filter #(= "theirs" (get % "variant")) (get he "car_of_atom"))
+      e1f (filter #(not= "theirs" (get % "variant")) (get he "car_of_atom"))
       e1x (by (get he "car_of_atom_examples") "D" 2048)
       r5 (by (get re "lexer") "source" "(+ (+ 1 2) 3)")
       r5ok (by (get re "lexer") "source" "(+ (+ 1 2 ) 3 )")
       c42 (filter #(= "(CAR (x . lhs))" (get % "program")) (get hm "rows"))
+      c42f (filter #(and (= "4.2" (get % "variant")) (= "(CAR (x . lhs))" (get % "program")))
+                   (get hf "roles"))
       e2 (by (get he "other") "note" "Lisp 1.5 gives b")
+      e2f (filter #(and (= "E2 + unwrap QUOTE" (get % "variant"))
+                        (= "(CAR (CDR (a b c)))" (get % "program")))
+                  (get hf "e2"))
       e3 (by (get he "other") "note" "LABEL")
+      e3f (hv "e3" "E3 removed" "(LABEL f (LAMBDA (x) x))")
       lk (fn [mode] (first (filter #(and (= 8192 (get % "D")) (= 5.5 (get % "sigma"))
                                          (= mode (get % "mode")))
                                    (get ht "lookup"))))
       th (lk "theirs (theta=0.2)")
       ch (lk "chance floor (theta=5/sqrt(D))")
-      g800 (by (get he "memory_growth") "items stored" 800)]
-  (table ["item" "code" "program" "should give" "gives (×runs)" "wrong"]
-         [(row "R1 (4.6)" "residuelisp" (rp "(eq? 3 5 )"))
-          (row "R2" "residuelisp" (rp "(and #t #f)"))
-          (row "R2" "residuelisp" (rp "(eq? (cons a (cons b nil)) (cons a (cons c nil)))"))
-          (row "R3" "residuelisp" (rp "(if (eq? a b) yes no)"))
+      g800 (by (get he "memory_growth") "items stored" 800)
+      g800f (first (filter #(and (= "E4" (get % "variant")) (= 800 (get % "items stored")))
+                           (get hf "e4_growth")))]
+  (table ["item" "code" "program" "should give" "gives (×runs)" "wrong" "wrong with the fix"]
+         [(row "R1 (4.6)" "residuelisp" (rp "(eq? 3 5 )") (fx "R1" "(eq? 3 5 )"))
+          (row "R2" "residuelisp" (rp "(and #t #f)") (fx "R2" "(and #t #f)"))
+          (row "R2" "residuelisp" (rp "(eq? (cons a (cons b nil)) (cons a (cons c nil)))")
+               (fx "R2" "(eq? (cons a (cons b nil)) (cons a (cons c nil)))"))
+          (row "R3" "residuelisp" (rp "(if (eq? a b) yes no)") (fx "R3" "(if (eq? a b) yes no)"))
           ["E1" "holis" (kind/code (get-in he ["meta" "settings" "program"])) "(a b c)"
            (str "varies, e.g. " (get e1x "result") " (D = 2048, seed " (get e1x "seed") ")")
            (str/join ", " (for [r e1] (str (get r "wrong") " / " (get r "runs")
-                                           " at D = " (get r "D"))))]
-          (row "R4" "residuelisp" (rp "(+ 150 100 )"))
+                                           " at D = " (get r "D"))))
+           (str/join ", " (for [r e1f] (str (get r "wrong") " / " (get r "runs")
+                                            " at D = " (get r "D"))))]
+          (row "R4" "residuelisp" (rp "(+ 150 100 )") (fx "R4" "(+ 150 100 )"))
           ["R5" "residuelisp" (kind/code (get r5 "source")) (get r5ok "result_seed0")
-           (str (get r5 "result_seed0")) "seed 0 (lexer, no randomness)"]
+           (str (get r5 "result_seed0")) "seed 0 (lexer, no randomness)"
+           (wrong-of (fx "R5" "(+ (+ 1 2) 3)"))]
           ["4.2" "holis" (kind/code "(CAR (x . lhs))") "x"
            (str/join "; " (for [r c42] (str "D = " (get r "D") ": " (fmt (get r "results")))))
-           (str/join ", " (map wrong-of c42))]
+           (at-d c42) (at-d c42f)]
           ["E2" "holis" (kind/code (get e2 "program")) "b" (fmt (get e2 "results"))
-           (str (- (get e2 "runs") (get-in e2 ["results" "[\"b\"]"] 0)) " / " (get e2 "runs"))]
+           (str (- (get e2 "runs") (get-in e2 ["results" "[\"b\"]"] 0)) " / " (get e2 "runs"))
+           (at-d e2f)]
           ["4.5" "holis" "CAR lookup on a stored 4-list, σ = 5.5, D = 8192" "the stored head"
            (str (get th "correct") " right with θ = 0.2; " (get ch "correct")
                 " right with θ = 5/√D")
-           (str (- (get th "trials") (get th "correct")) " / " (get th "trials"))]
+           (str (- (get th "trials") (get th "correct")) " / " (get th "trials"))
+           (str (- (get ch "trials") (get ch "correct")) " / " (get ch "trials"))]
           ["E4" "holis" "store 800 items in SimpleCleanUp" "about 800 rows"
-           (str (get g800 "matrix rows") " rows, " (get g800 "MB at D=512") " MB at D = 512") "–"]
+           (str (get g800 "matrix rows") " rows, " (get g800 "MB at D=512") " MB at D = 512") "–"
+           (str (get g800f "matrix rows") " rows")]
           ["E3" "holis" (kind/code (get e3 "program")) "an error that names LABEL, or no LABEL"
-           (fmt (get e3 "results")) (str (get e3 "runs") " / " (get e3 "runs"))]]))
+           (fmt (get e3 "results")) (str (get e3 "runs") " / " (get e3 "runs"))
+           (str (reduce + (for [[k n] (get e3f "results") :when (str/includes? k "Error")] n))
+                " / " (get e3f "runs") " (LABEL removed)")]]))
+
+;; With each fix applied, the control programs from the start of the page
+;; still give the right answers. holis, 10 programs at D = 512 and 2048,
+;; 5 seeds each. The one program that misses a seed in most rows is the
+;; LAMBDA program of E1; only the rows with an E1 fix get it right:
+
+^:kindly/hide-code
+(regression-table (get hf "regression") "variant")
+
+;; residuelisp, its 15 control programs over 5 seeds:
+
+^:kindly/hide-code
+(regression-table (get rf "regression") "fix")
+
+;; The holis control programs have no DEFINE, so we also ran their
+;; fizzbuzz helpers: their DEFINEs, then the five calls in one
+;; environment, D = 512, 5 seeds, each call stopped after 60 s. All these
+;; runs use the E4 fix, which changes no answer and turns minutes into
+;; seconds (E4 below). Runs right per call:
+
+^:kindly/hide-code
+(let [rows (get hf "fizzbuzz")
+      vs (distinct (map #(get % "variant") rows))]
+  (table (cons "call" vs)
+         (for [p (distinct (map #(get % "program") rows))]
+           (cons p (for [v vs :let [rs (filter #(and (= p (get % "program")) (= v (get % "variant")))
+                                               rows)]]
+                     (str (count (filter #(get % "correct") rs)) " / " (count rs)))))))
+
+;; What the wrong runs gave:
+
+^:kindly/hide-code
+(let [short (fn [x] (if (> (count x) 70) (str (subs x 0 70) " …") x))]
+  (table ["fix" "call" "results of the wrong runs"]
+         (for [[[v p] rs] (group-by (juxt #(get % "variant") #(get % "program"))
+                                    (remove #(get % "correct") (get hf "fizzbuzz")))]
+           [v p (str/join "; " (for [[x n] (frequencies (map #(short (get % "result")) rs))]
+                                 (str x " ×" n)))])))
 
 ;; ### Wrong answers without noise
 ;;
@@ -629,7 +739,35 @@
 ;; assert decode(value, enc_env, eval_env) == "3"
 ;; ```
 ;;
-;; - *Status.* Untested.
+;; - *Status.* **Tested**, as shown. Before and after, D = 1000, 5 seeds:
+
+^:kindly/hide-code
+(before-after (rf-errata "R1") "fix" ["theirs" "R1"])
+
+;;   Their test pattern now tells a right sum from a wrong one. The result
+;;   of `(+ 5 5 )` compared with 10, 7, 0 and 999, through `equals` and
+;;   through the decoded value:
+
+^:kindly/hide-code
+(table ["fix" "seed" "equals(result, n) for n = 10, 7, 0, 999" "decode(result)"]
+       (for [r (get rf "test_oracle")]
+         [(get r "fix") (get r "seed") (fmt (get r "equals(result, encode(n))"))
+          (get r "decode(result)")]))
+
+;;   And their own `test_rhc_add` and `test_rhc_sub` sources, checked
+;;   against the right answer 3 and a wrong answer 4, counted over the
+;;   seeds:
+
+^:kindly/hide-code
+(table ["source" "fix" "assert passes for 3" "assert passes for 4" "decode gives 3"]
+       (for [[[src fix] rs] (group-by (juxt #(get % "source") #(get % "fix")) (get rf "their_tests"))
+             :let [n (count rs) c (fn [pred] (str (count (filter pred rs)) " / " n))]]
+         [(kind/code src) fix (c #(get % "equals 3")) (c #(get % "equals 4"))
+          (c #(= "3" (get % "decode")))]))
+
+;;   With the fix their assertion fails for 4, as it should. The decoded
+;;   value was right all along. The control programs still pass (the
+;;   regression table above).
 ;;
 ;; **R2 (residuelisp). `and` never looks at its second argument.**
 ;;
@@ -646,7 +784,12 @@
 ;;
 ;;   Their `test_and` and `test_and_comp` only use true arguments, so a
 ;;   test of `(and #t #f)` would have caught it.
-;; - *Status.* Untested. It is a one-word change.
+;; - *Status.* **Tested**, as shown. Structural `eq?` now compares the
+;;   cdrs too, and the control programs still pass:
+
+^:kindly/hide-code
+(before-after (rf-errata "R2") "fix" ["theirs" "R2"])
+
 ;;
 ;; **R3 (residuelisp). `if` does not evaluate its condition.**
 ;;
@@ -663,7 +806,12 @@
 ;;     condition = evaluate(car(rand, enc_env, eval_env), enc_env, eval_env)
 ;; ```
 ;;
-;; - *Status.* Untested.
+;; - *Status.* **Tested**, as shown. The literal conditions give the same
+;;   answers as before, and the control programs still pass:
+
+^:kindly/hide-code
+(before-after (rf-errata "R3") "fix" ["theirs" "R3"])
+
 ;;
 ;; **E1 (holis). CAR of an atom returns a random item.**
 ;;
@@ -686,11 +834,21 @@
 ;;     return mem.recall(assoc.recall(c) * ~env["lhs"])
 ;; ```
 ;;
-;; - *Status.* **Tested**, noise-free: wrong results go to 0 of 100 at
-;;   D = 512 and 2048 (E1 table). The same guard in `cdr` is untested.
-;;   The test is an exact key match, which is right for the pointers
-;;   their code passes around. A version for noisy pointers would let
-;;   `SimpleAssoc.recall` report a miss instead of returning the probe.
+;; - *Status.* **Tested, and incomplete.** On the LAMBDA program, wrong
+;;   results go to 0 of 100 at D = 512 and 2048 (E1 table), and the
+;;   control programs all pass (regression table above). But it breaks
+;;   every DEFINE'd function (the fizzbuzz table above, column `E1 + E4`):
+;;   their calls come back unevaluated. Their function memory holds cell
+;;   bundles, not pointers, and `ev` finds a function by `car` of such a
+;;   bundle, which the guard now answers with NIL. Admitting stored cells
+;;   too (`c in assoc.A or c in assoc.A.reverse`) brings DEFINE back,
+;;   but in one of the 5 seeds four of the five calls then run past 60 s
+;;   (column
+;;   `E1 admitting cells + E4`). So we have no fix for E1 that we can
+;;   recommend. The cause is that their code uses one `car` both on
+;;   pointers and on bundles. A fix would give the function memory its
+;;   own lookup, and let `SimpleAssoc.recall` report a miss instead of
+;;   returning the probe.
 ;;
 ;; **R4 (residuelisp). The decoder stops at 199.**
 ;;
@@ -701,17 +859,26 @@
 ;; - *Cause.* The argmax runs over the codes of 0..199 (plus literals
 ;;   seen), while the moduli 3, 5, 7, 11 cover 0..1154.
 ;; - *Fix.* Lines 1265–1267. `RHC.moduli` is the moduli the encoder
-;;   used; `enc_env.moduli` is empty by default:
+;;   used; `enc_env.moduli` is empty by default. `RHC.z_ms` are the roots
+;;   the encoder used, so each code is built as `RHC.encode` builds it:
 ;;
 ;; ```python
 ;;     for i in range(int(np.prod(RHC.moduli))):   # 0..1154
 ;;         if i not in codebook:
-;;             codebook[i] = RHC.encode(enc_env.dim, i, RHC.moduli).data
+;;             codebook[i] = np.prod([z_m ** i for z_m in RHC.z_ms], axis=0)
 ;; ```
 ;;
 ;;   Results then wrap modulo 1155, so `(- 3 5 )` decodes as 1153. Map
 ;;   the upper half to negatives if that is wanted.
-;; - *Status.* Untested.
+;; - *Status.* **Tested**, as shown. Our first version called
+;;   `RHC.encode(enc_env.dim, i, RHC.moduli).data` in the loop. It gave
+;;   the same answers, but each call builds an `RHC` object whose
+;;   constructor recomputes the four roots, so one decode took about 20 s
+;;   at D = 1000. The version above takes well under a second:
+
+^:kindly/hide-code
+(before-after (rf-errata "R4") "fix" ["theirs" "R4"])
+
 ;;
 ;; **R5 (residuelisp). The lexer drops a `)` right after a number.**
 ;;
@@ -731,7 +898,40 @@
 ;;     return Token("".join(ds), TokenKind.Int)
 ;; ```
 ;;
-;; - *Status.* Untested.
+;; - *Status.* **Tested**, as shown. The tokens:
+
+^:kindly/hide-code
+(table ["fix" "source" "tokens"]
+       (for [r (get rf "lexer")]
+         [(get r "fix") (kind/code (get r "source")) (kind/code (get r "tokens"))]))
+
+^:kindly/hide-code
+(before-after (rf-errata "R5") "fix" ["theirs" "R5"])
+
+^:kindly/hide-code
+(table ["fix" "control programs without the space before ), right in every run"]
+       (for [r (get rf "regression_unspaced")]
+         [(get r "fix") (str (get r "all_seeds_correct") " / " (get r "programs"))]))
+
+;;   The control programs pass with the fix, with and without the space
+;;   before each `)`. They pass without the space even unfixed: a `)`
+;;   lost at the very end is forgiven by the parser. Only a lost `)`
+;;   inside the form breaks a program. That is also why their tests,
+;;   which write `(+ 1 2)`, never saw it.
+;;
+;; With all five fixes applied together, the programs of R1 to R5 give:
+
+^:kindly/hide-code
+(let [rs (rf-errata "all fixes")]
+  (table ["programs" "right in every run" "runs right"]
+         [[(count rs) (count (filter #(= (get % "correct") (get % "runs")) rs))
+           (str (reduce + (map #(get % "correct") rs)) " / " (reduce + (map #(get % "runs") rs)))]]))
+
+;; And programs that need two fixes at once:
+
+^:kindly/hide-code
+(before-after (rf-errata "combined") "fix" ["theirs" "all"])
+
 ;;
 ;; **4.2 (holis). Programs can name the role vectors.**
 ;;
@@ -752,27 +952,66 @@
 ;;     env[role] = HRR(N=dim)           # roles only, not in env['lex'] or mem
 ;; ```
 ;;
-;; - *Status.* Untested. Nothing else reads the roles from `env['lex']`,
-;;   as far as we can see.
+;; - *Status.* **Tested.** Our harness lets `vsa_env` draw the roles as
+;;   before and then deletes them from `env['lex']` and their rows from
+;;   the item memory. That is the state the change above gives, with the
+;;   same random draws. `lhs` in a program is then a fresh atom. The 4.2
+;;   programs, 40 seeds per row:
+
+^:kindly/hide-code
+(before-after (get hf "roles") "variant" ["theirs" "4.2"])
+
+;;   Nothing else reads the roles from `env['lex']`: the control programs
+;;   give the same counts as without the fix (regression table above).
 ;;
 ;; **E2 (holis). CAR does not evaluate its argument.**
 ;;
-;; - *Where.* Code cell 2, `vsa_env`, `caar`. By reading, `cdar` and
-;;   `cons` do the same; we ran only the CAR case.
+;; - *Where.* Code cell 2, `vsa_env`, `caar`, `cdar` and `cons`.
 ;; - *Symptom.* `(CAR (CDR (a b c)))` gives `CDR`. Lisp 1.5 gives `b`.
+;;   `(CDR (CDR (a b c)))` gives `((a b c))` instead of `(c)` (table
+;;   below).
 ;; - *Cause.* `caar(c)` is `car(car(c))`: it takes the first element of
 ;;   the argument form instead of its value.
-;; - *Fix,* if Lisp 1.5 semantics are intended. Evaluate first:
+;; - *Fix,* if Lisp 1.5 semantics are intended. Evaluate first, and read
+;;   their QUOTE form as its argument:
 ;;
 ;; ```python
-;; def caar(c, ind=''): return car(ev_until_done(car(c), ind))
-;; def cdar(c, ind=''): return cdr(ev_until_done(car(c), ind))
+;; def val(x, ind=''):
+;;     v = ev_until_done(x, ind)
+;;     if (car(v) == env['lex']['QUOTE']) > floor:   # (QUOTE (x)) -> x
+;;         v = car(car(cdr(v)))
+;;     return v
+;; def caar(c, ind=''):  return car(val(car(c), ind))
+;; def cdar(c, ind=''):  return cdr(val(car(c), ind))
+;; def cons(ab, ind=''): return ccons(val(car(ab), ind), val(car(cdr(ab)), ind))
 ;; ```
 ;;
-;;   Literal lists then need QUOTE, and their QUOTE keeps its wrapper, so
-;;   `quote` would have to return its argument too. Rerun the fizzbuzz
-;;   helpers after this change.
-;; - *Status.* Untested.
+;; - *Status.* **Tested.** We first suggested only the two `ev_until_done`
+;;   lines, and that `quote` return its argument. Both were incomplete.
+;;   Without the unwrapping, a quoted list comes back with its wrapper,
+;;   `(QUOTE ((a b c)))`. With `quote` returning its argument,
+;;   `ev_until_done` evaluates the argument again, so `(QUOTE (CDR a))`
+;;   runs `CDR` on an atom (E1) and gives a random item. The version
+;;   above leaves `quote` alone. Unquoted literal lists such as `(a b c)`
+;;   keep working, because their evaluator returns a list with an unknown
+;;   head unchanged. CONS evaluates by accident in their code: the loop
+;;   in `ev_until_done` evaluates the new cell again. Over 5 seeds:
+
+^:kindly/hide-code
+(before-after (get hf "e2") "variant"
+              ["theirs" "E2" "E2 + QUOTE returns its argument" "E2 + unwrap QUOTE"])
+
+;;   Here `E2` is the two lines alone (and CONS), and `E2 + unwrap QUOTE`
+;;   is the fix shown. The control programs keep their counts with it
+;;   (regression table above). Their fizzbuzz helpers do not all survive
+;;   it (the fizzbuzz table above, column `E2 + unwrap QUOTE + E4`): in
+;;   one of the 5 seeds, every call after the first runs into unbounded
+;;   recursion. Raising Python's recursion limit to 200 000 did not let it
+;;   finish within 15 minutes (a side run, not in the JSON files). We
+;;   suspect E1: evaluating
+;;   CAR's argument runs `ev` on more atoms, and `ev` takes CAR of an
+;;   atom. We did not confirm this, and with no working E1 fix (above) we
+;;   could not test the pair.
 ;;
 ;; ### Robustness under noise
 ;;
@@ -802,7 +1041,7 @@
 ;;
 ;; - *Where.* Code cell 2, `SimpleCleanUp.memorize`.
 ;; - *Symptom.* 800 stored items take 70 100 rows (table above, and the
-;;   E4 tables). Their fizzbuzz runs take minutes partly because of this.
+;;   E4 tables). Their fizzbuzz runs take minutes because of this.
 ;; - *Cause.* When the matrix is full it appends `k` empty rows but never
 ;;   raises `m`, so every later item appends another `k` rows.
 ;; - *Fix.* One line, as residuelisp's `CleanupMemory.memorize` does
@@ -814,7 +1053,28 @@
 ;;             self.m += self.k
 ;; ```
 ;;
-;; - *Status.* Untested. We only measured their version.
+;; - *Status.* **Tested**, as shown. Rows of the matrix after storing n
+;;   items:
+
+^:kindly/hide-code
+(table ["items stored" "rows, theirs" "rows, with the fix" "MB at D = 512, theirs" "MB, with the fix"]
+       (for [[n rs] (group-by #(get % "items stored") (get hf "e4_growth"))
+             :let [t (by rs "variant" "theirs") f (by rs "variant" "E4")]]
+         [n (get t "matrix rows") (get f "matrix rows") (get t "MB at D=512") (get f "MB at D=512")]))
+
+;;   The control programs keep their counts (regression table above). The
+;;   fizzbuzz helpers give the right answers in all 5 seeds (fizzbuzz
+;;   table above, column `E4`), and the time per call drops from minutes
+;;   to seconds. Seed 0, against the control at the top of the page:
+
+^:kindly/hide-code
+(let [theirs (into {} (for [r (get hc "fizzbuzz")] [(get r "program") (get r "seconds")]))]
+  (table ["call" "seconds, theirs" "seconds, with the fix"]
+         (for [r (get hf "fizzbuzz")
+               :when (and (= "E4" (get r "variant")) (= 0 (get r "seed")))]
+           [(get r "program") (get theirs (get r "program")) (get r "seconds")])))
+
+;;   So here the empty rows changed no result. They only cost time.
 ;;
 ;; **E3 (holis). LABEL is a leftover.** Their paper says it leaves LABEL
 ;; out, so this breaks no claim.
@@ -826,9 +1086,28 @@
 ;;   has no such parameter. Inside, `mem.memorize(lbl, exp)` passes two
 ;;   arguments to a one-argument method, so it would fail next.
 ;; - *Fix.* Remove `'LABEL'` from `basic_fs` and from `env.update`. To
-;;   keep it, give `label` an `ind=''` parameter and call
-;;   `mem.memorize(lbl)`.
-;; - *Status.* Untested.
+;;   keep it, let it enter the name the way DEFINE does, and return the
+;;   lambda:
+;;
+;; ```python
+;; def label(lbl_exp, ind=''):
+;;     define(lbl_exp, ind)
+;;     return car(cdr(lbl_exp))
+;; ```
+;;
+;;   Unlike Lisp 1.5, the name is then global.
+;; - *Status.* **Tested.** We first suggested keeping their `label` with an
+;;   `ind=''` parameter and `mem.memorize(lbl)`. That stops the error, but
+;;   recursion still fails: their helper `ll` replaces the label only at
+;;   the top level of the body, never inside it. Removing LABEL turns the
+;;   form into plain data. D = 512, 5 seeds:
+
+^:kindly/hide-code
+(before-after (get hf "e3") "variant" ["theirs" "E3 removed" "E3 kept" "E3 as DEFINE"])
+
+;;   `E3 kept` is the first suggestion, `E3 as DEFINE` the version above.
+;;   Every variant keeps the control programs' counts (regression table
+;;   above).
 
 ;; ## What did not reproduce
 ;;
@@ -877,6 +1156,8 @@
 ;; .venv/bin/python residuelisp_errata.py
 ;; .venv/bin/python residuelisp_residues.py
 ;; .venv/bin/python residuelisp_thresholds.py
+;; .venv/bin/python holis_fixes.py
+;; .venv/bin/python residuelisp_fixes.py
 ;; ```
 ;;
 ;; Each script writes the JSON file of the same name, which this page
@@ -892,7 +1173,8 @@
                     ["holis_commute.json" hm] ["holis_thresholds.json" ht]
                     ["holis_cells.json" hcell] ["residuelisp_control.json" rc]
                     ["residuelisp_errata.json" re] ["residuelisp_residues.json" rr]
-                    ["residuelisp_thresholds.json" rt]]]
+                    ["residuelisp_thresholds.json" rt] ["holis_fixes.json" hf]
+                    ["residuelisp_fixes.json" rf]]]
          (let [m (get d "meta")]
            [f (str (get-in m ["upstream" "repo"]) " @ "
                    (subs (get-in m ["upstream" "commit"]) 0 7))

@@ -1,0 +1,2991 @@
+{
+ "meta": {
+  "script": "residuelisp_fixes.py",
+  "upstream": {
+   "repo": "https://github.com/hanleyc01/residuelisp",
+   "commit": "09864c74f1a35680a0008e59d7ab2571269a986f"
+  },
+  "python": "3.14.7",
+  "numpy": "2.5.4",
+  "date": "2026-10-22",
+  "settings": {
+   "D": 1000,
+   "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ],
+   "sigma": 0,
+   "max_steps": 5000,
+   "fixes": [
+    "R1",
+    "R2",
+    "R3",
+    "R4",
+    "R5",
+    "all"
+   ]
+  }
+ },
+ "errata": [
+  {
+   "erratum": "R1",
+   "program": "(eq? 3 5 )",
+   "expected": "#f",
+   "fix": "theirs",
+   "correct": 0,
+   "runs": 5,
+   "results": {
+    "#t": 5
+   }
+  },
+  {
+   "erratum": "R1",
+   "program": "(eq? 3 5 )",
+   "expected": "#f",
+   "fix": "R1",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "#f": 5
+   }
+  },
+  {
+   "erratum": "R1",
+   "program": "(eq? 3 1000 )",
+   "expected": "#f",
+   "fix": "theirs",
+   "correct": 0,
+   "runs": 5,
+   "results": {
+    "#t": 5
+   }
+  },
+  {
+   "erratum": "R1",
+   "program": "(eq? 3 1000 )",
+   "expected": "#f",
+   "fix": "R1",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "#f": 5
+   }
+  },
+  {
+   "erratum": "R1",
+   "program": "(eq? 3 3 )",
+   "expected": "#t",
+   "fix": "theirs",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "#t": 5
+   }
+  },
+  {
+   "erratum": "R1",
+   "program": "(eq? 3 3 )",
+   "expected": "#t",
+   "fix": "R1",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "#t": 5
+   }
+  },
+  {
+   "erratum": "R1",
+   "program": "(eq? (+ 1 2 ) 3 )",
+   "expected": "#t",
+   "fix": "theirs",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "#t": 5
+   }
+  },
+  {
+   "erratum": "R1",
+   "program": "(eq? (+ 1 2 ) 3 )",
+   "expected": "#t",
+   "fix": "R1",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "#t": 5
+   }
+  },
+  {
+   "erratum": "R1",
+   "program": "(eq? (+ 1 2 ) 4 )",
+   "expected": "#f",
+   "fix": "theirs",
+   "correct": 0,
+   "runs": 5,
+   "results": {
+    "#t": 5
+   }
+  },
+  {
+   "erratum": "R1",
+   "program": "(eq? (+ 1 2 ) 4 )",
+   "expected": "#f",
+   "fix": "R1",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "#f": 5
+   }
+  },
+  {
+   "erratum": "R1",
+   "program": "(eq? a 3 )",
+   "expected": "#f",
+   "fix": "theirs",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "#f": 5
+   }
+  },
+  {
+   "erratum": "R1",
+   "program": "(eq? a 3 )",
+   "expected": "#f",
+   "fix": "R1",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "#f": 5
+   }
+  },
+  {
+   "erratum": "R2",
+   "program": "(and #t #f)",
+   "expected": "#f",
+   "fix": "theirs",
+   "correct": 0,
+   "runs": 5,
+   "results": {
+    "#t": 5
+   }
+  },
+  {
+   "erratum": "R2",
+   "program": "(and #t #f)",
+   "expected": "#f",
+   "fix": "R2",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "#f": 5
+   }
+  },
+  {
+   "erratum": "R2",
+   "program": "(and #t nil)",
+   "expected": "#f or nil",
+   "fix": "theirs",
+   "correct": 0,
+   "runs": 5,
+   "results": {
+    "#t": 5
+   }
+  },
+  {
+   "erratum": "R2",
+   "program": "(and #t nil)",
+   "expected": "#f or nil",
+   "fix": "R2",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "#f": 5
+   }
+  },
+  {
+   "erratum": "R2",
+   "program": "(and #t #t)",
+   "expected": "#t",
+   "fix": "theirs",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "#t": 5
+   }
+  },
+  {
+   "erratum": "R2",
+   "program": "(and #t #t)",
+   "expected": "#t",
+   "fix": "R2",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "#t": 5
+   }
+  },
+  {
+   "erratum": "R2",
+   "program": "(and #f #t)",
+   "expected": "#f",
+   "fix": "theirs",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "#f": 5
+   }
+  },
+  {
+   "erratum": "R2",
+   "program": "(and #f #t)",
+   "expected": "#f",
+   "fix": "R2",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "#f": 5
+   }
+  },
+  {
+   "erratum": "R2",
+   "program": "(eq? (cons a (cons b nil)) (cons a (cons c nil)))",
+   "expected": "#f",
+   "fix": "theirs",
+   "correct": 0,
+   "runs": 5,
+   "results": {
+    "#t": 5
+   }
+  },
+  {
+   "erratum": "R2",
+   "program": "(eq? (cons a (cons b nil)) (cons a (cons c nil)))",
+   "expected": "#f",
+   "fix": "R2",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "#f": 5
+   }
+  },
+  {
+   "erratum": "R2",
+   "program": "(eq? (cons a (cons b nil)) (cons a (cons b nil)))",
+   "expected": "#t",
+   "fix": "theirs",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "#t": 5
+   }
+  },
+  {
+   "erratum": "R2",
+   "program": "(eq? (cons a (cons b nil)) (cons a (cons b nil)))",
+   "expected": "#t",
+   "fix": "R2",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "#t": 5
+   }
+  },
+  {
+   "erratum": "R3",
+   "program": "(if (eq? a b) yes no)",
+   "expected": "no",
+   "fix": "theirs",
+   "correct": 0,
+   "runs": 5,
+   "results": {
+    "yes": 5
+   }
+  },
+  {
+   "erratum": "R3",
+   "program": "(if (eq? a b) yes no)",
+   "expected": "no",
+   "fix": "R3",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "no": 5
+   }
+  },
+  {
+   "erratum": "R3",
+   "program": "(if (eq? a a) yes no)",
+   "expected": "yes",
+   "fix": "theirs",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "yes": 5
+   }
+  },
+  {
+   "erratum": "R3",
+   "program": "(if (eq? a a) yes no)",
+   "expected": "yes",
+   "fix": "R3",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "yes": 5
+   }
+  },
+  {
+   "erratum": "R3",
+   "program": "(if (and #f #f) yes no)",
+   "expected": "no",
+   "fix": "theirs",
+   "correct": 0,
+   "runs": 5,
+   "results": {
+    "yes": 5
+   }
+  },
+  {
+   "erratum": "R3",
+   "program": "(if (and #f #f) yes no)",
+   "expected": "no",
+   "fix": "R3",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "no": 5
+   }
+  },
+  {
+   "erratum": "R3",
+   "program": "(if (and #t #t) yes no)",
+   "expected": "yes",
+   "fix": "theirs",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "yes": 5
+   }
+  },
+  {
+   "erratum": "R3",
+   "program": "(if (and #t #t) yes no)",
+   "expected": "yes",
+   "fix": "R3",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "yes": 5
+   }
+  },
+  {
+   "erratum": "R3",
+   "program": "(if #f yes no)",
+   "expected": "no",
+   "fix": "theirs",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "no": 5
+   }
+  },
+  {
+   "erratum": "R3",
+   "program": "(if #f yes no)",
+   "expected": "no",
+   "fix": "R3",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "no": 5
+   }
+  },
+  {
+   "erratum": "R3",
+   "program": "(if #t yes no)",
+   "expected": "yes",
+   "fix": "theirs",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "yes": 5
+   }
+  },
+  {
+   "erratum": "R3",
+   "program": "(if #t yes no)",
+   "expected": "yes",
+   "fix": "R3",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "yes": 5
+   }
+  },
+  {
+   "erratum": "R4",
+   "program": "(+ 150 100 )",
+   "expected": "250",
+   "fix": "theirs",
+   "correct": 0,
+   "runs": 5,
+   "results": {
+    "37": 1,
+    "15": 1,
+    "119": 1,
+    "77": 1,
+    "61": 1
+   }
+  },
+  {
+   "erratum": "R4",
+   "program": "(+ 150 100 )",
+   "expected": "250",
+   "fix": "R4",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "250": 5
+   }
+  },
+  {
+   "erratum": "R4",
+   "program": "(+ 199 1 )",
+   "expected": "200",
+   "fix": "theirs",
+   "correct": 0,
+   "runs": 5,
+   "results": {
+    "173": 1,
+    "32": 1,
+    "16": 2,
+    "61": 1
+   }
+  },
+  {
+   "erratum": "R4",
+   "program": "(+ 199 1 )",
+   "expected": "200",
+   "fix": "R4",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "200": 5
+   }
+  },
+  {
+   "erratum": "R4",
+   "program": "(- 3 5 )",
+   "expected": "1153",
+   "fix": "theirs",
+   "correct": 0,
+   "runs": 5,
+   "results": {
+    "173": 1,
+    "15": 1,
+    "121": 1,
+    "127": 1,
+    "46": 1
+   }
+  },
+  {
+   "erratum": "R4",
+   "program": "(- 3 5 )",
+   "expected": "1153",
+   "fix": "R4",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "1153": 5
+   }
+  },
+  {
+   "erratum": "R4",
+   "program": "(+ 1000 154 )",
+   "expected": "1154",
+   "fix": "theirs",
+   "correct": 0,
+   "runs": 5,
+   "results": {
+    "106": 1,
+    "81": 1,
+    "130": 1,
+    "173": 1,
+    "1": 1
+   }
+  },
+  {
+   "erratum": "R4",
+   "program": "(+ 1000 154 )",
+   "expected": "1154",
+   "fix": "R4",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "1154": 5
+   }
+  },
+  {
+   "erratum": "R4",
+   "program": "(+ 100 99 )",
+   "expected": "199",
+   "fix": "theirs",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "199": 5
+   }
+  },
+  {
+   "erratum": "R4",
+   "program": "(+ 100 99 )",
+   "expected": "199",
+   "fix": "R4",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "199": 5
+   }
+  },
+  {
+   "erratum": "R5",
+   "program": "(+ (+ 1 2) 3)",
+   "expected": "6",
+   "fix": "theirs",
+   "correct": 0,
+   "runs": 5,
+   "results": {
+    "InterpreterError: Segmentation fault in car hehe": 5
+   }
+  },
+  {
+   "erratum": "R5",
+   "program": "(+ (+ 1 2) 3)",
+   "expected": "6",
+   "fix": "R5",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "6": 5
+   }
+  },
+  {
+   "erratum": "R5",
+   "program": "(+ 1 2)",
+   "expected": "3",
+   "fix": "theirs",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "3": 5
+   }
+  },
+  {
+   "erratum": "R5",
+   "program": "(+ 1 2)",
+   "expected": "3",
+   "fix": "R5",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "3": 5
+   }
+  },
+  {
+   "erratum": "R5",
+   "program": "(car (cons 1 2))",
+   "expected": "1",
+   "fix": "theirs",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "1": 5
+   }
+  },
+  {
+   "erratum": "R5",
+   "program": "(car (cons 1 2))",
+   "expected": "1",
+   "fix": "R5",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "1": 5
+   }
+  },
+  {
+   "erratum": "R5",
+   "program": "(+ (+ 1 2 ) 3 )",
+   "expected": "6",
+   "fix": "theirs",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "6": 5
+   }
+  },
+  {
+   "erratum": "R5",
+   "program": "(+ (+ 1 2 ) 3 )",
+   "expected": "6",
+   "fix": "R5",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "6": 5
+   }
+  },
+  {
+   "erratum": "all fixes",
+   "program": "(eq? 3 5 )",
+   "expected": "#f",
+   "fix": "all",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "#f": 5
+   }
+  },
+  {
+   "erratum": "all fixes",
+   "program": "(eq? 3 1000 )",
+   "expected": "#f",
+   "fix": "all",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "#f": 5
+   }
+  },
+  {
+   "erratum": "all fixes",
+   "program": "(eq? 3 3 )",
+   "expected": "#t",
+   "fix": "all",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "#t": 5
+   }
+  },
+  {
+   "erratum": "all fixes",
+   "program": "(eq? (+ 1 2 ) 3 )",
+   "expected": "#t",
+   "fix": "all",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "#t": 5
+   }
+  },
+  {
+   "erratum": "all fixes",
+   "program": "(eq? (+ 1 2 ) 4 )",
+   "expected": "#f",
+   "fix": "all",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "#f": 5
+   }
+  },
+  {
+   "erratum": "all fixes",
+   "program": "(eq? a 3 )",
+   "expected": "#f",
+   "fix": "all",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "#f": 5
+   }
+  },
+  {
+   "erratum": "all fixes",
+   "program": "(and #t #f)",
+   "expected": "#f",
+   "fix": "all",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "#f": 5
+   }
+  },
+  {
+   "erratum": "all fixes",
+   "program": "(and #t nil)",
+   "expected": "#f or nil",
+   "fix": "all",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "#f": 5
+   }
+  },
+  {
+   "erratum": "all fixes",
+   "program": "(and #t #t)",
+   "expected": "#t",
+   "fix": "all",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "#t": 5
+   }
+  },
+  {
+   "erratum": "all fixes",
+   "program": "(and #f #t)",
+   "expected": "#f",
+   "fix": "all",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "#f": 5
+   }
+  },
+  {
+   "erratum": "all fixes",
+   "program": "(eq? (cons a (cons b nil)) (cons a (cons c nil)))",
+   "expected": "#f",
+   "fix": "all",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "#f": 5
+   }
+  },
+  {
+   "erratum": "all fixes",
+   "program": "(eq? (cons a (cons b nil)) (cons a (cons b nil)))",
+   "expected": "#t",
+   "fix": "all",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "#t": 5
+   }
+  },
+  {
+   "erratum": "all fixes",
+   "program": "(if (eq? a b) yes no)",
+   "expected": "no",
+   "fix": "all",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "no": 5
+   }
+  },
+  {
+   "erratum": "all fixes",
+   "program": "(if (eq? a a) yes no)",
+   "expected": "yes",
+   "fix": "all",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "yes": 5
+   }
+  },
+  {
+   "erratum": "all fixes",
+   "program": "(if (and #f #f) yes no)",
+   "expected": "no",
+   "fix": "all",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "no": 5
+   }
+  },
+  {
+   "erratum": "all fixes",
+   "program": "(if (and #t #t) yes no)",
+   "expected": "yes",
+   "fix": "all",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "yes": 5
+   }
+  },
+  {
+   "erratum": "all fixes",
+   "program": "(if #f yes no)",
+   "expected": "no",
+   "fix": "all",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "no": 5
+   }
+  },
+  {
+   "erratum": "all fixes",
+   "program": "(if #t yes no)",
+   "expected": "yes",
+   "fix": "all",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "yes": 5
+   }
+  },
+  {
+   "erratum": "all fixes",
+   "program": "(+ 150 100 )",
+   "expected": "250",
+   "fix": "all",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "250": 5
+   }
+  },
+  {
+   "erratum": "all fixes",
+   "program": "(+ 199 1 )",
+   "expected": "200",
+   "fix": "all",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "200": 5
+   }
+  },
+  {
+   "erratum": "all fixes",
+   "program": "(- 3 5 )",
+   "expected": "1153",
+   "fix": "all",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "1153": 5
+   }
+  },
+  {
+   "erratum": "all fixes",
+   "program": "(+ 1000 154 )",
+   "expected": "1154",
+   "fix": "all",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "1154": 5
+   }
+  },
+  {
+   "erratum": "all fixes",
+   "program": "(+ 100 99 )",
+   "expected": "199",
+   "fix": "all",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "199": 5
+   }
+  },
+  {
+   "erratum": "all fixes",
+   "program": "(+ (+ 1 2) 3)",
+   "expected": "6",
+   "fix": "all",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "6": 5
+   }
+  },
+  {
+   "erratum": "all fixes",
+   "program": "(+ 1 2)",
+   "expected": "3",
+   "fix": "all",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "3": 5
+   }
+  },
+  {
+   "erratum": "all fixes",
+   "program": "(car (cons 1 2))",
+   "expected": "1",
+   "fix": "all",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "1": 5
+   }
+  },
+  {
+   "erratum": "all fixes",
+   "program": "(+ (+ 1 2 ) 3 )",
+   "expected": "6",
+   "fix": "all",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "6": 5
+   }
+  },
+  {
+   "erratum": "combined",
+   "program": "(if (eq? 3 5) yes no)",
+   "expected": "no",
+   "fix": "theirs",
+   "correct": 0,
+   "runs": 5,
+   "results": {
+    "InterpreterError: ERROR: Conditional expression requires `CONSEQUENT` and `ALTERNATE`, see documen": 5
+   }
+  },
+  {
+   "erratum": "combined",
+   "program": "(if (eq? 3 5) yes no)",
+   "expected": "no",
+   "fix": "all",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "no": 5
+   }
+  },
+  {
+   "erratum": "combined",
+   "program": "(if (eq? (+ 2 3) 5) yes no)",
+   "expected": "yes",
+   "fix": "theirs",
+   "correct": 0,
+   "runs": 5,
+   "results": {
+    "InterpreterError: ERROR: Conditional expression requires `CONSEQUENT` and `ALTERNATE`, see documen": 5
+   }
+  },
+  {
+   "erratum": "combined",
+   "program": "(if (eq? (+ 2 3) 5) yes no)",
+   "expected": "yes",
+   "fix": "all",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "yes": 5
+   }
+  },
+  {
+   "erratum": "combined",
+   "program": "(eq? (cons 1 (cons 2 nil)) (cons 1 (cons 3 nil)))",
+   "expected": "#f",
+   "fix": "theirs",
+   "correct": 0,
+   "runs": 5,
+   "results": {
+    "#t": 5
+   }
+  },
+  {
+   "erratum": "combined",
+   "program": "(eq? (cons 1 (cons 2 nil)) (cons 1 (cons 3 nil)))",
+   "expected": "#f",
+   "fix": "all",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "#f": 5
+   }
+  },
+  {
+   "erratum": "combined",
+   "program": "(eq? (cons 1 (cons 2 nil)) (cons 1 (cons 2 nil)))",
+   "expected": "#t",
+   "fix": "theirs",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "#t": 5
+   }
+  },
+  {
+   "erratum": "combined",
+   "program": "(eq? (cons 1 (cons 2 nil)) (cons 1 (cons 2 nil)))",
+   "expected": "#t",
+   "fix": "all",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "#t": 5
+   }
+  },
+  {
+   "erratum": "combined",
+   "program": "(+ (+ 150 100) 1)",
+   "expected": "251",
+   "fix": "theirs",
+   "correct": 0,
+   "runs": 5,
+   "results": {
+    "InterpreterError: Segmentation fault in car hehe": 5
+   }
+  },
+  {
+   "erratum": "combined",
+   "program": "(+ (+ 150 100) 1)",
+   "expected": "251",
+   "fix": "all",
+   "correct": 5,
+   "runs": 5,
+   "results": {
+    "251": 5
+   }
+  }
+ ],
+ "regression": [
+  {
+   "fix": "theirs",
+   "programs": 15,
+   "all_seeds_correct": 15,
+   "correct": 75,
+   "runs": 75,
+   "rows": [
+    {
+     "program": "(+ 1 2 )",
+     "expected": "3",
+     "fix": "theirs",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "3": 5
+     }
+    },
+    {
+     "program": "(+ 20 22 )",
+     "expected": "42",
+     "fix": "theirs",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "42": 5
+     }
+    },
+    {
+     "program": "(- 7 3 )",
+     "expected": "4",
+     "fix": "theirs",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "4": 5
+     }
+    },
+    {
+     "program": "(car (cons 1 2 ) )",
+     "expected": "1",
+     "fix": "theirs",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "1": 5
+     }
+    },
+    {
+     "program": "(cdr (cons a b))",
+     "expected": "b",
+     "fix": "theirs",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "b": 5
+     }
+    },
+    {
+     "program": "((lambda (x) ((lambda (y) (cons x (cons y nil))) n)) m)",
+     "expected": "[\"m\", \"n\"]",
+     "fix": "theirs",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "[\"m\", \"n\"]": 5
+     }
+    },
+    {
+     "program": "(eq? a a)",
+     "expected": "#t",
+     "fix": "theirs",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#t": 5
+     }
+    },
+    {
+     "program": "(eq? a b)",
+     "expected": "#f",
+     "fix": "theirs",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#f": 5
+     }
+    },
+    {
+     "program": "(eq? 3 3 )",
+     "expected": "#t",
+     "fix": "theirs",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#t": 5
+     }
+    },
+    {
+     "program": "(int? 3 )",
+     "expected": "#t",
+     "fix": "theirs",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#t": 5
+     }
+    },
+    {
+     "program": "(int? a)",
+     "expected": "#f",
+     "fix": "theirs",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#f": 5
+     }
+    },
+    {
+     "program": "(and #t #t)",
+     "expected": "#t",
+     "fix": "theirs",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#t": 5
+     }
+    },
+    {
+     "program": "(and #f #t)",
+     "expected": "#f",
+     "fix": "theirs",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#f": 5
+     }
+    },
+    {
+     "program": "(if #t yes no)",
+     "expected": "yes",
+     "fix": "theirs",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "yes": 5
+     }
+    },
+    {
+     "program": "(if #f yes no)",
+     "expected": "no",
+     "fix": "theirs",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "no": 5
+     }
+    }
+   ]
+  },
+  {
+   "fix": "R1",
+   "programs": 15,
+   "all_seeds_correct": 15,
+   "correct": 75,
+   "runs": 75,
+   "rows": [
+    {
+     "program": "(+ 1 2 )",
+     "expected": "3",
+     "fix": "R1",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "3": 5
+     }
+    },
+    {
+     "program": "(+ 20 22 )",
+     "expected": "42",
+     "fix": "R1",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "42": 5
+     }
+    },
+    {
+     "program": "(- 7 3 )",
+     "expected": "4",
+     "fix": "R1",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "4": 5
+     }
+    },
+    {
+     "program": "(car (cons 1 2 ) )",
+     "expected": "1",
+     "fix": "R1",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "1": 5
+     }
+    },
+    {
+     "program": "(cdr (cons a b))",
+     "expected": "b",
+     "fix": "R1",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "b": 5
+     }
+    },
+    {
+     "program": "((lambda (x) ((lambda (y) (cons x (cons y nil))) n)) m)",
+     "expected": "[\"m\", \"n\"]",
+     "fix": "R1",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "[\"m\", \"n\"]": 5
+     }
+    },
+    {
+     "program": "(eq? a a)",
+     "expected": "#t",
+     "fix": "R1",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#t": 5
+     }
+    },
+    {
+     "program": "(eq? a b)",
+     "expected": "#f",
+     "fix": "R1",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#f": 5
+     }
+    },
+    {
+     "program": "(eq? 3 3 )",
+     "expected": "#t",
+     "fix": "R1",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#t": 5
+     }
+    },
+    {
+     "program": "(int? 3 )",
+     "expected": "#t",
+     "fix": "R1",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#t": 5
+     }
+    },
+    {
+     "program": "(int? a)",
+     "expected": "#f",
+     "fix": "R1",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#f": 5
+     }
+    },
+    {
+     "program": "(and #t #t)",
+     "expected": "#t",
+     "fix": "R1",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#t": 5
+     }
+    },
+    {
+     "program": "(and #f #t)",
+     "expected": "#f",
+     "fix": "R1",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#f": 5
+     }
+    },
+    {
+     "program": "(if #t yes no)",
+     "expected": "yes",
+     "fix": "R1",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "yes": 5
+     }
+    },
+    {
+     "program": "(if #f yes no)",
+     "expected": "no",
+     "fix": "R1",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "no": 5
+     }
+    }
+   ]
+  },
+  {
+   "fix": "R2",
+   "programs": 15,
+   "all_seeds_correct": 15,
+   "correct": 75,
+   "runs": 75,
+   "rows": [
+    {
+     "program": "(+ 1 2 )",
+     "expected": "3",
+     "fix": "R2",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "3": 5
+     }
+    },
+    {
+     "program": "(+ 20 22 )",
+     "expected": "42",
+     "fix": "R2",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "42": 5
+     }
+    },
+    {
+     "program": "(- 7 3 )",
+     "expected": "4",
+     "fix": "R2",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "4": 5
+     }
+    },
+    {
+     "program": "(car (cons 1 2 ) )",
+     "expected": "1",
+     "fix": "R2",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "1": 5
+     }
+    },
+    {
+     "program": "(cdr (cons a b))",
+     "expected": "b",
+     "fix": "R2",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "b": 5
+     }
+    },
+    {
+     "program": "((lambda (x) ((lambda (y) (cons x (cons y nil))) n)) m)",
+     "expected": "[\"m\", \"n\"]",
+     "fix": "R2",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "[\"m\", \"n\"]": 5
+     }
+    },
+    {
+     "program": "(eq? a a)",
+     "expected": "#t",
+     "fix": "R2",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#t": 5
+     }
+    },
+    {
+     "program": "(eq? a b)",
+     "expected": "#f",
+     "fix": "R2",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#f": 5
+     }
+    },
+    {
+     "program": "(eq? 3 3 )",
+     "expected": "#t",
+     "fix": "R2",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#t": 5
+     }
+    },
+    {
+     "program": "(int? 3 )",
+     "expected": "#t",
+     "fix": "R2",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#t": 5
+     }
+    },
+    {
+     "program": "(int? a)",
+     "expected": "#f",
+     "fix": "R2",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#f": 5
+     }
+    },
+    {
+     "program": "(and #t #t)",
+     "expected": "#t",
+     "fix": "R2",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#t": 5
+     }
+    },
+    {
+     "program": "(and #f #t)",
+     "expected": "#f",
+     "fix": "R2",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#f": 5
+     }
+    },
+    {
+     "program": "(if #t yes no)",
+     "expected": "yes",
+     "fix": "R2",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "yes": 5
+     }
+    },
+    {
+     "program": "(if #f yes no)",
+     "expected": "no",
+     "fix": "R2",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "no": 5
+     }
+    }
+   ]
+  },
+  {
+   "fix": "R3",
+   "programs": 15,
+   "all_seeds_correct": 15,
+   "correct": 75,
+   "runs": 75,
+   "rows": [
+    {
+     "program": "(+ 1 2 )",
+     "expected": "3",
+     "fix": "R3",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "3": 5
+     }
+    },
+    {
+     "program": "(+ 20 22 )",
+     "expected": "42",
+     "fix": "R3",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "42": 5
+     }
+    },
+    {
+     "program": "(- 7 3 )",
+     "expected": "4",
+     "fix": "R3",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "4": 5
+     }
+    },
+    {
+     "program": "(car (cons 1 2 ) )",
+     "expected": "1",
+     "fix": "R3",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "1": 5
+     }
+    },
+    {
+     "program": "(cdr (cons a b))",
+     "expected": "b",
+     "fix": "R3",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "b": 5
+     }
+    },
+    {
+     "program": "((lambda (x) ((lambda (y) (cons x (cons y nil))) n)) m)",
+     "expected": "[\"m\", \"n\"]",
+     "fix": "R3",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "[\"m\", \"n\"]": 5
+     }
+    },
+    {
+     "program": "(eq? a a)",
+     "expected": "#t",
+     "fix": "R3",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#t": 5
+     }
+    },
+    {
+     "program": "(eq? a b)",
+     "expected": "#f",
+     "fix": "R3",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#f": 5
+     }
+    },
+    {
+     "program": "(eq? 3 3 )",
+     "expected": "#t",
+     "fix": "R3",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#t": 5
+     }
+    },
+    {
+     "program": "(int? 3 )",
+     "expected": "#t",
+     "fix": "R3",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#t": 5
+     }
+    },
+    {
+     "program": "(int? a)",
+     "expected": "#f",
+     "fix": "R3",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#f": 5
+     }
+    },
+    {
+     "program": "(and #t #t)",
+     "expected": "#t",
+     "fix": "R3",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#t": 5
+     }
+    },
+    {
+     "program": "(and #f #t)",
+     "expected": "#f",
+     "fix": "R3",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#f": 5
+     }
+    },
+    {
+     "program": "(if #t yes no)",
+     "expected": "yes",
+     "fix": "R3",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "yes": 5
+     }
+    },
+    {
+     "program": "(if #f yes no)",
+     "expected": "no",
+     "fix": "R3",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "no": 5
+     }
+    }
+   ]
+  },
+  {
+   "fix": "R4",
+   "programs": 15,
+   "all_seeds_correct": 15,
+   "correct": 75,
+   "runs": 75,
+   "rows": [
+    {
+     "program": "(+ 1 2 )",
+     "expected": "3",
+     "fix": "R4",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "3": 5
+     }
+    },
+    {
+     "program": "(+ 20 22 )",
+     "expected": "42",
+     "fix": "R4",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "42": 5
+     }
+    },
+    {
+     "program": "(- 7 3 )",
+     "expected": "4",
+     "fix": "R4",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "4": 5
+     }
+    },
+    {
+     "program": "(car (cons 1 2 ) )",
+     "expected": "1",
+     "fix": "R4",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "1": 5
+     }
+    },
+    {
+     "program": "(cdr (cons a b))",
+     "expected": "b",
+     "fix": "R4",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "b": 5
+     }
+    },
+    {
+     "program": "((lambda (x) ((lambda (y) (cons x (cons y nil))) n)) m)",
+     "expected": "[\"m\", \"n\"]",
+     "fix": "R4",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "[\"m\", \"n\"]": 5
+     }
+    },
+    {
+     "program": "(eq? a a)",
+     "expected": "#t",
+     "fix": "R4",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#t": 5
+     }
+    },
+    {
+     "program": "(eq? a b)",
+     "expected": "#f",
+     "fix": "R4",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#f": 5
+     }
+    },
+    {
+     "program": "(eq? 3 3 )",
+     "expected": "#t",
+     "fix": "R4",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#t": 5
+     }
+    },
+    {
+     "program": "(int? 3 )",
+     "expected": "#t",
+     "fix": "R4",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#t": 5
+     }
+    },
+    {
+     "program": "(int? a)",
+     "expected": "#f",
+     "fix": "R4",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#f": 5
+     }
+    },
+    {
+     "program": "(and #t #t)",
+     "expected": "#t",
+     "fix": "R4",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#t": 5
+     }
+    },
+    {
+     "program": "(and #f #t)",
+     "expected": "#f",
+     "fix": "R4",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#f": 5
+     }
+    },
+    {
+     "program": "(if #t yes no)",
+     "expected": "yes",
+     "fix": "R4",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "yes": 5
+     }
+    },
+    {
+     "program": "(if #f yes no)",
+     "expected": "no",
+     "fix": "R4",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "no": 5
+     }
+    }
+   ]
+  },
+  {
+   "fix": "R5",
+   "programs": 15,
+   "all_seeds_correct": 15,
+   "correct": 75,
+   "runs": 75,
+   "rows": [
+    {
+     "program": "(+ 1 2 )",
+     "expected": "3",
+     "fix": "R5",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "3": 5
+     }
+    },
+    {
+     "program": "(+ 20 22 )",
+     "expected": "42",
+     "fix": "R5",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "42": 5
+     }
+    },
+    {
+     "program": "(- 7 3 )",
+     "expected": "4",
+     "fix": "R5",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "4": 5
+     }
+    },
+    {
+     "program": "(car (cons 1 2 ) )",
+     "expected": "1",
+     "fix": "R5",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "1": 5
+     }
+    },
+    {
+     "program": "(cdr (cons a b))",
+     "expected": "b",
+     "fix": "R5",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "b": 5
+     }
+    },
+    {
+     "program": "((lambda (x) ((lambda (y) (cons x (cons y nil))) n)) m)",
+     "expected": "[\"m\", \"n\"]",
+     "fix": "R5",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "[\"m\", \"n\"]": 5
+     }
+    },
+    {
+     "program": "(eq? a a)",
+     "expected": "#t",
+     "fix": "R5",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#t": 5
+     }
+    },
+    {
+     "program": "(eq? a b)",
+     "expected": "#f",
+     "fix": "R5",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#f": 5
+     }
+    },
+    {
+     "program": "(eq? 3 3 )",
+     "expected": "#t",
+     "fix": "R5",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#t": 5
+     }
+    },
+    {
+     "program": "(int? 3 )",
+     "expected": "#t",
+     "fix": "R5",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#t": 5
+     }
+    },
+    {
+     "program": "(int? a)",
+     "expected": "#f",
+     "fix": "R5",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#f": 5
+     }
+    },
+    {
+     "program": "(and #t #t)",
+     "expected": "#t",
+     "fix": "R5",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#t": 5
+     }
+    },
+    {
+     "program": "(and #f #t)",
+     "expected": "#f",
+     "fix": "R5",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#f": 5
+     }
+    },
+    {
+     "program": "(if #t yes no)",
+     "expected": "yes",
+     "fix": "R5",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "yes": 5
+     }
+    },
+    {
+     "program": "(if #f yes no)",
+     "expected": "no",
+     "fix": "R5",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "no": 5
+     }
+    }
+   ]
+  },
+  {
+   "fix": "all",
+   "programs": 15,
+   "all_seeds_correct": 15,
+   "correct": 75,
+   "runs": 75,
+   "rows": [
+    {
+     "program": "(+ 1 2 )",
+     "expected": "3",
+     "fix": "all",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "3": 5
+     }
+    },
+    {
+     "program": "(+ 20 22 )",
+     "expected": "42",
+     "fix": "all",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "42": 5
+     }
+    },
+    {
+     "program": "(- 7 3 )",
+     "expected": "4",
+     "fix": "all",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "4": 5
+     }
+    },
+    {
+     "program": "(car (cons 1 2 ) )",
+     "expected": "1",
+     "fix": "all",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "1": 5
+     }
+    },
+    {
+     "program": "(cdr (cons a b))",
+     "expected": "b",
+     "fix": "all",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "b": 5
+     }
+    },
+    {
+     "program": "((lambda (x) ((lambda (y) (cons x (cons y nil))) n)) m)",
+     "expected": "[\"m\", \"n\"]",
+     "fix": "all",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "[\"m\", \"n\"]": 5
+     }
+    },
+    {
+     "program": "(eq? a a)",
+     "expected": "#t",
+     "fix": "all",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#t": 5
+     }
+    },
+    {
+     "program": "(eq? a b)",
+     "expected": "#f",
+     "fix": "all",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#f": 5
+     }
+    },
+    {
+     "program": "(eq? 3 3 )",
+     "expected": "#t",
+     "fix": "all",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#t": 5
+     }
+    },
+    {
+     "program": "(int? 3 )",
+     "expected": "#t",
+     "fix": "all",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#t": 5
+     }
+    },
+    {
+     "program": "(int? a)",
+     "expected": "#f",
+     "fix": "all",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#f": 5
+     }
+    },
+    {
+     "program": "(and #t #t)",
+     "expected": "#t",
+     "fix": "all",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#t": 5
+     }
+    },
+    {
+     "program": "(and #f #t)",
+     "expected": "#f",
+     "fix": "all",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#f": 5
+     }
+    },
+    {
+     "program": "(if #t yes no)",
+     "expected": "yes",
+     "fix": "all",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "yes": 5
+     }
+    },
+    {
+     "program": "(if #f yes no)",
+     "expected": "no",
+     "fix": "all",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "no": 5
+     }
+    }
+   ]
+  }
+ ],
+ "regression_unspaced": [
+  {
+   "fix": "theirs",
+   "programs": 15,
+   "all_seeds_correct": 15,
+   "correct": 75,
+   "runs": 75,
+   "rows": [
+    {
+     "program": "(+ 1 2)",
+     "expected": "3",
+     "fix": "theirs",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "3": 5
+     }
+    },
+    {
+     "program": "(+ 20 22)",
+     "expected": "42",
+     "fix": "theirs",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "42": 5
+     }
+    },
+    {
+     "program": "(- 7 3)",
+     "expected": "4",
+     "fix": "theirs",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "4": 5
+     }
+    },
+    {
+     "program": "(car (cons 1 2))",
+     "expected": "1",
+     "fix": "theirs",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "1": 5
+     }
+    },
+    {
+     "program": "(cdr (cons a b))",
+     "expected": "b",
+     "fix": "theirs",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "b": 5
+     }
+    },
+    {
+     "program": "((lambda (x) ((lambda (y) (cons x (cons y nil))) n)) m)",
+     "expected": "[\"m\", \"n\"]",
+     "fix": "theirs",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "[\"m\", \"n\"]": 5
+     }
+    },
+    {
+     "program": "(eq? a a)",
+     "expected": "#t",
+     "fix": "theirs",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#t": 5
+     }
+    },
+    {
+     "program": "(eq? a b)",
+     "expected": "#f",
+     "fix": "theirs",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#f": 5
+     }
+    },
+    {
+     "program": "(eq? 3 3)",
+     "expected": "#t",
+     "fix": "theirs",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#t": 5
+     }
+    },
+    {
+     "program": "(int? 3)",
+     "expected": "#t",
+     "fix": "theirs",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#t": 5
+     }
+    },
+    {
+     "program": "(int? a)",
+     "expected": "#f",
+     "fix": "theirs",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#f": 5
+     }
+    },
+    {
+     "program": "(and #t #t)",
+     "expected": "#t",
+     "fix": "theirs",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#t": 5
+     }
+    },
+    {
+     "program": "(and #f #t)",
+     "expected": "#f",
+     "fix": "theirs",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#f": 5
+     }
+    },
+    {
+     "program": "(if #t yes no)",
+     "expected": "yes",
+     "fix": "theirs",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "yes": 5
+     }
+    },
+    {
+     "program": "(if #f yes no)",
+     "expected": "no",
+     "fix": "theirs",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "no": 5
+     }
+    }
+   ]
+  },
+  {
+   "fix": "R5",
+   "programs": 15,
+   "all_seeds_correct": 15,
+   "correct": 75,
+   "runs": 75,
+   "rows": [
+    {
+     "program": "(+ 1 2)",
+     "expected": "3",
+     "fix": "R5",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "3": 5
+     }
+    },
+    {
+     "program": "(+ 20 22)",
+     "expected": "42",
+     "fix": "R5",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "42": 5
+     }
+    },
+    {
+     "program": "(- 7 3)",
+     "expected": "4",
+     "fix": "R5",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "4": 5
+     }
+    },
+    {
+     "program": "(car (cons 1 2))",
+     "expected": "1",
+     "fix": "R5",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "1": 5
+     }
+    },
+    {
+     "program": "(cdr (cons a b))",
+     "expected": "b",
+     "fix": "R5",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "b": 5
+     }
+    },
+    {
+     "program": "((lambda (x) ((lambda (y) (cons x (cons y nil))) n)) m)",
+     "expected": "[\"m\", \"n\"]",
+     "fix": "R5",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "[\"m\", \"n\"]": 5
+     }
+    },
+    {
+     "program": "(eq? a a)",
+     "expected": "#t",
+     "fix": "R5",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#t": 5
+     }
+    },
+    {
+     "program": "(eq? a b)",
+     "expected": "#f",
+     "fix": "R5",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#f": 5
+     }
+    },
+    {
+     "program": "(eq? 3 3)",
+     "expected": "#t",
+     "fix": "R5",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#t": 5
+     }
+    },
+    {
+     "program": "(int? 3)",
+     "expected": "#t",
+     "fix": "R5",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#t": 5
+     }
+    },
+    {
+     "program": "(int? a)",
+     "expected": "#f",
+     "fix": "R5",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#f": 5
+     }
+    },
+    {
+     "program": "(and #t #t)",
+     "expected": "#t",
+     "fix": "R5",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#t": 5
+     }
+    },
+    {
+     "program": "(and #f #t)",
+     "expected": "#f",
+     "fix": "R5",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "#f": 5
+     }
+    },
+    {
+     "program": "(if #t yes no)",
+     "expected": "yes",
+     "fix": "R5",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "yes": 5
+     }
+    },
+    {
+     "program": "(if #f yes no)",
+     "expected": "no",
+     "fix": "R5",
+     "correct": 5,
+     "runs": 5,
+     "results": {
+      "no": 5
+     }
+    }
+   ]
+  }
+ ],
+ "test_oracle": [
+  {
+   "seed": 0,
+   "fix": "theirs",
+   "program": "(+ 5 5 )",
+   "equals(result, encode(n))": {
+    "10": "#t",
+    "7": "#t",
+    "0": "#t",
+    "999": "#t"
+   },
+   "decode(result)": "10",
+   "decode(result) == n": {
+    "10": true,
+    "7": false,
+    "0": false,
+    "999": false
+   }
+  },
+  {
+   "seed": 1,
+   "fix": "theirs",
+   "program": "(+ 5 5 )",
+   "equals(result, encode(n))": {
+    "10": "#t",
+    "7": "#t",
+    "0": "#t",
+    "999": "#t"
+   },
+   "decode(result)": "10",
+   "decode(result) == n": {
+    "10": true,
+    "7": false,
+    "0": false,
+    "999": false
+   }
+  },
+  {
+   "seed": 2,
+   "fix": "theirs",
+   "program": "(+ 5 5 )",
+   "equals(result, encode(n))": {
+    "10": "#t",
+    "7": "#t",
+    "0": "#t",
+    "999": "#t"
+   },
+   "decode(result)": "10",
+   "decode(result) == n": {
+    "10": true,
+    "7": false,
+    "0": false,
+    "999": false
+   }
+  },
+  {
+   "seed": 3,
+   "fix": "theirs",
+   "program": "(+ 5 5 )",
+   "equals(result, encode(n))": {
+    "10": "#t",
+    "7": "#t",
+    "0": "#t",
+    "999": "#t"
+   },
+   "decode(result)": "10",
+   "decode(result) == n": {
+    "10": true,
+    "7": false,
+    "0": false,
+    "999": false
+   }
+  },
+  {
+   "seed": 4,
+   "fix": "theirs",
+   "program": "(+ 5 5 )",
+   "equals(result, encode(n))": {
+    "10": "#t",
+    "7": "#t",
+    "0": "#t",
+    "999": "#t"
+   },
+   "decode(result)": "10",
+   "decode(result) == n": {
+    "10": true,
+    "7": false,
+    "0": false,
+    "999": false
+   }
+  },
+  {
+   "seed": 0,
+   "fix": "R1",
+   "program": "(+ 5 5 )",
+   "equals(result, encode(n))": {
+    "10": "#t",
+    "7": "#f",
+    "0": "#f",
+    "999": "#f"
+   },
+   "decode(result)": "10",
+   "decode(result) == n": {
+    "10": true,
+    "7": false,
+    "0": false,
+    "999": false
+   }
+  },
+  {
+   "seed": 1,
+   "fix": "R1",
+   "program": "(+ 5 5 )",
+   "equals(result, encode(n))": {
+    "10": "#t",
+    "7": "#f",
+    "0": "#f",
+    "999": "#f"
+   },
+   "decode(result)": "10",
+   "decode(result) == n": {
+    "10": true,
+    "7": false,
+    "0": false,
+    "999": false
+   }
+  },
+  {
+   "seed": 2,
+   "fix": "R1",
+   "program": "(+ 5 5 )",
+   "equals(result, encode(n))": {
+    "10": "#t",
+    "7": "#f",
+    "0": "#f",
+    "999": "#f"
+   },
+   "decode(result)": "10",
+   "decode(result) == n": {
+    "10": true,
+    "7": false,
+    "0": false,
+    "999": false
+   }
+  },
+  {
+   "seed": 3,
+   "fix": "R1",
+   "program": "(+ 5 5 )",
+   "equals(result, encode(n))": {
+    "10": "#t",
+    "7": "#f",
+    "0": "#f",
+    "999": "#f"
+   },
+   "decode(result)": "10",
+   "decode(result) == n": {
+    "10": true,
+    "7": false,
+    "0": false,
+    "999": false
+   }
+  },
+  {
+   "seed": 4,
+   "fix": "R1",
+   "program": "(+ 5 5 )",
+   "equals(result, encode(n))": {
+    "10": "#t",
+    "7": "#f",
+    "0": "#f",
+    "999": "#f"
+   },
+   "decode(result)": "10",
+   "decode(result) == n": {
+    "10": true,
+    "7": false,
+    "0": false,
+    "999": false
+   }
+  }
+ ],
+ "their_tests": [
+  {
+   "source": "(+ 1 2)",
+   "seed": 0,
+   "fix": "theirs",
+   "right": "3",
+   "wrong": "4",
+   "equals 3": true,
+   "equals 4": true,
+   "decode": "3"
+  },
+  {
+   "source": "(+ 1 2)",
+   "seed": 1,
+   "fix": "theirs",
+   "right": "3",
+   "wrong": "4",
+   "equals 3": true,
+   "equals 4": true,
+   "decode": "3"
+  },
+  {
+   "source": "(+ 1 2)",
+   "seed": 2,
+   "fix": "theirs",
+   "right": "3",
+   "wrong": "4",
+   "equals 3": true,
+   "equals 4": true,
+   "decode": "3"
+  },
+  {
+   "source": "(+ 1 2)",
+   "seed": 3,
+   "fix": "theirs",
+   "right": "3",
+   "wrong": "4",
+   "equals 3": true,
+   "equals 4": true,
+   "decode": "3"
+  },
+  {
+   "source": "(+ 1 2)",
+   "seed": 4,
+   "fix": "theirs",
+   "right": "3",
+   "wrong": "4",
+   "equals 3": true,
+   "equals 4": true,
+   "decode": "3"
+  },
+  {
+   "source": "(- 5 2)",
+   "seed": 0,
+   "fix": "theirs",
+   "right": "3",
+   "wrong": "4",
+   "equals 3": true,
+   "equals 4": true,
+   "decode": "3"
+  },
+  {
+   "source": "(- 5 2)",
+   "seed": 1,
+   "fix": "theirs",
+   "right": "3",
+   "wrong": "4",
+   "equals 3": true,
+   "equals 4": true,
+   "decode": "3"
+  },
+  {
+   "source": "(- 5 2)",
+   "seed": 2,
+   "fix": "theirs",
+   "right": "3",
+   "wrong": "4",
+   "equals 3": true,
+   "equals 4": true,
+   "decode": "3"
+  },
+  {
+   "source": "(- 5 2)",
+   "seed": 3,
+   "fix": "theirs",
+   "right": "3",
+   "wrong": "4",
+   "equals 3": true,
+   "equals 4": true,
+   "decode": "3"
+  },
+  {
+   "source": "(- 5 2)",
+   "seed": 4,
+   "fix": "theirs",
+   "right": "3",
+   "wrong": "4",
+   "equals 3": true,
+   "equals 4": true,
+   "decode": "3"
+  },
+  {
+   "source": "(+ 1 2)",
+   "seed": 0,
+   "fix": "R1",
+   "right": "3",
+   "wrong": "4",
+   "equals 3": true,
+   "equals 4": false,
+   "decode": "3"
+  },
+  {
+   "source": "(+ 1 2)",
+   "seed": 1,
+   "fix": "R1",
+   "right": "3",
+   "wrong": "4",
+   "equals 3": true,
+   "equals 4": false,
+   "decode": "3"
+  },
+  {
+   "source": "(+ 1 2)",
+   "seed": 2,
+   "fix": "R1",
+   "right": "3",
+   "wrong": "4",
+   "equals 3": true,
+   "equals 4": false,
+   "decode": "3"
+  },
+  {
+   "source": "(+ 1 2)",
+   "seed": 3,
+   "fix": "R1",
+   "right": "3",
+   "wrong": "4",
+   "equals 3": true,
+   "equals 4": false,
+   "decode": "3"
+  },
+  {
+   "source": "(+ 1 2)",
+   "seed": 4,
+   "fix": "R1",
+   "right": "3",
+   "wrong": "4",
+   "equals 3": true,
+   "equals 4": false,
+   "decode": "3"
+  },
+  {
+   "source": "(- 5 2)",
+   "seed": 0,
+   "fix": "R1",
+   "right": "3",
+   "wrong": "4",
+   "equals 3": true,
+   "equals 4": false,
+   "decode": "3"
+  },
+  {
+   "source": "(- 5 2)",
+   "seed": 1,
+   "fix": "R1",
+   "right": "3",
+   "wrong": "4",
+   "equals 3": true,
+   "equals 4": false,
+   "decode": "3"
+  },
+  {
+   "source": "(- 5 2)",
+   "seed": 2,
+   "fix": "R1",
+   "right": "3",
+   "wrong": "4",
+   "equals 3": true,
+   "equals 4": false,
+   "decode": "3"
+  },
+  {
+   "source": "(- 5 2)",
+   "seed": 3,
+   "fix": "R1",
+   "right": "3",
+   "wrong": "4",
+   "equals 3": true,
+   "equals 4": false,
+   "decode": "3"
+  },
+  {
+   "source": "(- 5 2)",
+   "seed": 4,
+   "fix": "R1",
+   "right": "3",
+   "wrong": "4",
+   "equals 3": true,
+   "equals 4": false,
+   "decode": "3"
+  },
+  {
+   "source": "(+ 1 2)",
+   "seed": 0,
+   "fix": "all",
+   "right": "3",
+   "wrong": "4",
+   "equals 3": true,
+   "equals 4": false,
+   "decode": "3"
+  },
+  {
+   "source": "(+ 1 2)",
+   "seed": 1,
+   "fix": "all",
+   "right": "3",
+   "wrong": "4",
+   "equals 3": true,
+   "equals 4": false,
+   "decode": "3"
+  },
+  {
+   "source": "(+ 1 2)",
+   "seed": 2,
+   "fix": "all",
+   "right": "3",
+   "wrong": "4",
+   "equals 3": true,
+   "equals 4": false,
+   "decode": "3"
+  },
+  {
+   "source": "(+ 1 2)",
+   "seed": 3,
+   "fix": "all",
+   "right": "3",
+   "wrong": "4",
+   "equals 3": true,
+   "equals 4": false,
+   "decode": "3"
+  },
+  {
+   "source": "(+ 1 2)",
+   "seed": 4,
+   "fix": "all",
+   "right": "3",
+   "wrong": "4",
+   "equals 3": true,
+   "equals 4": false,
+   "decode": "3"
+  },
+  {
+   "source": "(- 5 2)",
+   "seed": 0,
+   "fix": "all",
+   "right": "3",
+   "wrong": "4",
+   "equals 3": true,
+   "equals 4": false,
+   "decode": "3"
+  },
+  {
+   "source": "(- 5 2)",
+   "seed": 1,
+   "fix": "all",
+   "right": "3",
+   "wrong": "4",
+   "equals 3": true,
+   "equals 4": false,
+   "decode": "3"
+  },
+  {
+   "source": "(- 5 2)",
+   "seed": 2,
+   "fix": "all",
+   "right": "3",
+   "wrong": "4",
+   "equals 3": true,
+   "equals 4": false,
+   "decode": "3"
+  },
+  {
+   "source": "(- 5 2)",
+   "seed": 3,
+   "fix": "all",
+   "right": "3",
+   "wrong": "4",
+   "equals 3": true,
+   "equals 4": false,
+   "decode": "3"
+  },
+  {
+   "source": "(- 5 2)",
+   "seed": 4,
+   "fix": "all",
+   "right": "3",
+   "wrong": "4",
+   "equals 3": true,
+   "equals 4": false,
+   "decode": "3"
+  }
+ ],
+ "lexer": [
+  {
+   "fix": "theirs",
+   "source": "(g 1)",
+   "tokens": "( g 1"
+  },
+  {
+   "fix": "theirs",
+   "source": "(+ (+ 1 2) 3)",
+   "tokens": "( + ( + 1 2 3"
+  },
+  {
+   "fix": "R5",
+   "source": "(g 1)",
+   "tokens": "( g 1 )"
+  },
+  {
+   "fix": "R5",
+   "source": "(+ (+ 1 2) 3)",
+   "tokens": "( + ( + 1 2 ) 3 )"
+  }
+ ]
+}
