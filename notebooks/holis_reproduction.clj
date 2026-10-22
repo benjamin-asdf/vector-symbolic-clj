@@ -28,6 +28,10 @@
 ;; Their papers are proofs of concept, and their READMEs say so. Nothing
 ;; below changes that. A proof of concept is where the next person starts,
 ;; and this page lists what that next person (us) ran into.
+;;
+;; If you maintain or build on either codebase, go to
+;; [Errata for the authors](#errata-for-the-authors): each defect with its
+;; location, a minimal program and a suggested fix.
 
 ^:kindly/hide-code
 (def dir "repro/holis/")
@@ -393,8 +397,8 @@
 ;; residuelisp the fixed numbers do not set a cap independent of D.
 ;; Its failures are loud: every failing run raised an exception (mostly
 ;; `InterpreterError`) or hit our cleanup budget, and none returned a
-;; wrong value (raw table in the appendix). The price of the
-;; unnormalised similarity is elsewhere, in 4.6.
+;; wrong value (raw table in the appendix). A fixed floor has a
+;; different cost there, in 4.6.
 
 ;; ## 4.6 A shared field: the integer tag
 ;;
@@ -463,7 +467,8 @@
        (for [[d m] (get he "car_of_a_spread")]
          [d (str/join ", " (for [[k v] (sort-by (comp - val) m)] (str k " ×" v)))]))
 
-;; **E2, E3 (holis).** CAR does not evaluate its argument, and LABEL is
+;; **E2, E3 (holis).** CAR does not evaluate its argument (by reading
+;; their code, CDR and CONS do not either), and LABEL is
 ;; dispatched but raises. Their paper says it leaves LABEL out, so E3 is a
 ;; leftover, not a broken claim:
 
@@ -517,6 +522,313 @@
        (for [r (get re "lexer")]
          [(kind/code (get r "source")) (kind/code (get r "tokens"))
           (or (get r "result_seed0") "–")]))
+
+;; ## Errata for the authors
+;;
+;; This section is for Tomkins-Flanagan, Kelly and Hanley, and for anyone
+;; who builds on their code. Each item says where the defect is, shows a
+;; minimal program, gives the cause in one sentence and suggests a small
+;; fix. Line numbers are for residuelisp at `09864c7`. holis is one
+;; notebook, so for it we name the cell and the function, at `db208d7`.
+;; Most items are slips that a proof of concept is allowed to have. They
+;; are listed so they are quick to fix.
+;;
+;; A fix marked **tested** is the control that our harness ran, with the
+;; result shown. A fix marked **untested** is our suggestion from reading
+;; the code. We did not run it.
+;;
+;; The order is by harm: wrong answers without any noise first, then
+;; robustness under noise, then memory and leftovers. The counts below
+;; come from the same JSON files as the rest of the page:
+
+^:kindly/hide-code
+(defn by
+  "The first row of `rows` whose value at `k` is `v`."
+  [rows k v]
+  (first (filter #(= v (get % k)) rows)))
+
+^:kindly/hide-code
+(defn wrong-of
+  "\"wrong / runs\" for a result row with \"correct\" and \"runs\"."
+  [r]
+  (str (- (get r "runs") (get r "correct")) " / " (get r "runs")))
+
+^:kindly/hide-code
+(let [rp (fn [p] (by (get re "programs") "program" p))
+      row (fn [id code r]
+            [id code (kind/code (get r "program")) (get r "expected")
+             (fmt (get r "results")) (wrong-of r)])
+      e1 (filter #(= "theirs" (get % "variant")) (get he "car_of_atom"))
+      e1x (by (get he "car_of_atom_examples") "D" 2048)
+      r5 (by (get re "lexer") "source" "(+ (+ 1 2) 3)")
+      r5ok (by (get re "lexer") "source" "(+ (+ 1 2 ) 3 )")
+      c42 (filter #(= "(CAR (x . lhs))" (get % "program")) (get hm "rows"))
+      e2 (by (get he "other") "note" "Lisp 1.5 gives b")
+      e3 (by (get he "other") "note" "LABEL")
+      lk (fn [mode] (first (filter #(and (= 8192 (get % "D")) (= 5.5 (get % "sigma"))
+                                         (= mode (get % "mode")))
+                                   (get ht "lookup"))))
+      th (lk "theirs (theta=0.2)")
+      ch (lk "chance floor (theta=5/sqrt(D))")
+      g800 (by (get he "memory_growth") "items stored" 800)]
+  (table ["item" "code" "program" "should give" "gives (×runs)" "wrong"]
+         [(row "R1 (4.6)" "residuelisp" (rp "(eq? 3 5 )"))
+          (row "R2" "residuelisp" (rp "(and #t #f)"))
+          (row "R2" "residuelisp" (rp "(eq? (cons a (cons b nil)) (cons a (cons c nil)))"))
+          (row "R3" "residuelisp" (rp "(if (eq? a b) yes no)"))
+          ["E1" "holis" (kind/code (get-in he ["meta" "settings" "program"])) "(a b c)"
+           (str "varies, e.g. " (get e1x "result") " (D = 2048, seed " (get e1x "seed") ")")
+           (str/join ", " (for [r e1] (str (get r "wrong") " / " (get r "runs")
+                                           " at D = " (get r "D"))))]
+          (row "R4" "residuelisp" (rp "(+ 150 100 )"))
+          ["R5" "residuelisp" (kind/code (get r5 "source")) (get r5ok "result_seed0")
+           (str (get r5 "result_seed0")) "seed 0 (lexer, no randomness)"]
+          ["4.2" "holis" (kind/code "(CAR (x . lhs))") "x"
+           (str/join "; " (for [r c42] (str "D = " (get r "D") ": " (fmt (get r "results")))))
+           (str/join ", " (map wrong-of c42))]
+          ["E2" "holis" (kind/code (get e2 "program")) "b" (fmt (get e2 "results"))
+           (str (- (get e2 "runs") (get-in e2 ["results" "[\"b\"]"] 0)) " / " (get e2 "runs"))]
+          ["4.5" "holis" "CAR lookup on a stored 4-list, σ = 5.5, D = 8192" "the stored head"
+           (str (get th "correct") " right with θ = 0.2; " (get ch "correct")
+                " right with θ = 5/√D")
+           (str (- (get th "trials") (get th "correct")) " / " (get th "trials"))]
+          ["E4" "holis" "store 800 items in SimpleCleanUp" "about 800 rows"
+           (str (get g800 "matrix rows") " rows, " (get g800 "MB at D=512") " MB at D = 512") "–"]
+          ["E3" "holis" (kind/code (get e3 "program")) "an error that names LABEL, or no LABEL"
+           (fmt (get e3 "results")) (str (get e3 "runs") " / " (get e3 "runs"))]]))
+
+;; ### Wrong answers without noise
+;;
+;; **R1 (residuelisp; our 4.6). Any two integers are `eq?`.**
+;;
+;; - *Where.* `src/language/interpreter.py`, `equals`, lines 320–362; the
+;;   atom comparison is line 331. The tag is added in
+;;   `src/language/encoding.py`, `encode_rhc_integer`, lines 322–348.
+;; - *Symptom.* `(eq? 3 5 )` and `(eq? 3 1000 )` give `#t` (table above).
+;;   The 4.6 table shows the same for their test pattern: the result of
+;;   `(+ 5 5)` "equals" 10, 7, 0 and 999. So `test_rhc_add` and
+;;   `test_rhc_sub` in `src/tests/test_interpret.py` (lines 302–335) pass
+;;   whatever the arithmetic returns.
+;; - *Cause.* Every integer is ζ(x) + `__int`, and the shared tag alone
+;;   gives a similarity of about 1, far above the 0.2 floor.
+;; - *Fix.* Compare integers without their tag, as `rhc_add` already
+;;   does. Normalising the similarity is not enough: the cosine of 3 and
+;;   5 is still about 0.5 (4.6 table). In the "both atomic" branch of
+;;   `equals`, before line 331:
+;;
+;; ```python
+;; tag = enc_env.codebook["__int"]
+;; if is_true(check_int(lhs, enc_env), enc_env) and is_true(check_int(rhs, enc_env), enc_env):
+;;     lhs, rhs = lhs - tag, rhs - tag
+;; ```
+;;
+;;   In the tests, compare the decoded value instead. Then a wrong sum
+;;   fails:
+;;
+;; ```python
+;; assert decode(value, enc_env, eval_env) == "3"
+;; ```
+;;
+;; - *Status.* Untested.
+;;
+;; **R2 (residuelisp). `and` never looks at its second argument.**
+;;
+;; - *Where.* `src/language/interpreter.py`, `_and_`, lines 286–289.
+;;   `equals` uses it at line 360 to join the car and cdr comparisons.
+;; - *Symptom.* `(and #t #f)` gives `#t`. Structural `eq?` compares only
+;;   the cars, so `(a b)` and `(a c)` are `eq?` (table above).
+;; - *Cause.* The second clause tests `lhs` again instead of `rhs`.
+;; - *Fix.* Line 288:
+;;
+;; ```python
+;;         is_nil(rhs, enc_env) or is_false(rhs, enc_env)
+;; ```
+;;
+;;   Their `test_and` and `test_and_comp` only use true arguments, so a
+;;   test of `(and #t #f)` would have caught it.
+;; - *Status.* Untested. It is a one-word change.
+;;
+;; **R3 (residuelisp). `if` does not evaluate its condition.**
+;;
+;; - *Where.* `src/language/interpreter.py`, `if_`, lines 427–461; the
+;;   condition is taken at line 447 and tested at line 458.
+;; - *Symptom.* `(if (eq? a b) yes no)` gives `yes`. Any compound
+;;   condition takes the consequent. A literal `#f` works, which is why
+;;   `test_if_consequent` and `test_if_alternate` pass.
+;; - *Cause.* The condition is the unevaluated form, a pointer, and a
+;;   pointer is neither `nil` nor `#f`.
+;; - *Fix.* Line 447:
+;;
+;; ```python
+;;     condition = evaluate(car(rand, enc_env, eval_env), enc_env, eval_env)
+;; ```
+;;
+;; - *Status.* Untested.
+;;
+;; **E1 (holis). CAR of an atom returns a random item.**
+;;
+;; - *Where.* Code cell 2 ("Lisp environment definitions"), `vsa_env`,
+;;   the inner `car`. `ev` calls it on atoms in two tests: "is head a
+;;   lambda expression?" (`car(head)`) and "is head a defined function?"
+;;   (`car(echo)`).
+;; - *Symptom.* `((LAMBDA (x) (CONS x (b c))) a)` gives a wrong list in
+;;   some seeds (table above, and the E1 tables under "Further errata").
+;; - *Cause.* For a probe that matches no pointer, `SimpleAssoc.recall`
+;;   returns the probe itself, so `car` unbinds `lhs` from an atom and
+;;   cleans up noise, which lands on an arbitrary stored item.
+;; - *Fix.* Let `car` answer NIL for anything that is not a stored
+;;   pointer. residuelisp's `car` raises in this case (line 226), which
+;;   is also fine.
+;;
+;; ```python
+;; def car(c, ind=''):
+;;     if c not in assoc.A: return env['NIL']
+;;     return mem.recall(assoc.recall(c) * ~env["lhs"])
+;; ```
+;;
+;; - *Status.* **Tested**, noise-free: wrong results go to 0 of 100 at
+;;   D = 512 and 2048 (E1 table). The same guard in `cdr` is untested.
+;;   The test is an exact key match, which is right for the pointers
+;;   their code passes around. A version for noisy pointers would let
+;;   `SimpleAssoc.recall` report a miss instead of returning the probe.
+;;
+;; **R4 (residuelisp). The decoder stops at 199.**
+;;
+;; - *Where.* `src/language/interpreter.py`, `decode_rhc`, lines
+;;   1253–1271; the range is line 1265.
+;; - *Symptom.* `(+ 150 100 )` gives a different wrong number in each
+;;   seed (table above). So do `(+ 199 1 )` and `(- 3 5 )`.
+;; - *Cause.* The argmax runs over the codes of 0..199 (plus literals
+;;   seen), while the moduli 3, 5, 7, 11 cover 0..1154.
+;; - *Fix.* Lines 1265–1267. `RHC.moduli` is the moduli the encoder
+;;   used; `enc_env.moduli` is empty by default:
+;;
+;; ```python
+;;     for i in range(int(np.prod(RHC.moduli))):   # 0..1154
+;;         if i not in codebook:
+;;             codebook[i] = RHC.encode(enc_env.dim, i, RHC.moduli).data
+;; ```
+;;
+;;   Results then wrap modulo 1155, so `(- 3 5 )` decodes as 1153. Map
+;;   the upper half to negatives if that is wanted.
+;; - *Status.* Untested.
+;;
+;; **R5 (residuelisp). The lexer drops a `)` right after a number.**
+;;
+;; - *Where.* `src/syntax/parser.py`, `_digit`, lines 121–127.
+;; - *Symptom.* `(+ (+ 1 2) 3)` lexes as `( + ( + 1 2 3` and fails. With
+;;   a space before each `)` it gives 6 (table above, and the lexer table
+;;   under "Further errata").
+;; - *Cause.* The loop calls `_next` to look at the character after the
+;;   digits, so that character is consumed and lost.
+;; - *Fix.* Peek first, as `_key_or_ident` does:
+;;
+;; ```python
+;; def _digit(d, conts):
+;;     ds = [d]
+;;     while (curr := _peek(conts)) is not None and curr.isdigit():
+;;         ds.append(_next(conts))
+;;     return Token("".join(ds), TokenKind.Int)
+;; ```
+;;
+;; - *Status.* Untested.
+;;
+;; **4.2 (holis). Programs can name the role vectors.**
+;;
+;; - *Where.* Code cell 2, `vsa_env`, the `reserved` list. It puts `lhs`,
+;;   `rhs` and `φ` into `env['lex']` and the item memory, and `make_atom`
+;;   returns the lexicon entry for any name a program uses.
+;; - *Symptom.* `(CAR (x . lhs))` gives `rhs` in about half the runs, at
+;;   every D (table above). `read` and `car` can also return `lhs`, `rhs`
+;;   or `φ` as atoms (the car(a) spread under E1).
+;; - *Cause.* The symbol `lhs` is the role vector itself, and binding
+;;   commutes, so unbinding `lhs` from rhs⊗lhs gives `rhs` as strongly as
+;;   unbinding it from lhs⊗x gives `x`.
+;; - *Fix.* Keep the roles out of the lexicon and the item memory:
+;;
+;; ```python
+;; reserved = ['T', 'F', "NIL", 1]      # atoms a program may name
+;; for role in ['lhs', 'rhs', 'φ']:
+;;     env[role] = HRR(N=dim)           # roles only, not in env['lex'] or mem
+;; ```
+;;
+;; - *Status.* Untested. Nothing else reads the roles from `env['lex']`,
+;;   as far as we can see.
+;;
+;; **E2 (holis). CAR does not evaluate its argument.**
+;;
+;; - *Where.* Code cell 2, `vsa_env`, `caar`. By reading, `cdar` and
+;;   `cons` do the same; we ran only the CAR case.
+;; - *Symptom.* `(CAR (CDR (a b c)))` gives `CDR`. Lisp 1.5 gives `b`.
+;; - *Cause.* `caar(c)` is `car(car(c))`: it takes the first element of
+;;   the argument form instead of its value.
+;; - *Fix,* if Lisp 1.5 semantics are intended. Evaluate first:
+;;
+;; ```python
+;; def caar(c, ind=''): return car(ev_until_done(car(c), ind))
+;; def cdar(c, ind=''): return cdr(ev_until_done(car(c), ind))
+;; ```
+;;
+;;   Literal lists then need QUOTE, and their QUOTE keeps its wrapper, so
+;;   `quote` would have to return its argument too. Rerun the fizzbuzz
+;;   helpers after this change.
+;; - *Status.* Untested.
+;;
+;; ### Robustness under noise
+;;
+;; **4.5 (holis). A fixed θ = 0.2 in the pointer memory.**
+;;
+;; - *Where.* Code cell 2, `SimpleAssoc.__init__` (`theta=0.2`); `vsa_env`
+;;   creates it with the default.
+;; - *Symptom.* Under probe noise, lookups fail past σ ≈ 4.9 at any D
+;;   (table above, and the 4.5 tables).
+;; - *Cause.* A noisy probe has cosine 1/√(1 + σ²) to its key, which
+;;   falls below 0.2 at σ = √24 whatever D is, while chance cosines
+;;   shrink like 1/√D.
+;; - *Fix.* Set θ relative to chance:
+;;
+;; ```python
+;; assoc = SimpleAssoc(lexicon=env['lex'], theta=5 / np.sqrt(dim))
+;; ```
+;;
+;; - *Status.* **Tested**: at D = 8192 lookups stay at 200 of 200 up to
+;;   σ = 8, and the LAMBDA program keeps 8 of 10 at σ = 5 and 6 (4.5
+;;   tables). At D = 512 it changes nothing, since 5/√512 ≈ 0.22. We did
+;;   not change the evaluator's other 0.2 floors.
+;;
+;; ### Memory and leftovers
+;;
+;; **E4 (holis). The item memory grows quadratically.**
+;;
+;; - *Where.* Code cell 2, `SimpleCleanUp.memorize`.
+;; - *Symptom.* 800 stored items take 70 100 rows (table above, and the
+;;   E4 tables). Their fizzbuzz runs take minutes partly because of this.
+;; - *Cause.* When the matrix is full it appends `k` empty rows but never
+;;   raises `m`, so every later item appends another `k` rows.
+;; - *Fix.* One line, as residuelisp's `CleanupMemory.memorize` does
+;;   (`src/language/encoding.py`, line 90):
+;;
+;; ```python
+;;         if self.i >= self.m:
+;;             self.M = np.concatenate([self.M, np.zeros((self.k, self.n))], axis=0)
+;;             self.m += self.k
+;; ```
+;;
+;; - *Status.* Untested. We only measured their version.
+;;
+;; **E3 (holis). LABEL is a leftover.** Their paper says it leaves LABEL
+;; out, so this breaks no claim.
+;;
+;; - *Where.* Code cell 2, `vsa_env`: `'LABEL'` in `basic_fs` and in
+;;   `env.update`, and the inner `label`.
+;; - *Symptom.* `(LABEL f (LAMBDA (x) x))` raises a `TypeError`.
+;; - *Cause.* `ev` calls every basic function with `ind=`, and `label`
+;;   has no such parameter. Inside, `mem.memorize(lbl, exp)` passes two
+;;   arguments to a one-argument method, so it would fail next.
+;; - *Fix.* Remove `'LABEL'` from `basic_fs` and from `env.update`. To
+;;   keep it, give `label` an `ind=''` parameter and call
+;;   `mem.memorize(lbl)`.
+;; - *Status.* Untested.
 
 ;; ## What did not reproduce
 ;;
