@@ -339,14 +339,21 @@ class Numbers:
     unitary vector. Z comes from its own random stream, so the atom stream
     (and every other vector of the space) is unchanged.
 
-    B is a residue-number-system base (cf. Tomkins-Flanagan & Kelly, "Hey
-    Pentti, We Did (More of) It!"): the Fourier bins are split at random into
-    one band per prime modulus p, and on the band of p every coefficient of B
-    is a p-th root of unity. B^n on that band therefore depends only on
-    n mod p. Cleanup is algorithmic: find each residue by matching its band
-    against p candidates, combine them with the Chinese remainder theorem,
-    and confirm with the similarity of v to B^n. It tolerates superposition
-    noise, because each band still carries a coherent share of the signal."""
+    B is a residue-number-system base in the product code of Kymn et al.
+    (2025): its phase at every Fourier bin k is 2π c_k/P, with c_k uniform in
+    Z_P and P the product of the moduli. By the Chinese remainder theorem
+    that is the same as one random p-th root of unity per modulus, multiplied
+    together, so every bin mixes all the clocks. B^x and B^y then agree only
+    on average over the bins, which is 0 unless x ≡ y (mod P): an integer is
+    unrelated to every other one, and a sum of integers has no chimeras.
+    (An earlier version gave each modulus its own band of bins, which made
+    numbers that share residues partly alike; docs/ISSUE-FINDINGS 4.3, 4.4.)
+
+    Readout: the integers the space has made (every `vec(n)`) are kept in a
+    small memory and are read by one matrix product. A probe that matches none
+    of them is read exactly against all P integers at once: binning its
+    spectrum by c_k turns the P similarities into one FFT of length P
+    (`read_all`, tens of milliseconds)."""
 
     def __init__(self, space, moduli=(5, 7, 11, 13, 17, 19)):
         self.space = space
@@ -354,60 +361,160 @@ class Numbers:
         self.P = int(np.prod(self.moduli))
         self.half = (self.P - 1) // 2
         d = space.dim
-        bins = np.arange(1, d // 2 if d % 2 == 0 else d // 2 + 1)
-        space.rng.shuffle(bins)
-        self.bands = np.array_split(bins, len(self.moduli))
-        self.expo = np.zeros(d // 2 + 1)  # B's phase at bin k = 2π expo[k]
-        self.cands = []
-        for band, p in zip(self.bands, self.moduli):
-            a = space.rng.integers(1, p, size=band.size)
-            self.expo[band] = a / p
-            # candidate spectra for residues 0..p-1, conjugated for matching
-            r = np.arange(p)[:, None]
-            self.cands.append(np.exp(-2j * np.pi * r * a[None, :] / p))
-        self.spec = np.exp(2j * np.pi * self.expo)
+        h = d // 2 + 1
+        # bins 1 .. h-1 (minus Nyquist for even d) carry the phases; DC and
+        # Nyquist stay 1 so that B is real. Own stream: drawing shifts no atom.
+        cr = np.random.default_rng([space.seed, 4])
+        self.top = d // 2 if d % 2 == 0 else h
+        self.c = np.zeros(h, dtype=np.int64)
+        self.c[1:self.top] = cr.integers(0, self.P, size=self.top - 1)
         # the offset Z: unitary (real ±1 at DC and Nyquist), own stream
         zr = np.random.default_rng([space.seed, 3])
-        self.zspec = np.exp(1j * zr.uniform(-np.pi, np.pi, d // 2 + 1))
+        self.zspec = np.exp(1j * zr.uniform(-np.pi, np.pi, h))
         self.zspec[0] = zr.choice([-1.0, 1.0])
         if d % 2 == 0:
             self.zspec[-1] = zr.choice([-1.0, 1.0])
         self.zconj = np.conj(self.zspec)
+        self.null = float(np.sqrt(2 * np.log(self.P)))
+        # the integer memory: rows are unit vectors vec(n), n in self.known
+        self.known = {}
+        self.K = np.zeros((64, d), dtype=np.float32)
+        self.Kn = []
+        self._ranges = {}
+
+    def _spec(self, n):
+        return np.exp(2j * np.pi * ((self.c * (int(n) % self.P)) % self.P) / self.P)
 
     def base(self):
         return self.vec(1)
 
     def step(self):
         """B itself: inc is B ⊗ n, dec is B ⊘ n."""
-        return self.space._made("num_vec", np.fft.irfft(self.spec, n=self.space.dim))
+        return self.space._made("num_vec", np.fft.irfft(self._spec(1), n=self.space.dim))
 
     def offset(self):
         """Z, the vector of 0 (= B^0 ⊗ Z)."""
         return self.space._made("num_vec", np.fft.irfft(self.zspec, n=self.space.dim))
 
     def vec(self, n):
-        spec = np.exp(2j * np.pi * ((self.expo * int(n)) % 1.0)) * self.zspec
-        return self.space._made("num_vec", np.fft.irfft(spec, n=self.space.dim))
+        n = int(n)
+        v = np.fft.irfft(self._spec(n) * self.zspec, n=self.space.dim)
+        if n not in self.known:
+            self._remember(n, v)
+        return self.space._made("num_vec", v)
 
-    def _crt(self, residues):
-        n = 0
-        for r, p in zip(residues, self.moduli):
-            q = self.P // p
-            n += r * q * pow(q, -1, p)
-        n %= self.P
-        return n - self.P if n > self.half else n
+    def _remember(self, n, v):
+        i = len(self.Kn)
+        if i == len(self.K):
+            self.K = np.concatenate([self.K, np.zeros_like(self.K)])
+        self.K[i] = v / (np.linalg.norm(v) or 1.0)
+        self.Kn.append(n)
+        self.known[n] = i
+
+    def _signed(self, m):
+        m = int(m) % self.P
+        return m - self.P if m > self.half else m
+
+    def read_all(self, v):
+        """v · (B^m ⊗ Z) for every m in Z_P, exact (Parseval), by one FFT."""
+        d = self.space.dim
+        self.space.tick("num_read_all")
+        X = np.fft.rfft(np.asarray(v, dtype=np.float64)) * self.zconj
+        c, Xk = self.c[1:self.top], X[1:self.top]
+        Y = np.bincount(c, Xk.real, self.P) + 1j * np.bincount(c, Xk.imag, self.P)
+        edge = X[0].real + (X[-1].real if d % 2 == 0 else 0.0)
+        # Σ_k X_k e^{-2πi m c_k/P} = Σ_c Y_c e^{-2πi m c/P}
+        return (edge + 2.0 * np.fft.fft(Y).real) / d
 
     def read(self, v):
         """[n, similarity of v to B^n]."""
         return self._read(self.space.perturb(v))
 
-    def _read(self, v):
+    def read_known(self, v):
+        """[n, similarity] by the remembered integers only (see _read)."""
+        return self._read(self.space.perturb(v), full=False)
+
+    def _known(self, u):
+        """[n, similarity] of the nearest remembered integer to unit u, n
+        None unless it clears the best of P unrelated integers (then no
+        unknown integer can be nearer)."""
+        k = len(self.Kn)
+        if not k:
+            return [None, 0.0]
+        a = self.K[:k] @ u.astype(np.float32)
+        i = int(np.argmax(a))
+        if a[i] > (self.null + 1.0) / np.sqrt(self.space.dim):
+            return [self.Kn[i], float(a[i])]
+        return [None, float(a[i]), self.Kn[i]]
+
+    def _read(self, v, full=True):
+        """Remembered integers first; with `full`, a probe none of them
+        explains is read against all of Z_P. Without it, such a probe reads
+        as no integer: [0, best similarity] (the cleanup's path, where new
+        integers can only come from `made`)."""
         self.space.tick("num_read")
-        X = np.fft.rfft(v) * self.zconj
-        residues = [int(np.argmax((c @ X[band]).real))
-                    for band, c in zip(self.bands, self.cands)]
-        n = self._crt(residues)
-        return [n, self.space.sim(v, self.vec(n))]
+        x = np.asarray(v, dtype=np.float64)
+        nx = np.linalg.norm(x)
+        if nx == 0:
+            return [0, 0.0]
+        u = x / nx
+        n, sn, *best = self._known(u)
+        if n is not None:
+            return [n, self.space.sim(v, self.vec(n))]
+        if not full:
+            # the nearest remembered integer; the caller weighs it against
+            # its chance level
+            return [best[0] if best else 0, sn]
+        dots = self.read_all(u)
+        n = self._signed(int(np.argmax(dots)))
+        if dots.max() > (self.null + 1.0) / np.sqrt(self.space.dim):
+            return [n, self.space.sim(v, self.vec(n))]
+        return [n, float(dots.max())]
+
+    OPS = {"inc": lambda a: a + 1, "dec": lambda a: a - 1,
+           "add": lambda a, b: a + b, "sub": lambda a, b: a - b}
+
+    def made(self, v, op, *args):
+        """Remember the integer that arithmetic `op` on `args` just made as v,
+        and return v. Clean remembered operands give its value directly
+        (checked against v); otherwise v is read against all of Z_P once."""
+        self.space.tick("num_made")
+        rd = np.sqrt(self.space.dim)
+        ns = []
+        for a in args:
+            a = np.asarray(a, dtype=np.float64)
+            n = self._known(a / (np.linalg.norm(a) or 1.0))[0]
+            if n is None:
+                ns = None
+                break
+            ns.append(n)
+        x = np.asarray(v, dtype=np.float64)
+        u = x / (np.linalg.norm(x) or 1.0)
+        if ns is not None:
+            n = self._signed(self.OPS[op](*ns))
+            if n in self.known:
+                return v
+            w = np.fft.irfft(self._spec(n) * self.zspec, n=self.space.dim)
+            if u @ w > (self.null + 1.0) / rd:
+                self._remember(n, w)
+                return v
+        self._read(x, full=True)
+        return v
+
+    def range_matrix(self, lo, hi):
+        """Unit rows vec(m) for m in [lo, hi] (cached; float32)."""
+        key = (int(lo), int(hi))
+        R = self._ranges.get(key)
+        if R is None:
+            d = self.space.dim
+            ms = np.arange(key[0], key[1] + 1)
+            R = np.empty((len(ms), d), dtype=np.float32)
+            for j in range(0, len(ms), 256):
+                mm = ms[j:j + 256] % self.P
+                ph = (self.c[None, :] * mm[:, None]) % self.P
+                R[j:j + 256] = np.fft.irfft(np.exp(2j * np.pi * ph / self.P) * self.zspec, n=d, axis=1)
+            self._ranges[key] = R
+        return R
 
 
 def peel(memories, v, theta, limit=256):
@@ -771,12 +878,9 @@ class Cleanup:
     into one call keeps the host/substrate chatter down."""
 
     NUM = 4
-    # Chance level of the integer readout, in units of 1/√D: on a random
-    # probe the band-wise argmax still reaches sim ≈ (4.0 ± 0.5)/√D at every
-    # D (measured, D = 1024…4096), because it maximises over the candidates
-    # of each band. The table's chance level is the expected maximum of n
-    # unrelated similarities, ≈ √(2 ln n)/√D.
-    NUM_NULL = 4.0
+    # Chance levels, in units of 1/√D, are the expected maximum of n
+    # unrelated similarities, ≈ √(2 ln n): for the table n is its size, for
+    # the integer readout P (nums.null), since it maximises over all of Z_P.
 
     def __init__(self, space, mem, nums, theta=0.9):
         self.space, self.mem, self.nums, self.theta = space, mem, nums, theta
@@ -792,9 +896,9 @@ class Cleanup:
         i, s, a = mem._select(u, "recognize")
         if s > self.theta:
             return [int(mem.labels[i]), i, s], u, a
-        n, sn = self.nums._read(v)
+        n, sn = self.nums._read(v, full=False)
         rd = np.sqrt(self.space.dim)
-        if sn - self.NUM_NULL / rd > s - np.sqrt(2 * np.log(max(mem.n, 2))) / rd:
+        if sn - self.nums.null / rd > s - np.sqrt(2 * np.log(max(mem.n, 2))) / rd:
             self.space.relabel("num", n, sn)
             return [self.NUM, n, sn], u, a
         return [int(mem.labels[i]) if i >= 0 else -1, i, s], u, a
@@ -1025,43 +1129,21 @@ BACKENDS["proj"] = Proj
 
 
 # -- integer worlds -----------------------------------------------------------
-# B^m restricted to p's band is the fixed candidate spectrum of the residue
-# m mod p, so the similarity of v to every B^m in a range needs one FFT and
-# six small band products, not a codebook of vectors. Readout is bounded to a
-# range [lo, hi]: outside it, residue integers have chimeras (integers that
-# match a superposition's residues in every band as well as its true worlds
-# do; W0 section 2), and the CRT readout happily prints them.
-def _int_spec(nums, v):
-    """Spectrum of v with the integer tag Z unbound (n = B^n ⊗ Z), so the
-    band scores compare against the untagged B^r candidates."""
-    return np.fft.rfft(np.asarray(v, dtype=np.float64)) * nums.zconj
-
-
-def _band_scores(nums, X):
-    """Per band p: Re(conj(B̂^r)·X) summed over the band, r = 0..p-1."""
-    return [(c @ X[band]).real for band, c in zip(nums.bands, nums.cands)]
-
-
+# Integer worlds are read against a bounded range [lo, hi], by one product
+# with the cached matrix of its integer vectors. The bound is a detection
+# floor, not a chimera guard (the product code has no chimeras): the more
+# candidates, the higher the best chance match.
 def int_dots(nums, v, lo, hi):
-    """(ms, v·B^m for every m in [lo, hi]), exact (Parseval)."""
-    d = nums.space.dim
-    X = _int_spec(nums, v)
-    sc = _band_scores(nums, X)
-    ms = np.arange(int(lo), int(hi) + 1)
-    tot = np.zeros(len(ms))
-    for s, p in zip(sc, nums.moduli):
-        tot += s[ms % p]
-    edge = X[0].real + (X[-1].real if d % 2 == 0 else 0.0)
-    return ms, (edge + 2.0 * tot) / d
+    """(ms, v·B^m for every m in [lo, hi]), the integer vectors being unit."""
+    R = nums.range_matrix(lo, hi)
+    nums.space.tick("rows", len(R))
+    return np.arange(int(lo), int(hi) + 1), (R @ np.asarray(v, dtype=np.float32)).astype(np.float64)
 
 
 def more_ints(nums, v, n, lo, hi, margin=3.0):
-    """Is there integer structure in v beyond B^n (n its residue readout)?
-    An integer outside [lo, hi] agrees with many inside it on most residues
-    (400000 and -400 share the bands of 5, 7, 11 and 13), so matching the
-    range against v itself would explain one big integer as a superposition
-    of small ones. Against the residual v − (v·Bⁿ)Bⁿ the range finds only
-    what Bⁿ does not explain: the other worlds of a true superposition."""
+    """Is there integer structure in v beyond B^n (n its readout)? Against
+    the residual v − (v·Bⁿ)Bⁿ the range finds only what Bⁿ does not explain:
+    the other worlds of a true superposition."""
     u = np.asarray(v, dtype=np.float64)
     u = u / (np.linalg.norm(u) or 1.0)
     b = nums.vec(int(n))
@@ -1084,7 +1166,7 @@ class ProjCleanup(Cleanup):
     Integers are looked for only in [int_lo, int_hi], and only when the best
     integer of that range clears the detection floor at `int_margin`
     (relative to what the item-memory worlds leave). A single integer found
-    that way is still returned by the codebook path (its residue readout).
+    that way is still returned by the codebook path (its readout).
 
     `roles` (L, R), set by the language layer, makes cell fields exact under
     superposition: when a field read comes back superposed, the other field

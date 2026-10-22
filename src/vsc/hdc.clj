@@ -68,10 +68,23 @@
 
 (defn num-offset "Z, the vector of 0: n = B^n ⊗ Z." [nums] (py/call-attr nums "offset"))
 
+(defn num-made
+  "Remember the integer that arithmetic `op` (:inc :dec :add :sub) on `args`
+  made as `v`; returns `v`."
+  [nums v op & args]
+  (apply py/call-attr nums "made" v (name op) args))
+
 (defn read-num
-  "[n similarity] for the integer vector nearest to `v`."
+  "[n similarity] for the integer vector nearest to `v`: the integers made
+  so far, else all of them (one FFT over the whole range, tens of ms)."
   [nums v]
   (vec (py/->jvm (py/call-attr nums "read" v))))
+
+(defn read-known-num
+  "[n similarity] for the nearest of the integers made so far; a vector far
+  from all of them comes back with a similarity near chance."
+  [nums v]
+  (vec (py/->jvm (py/call-attr nums "read_known" v))))
 
 ;; ---------------------------------------------------------------------------
 ;; algebra, parameterised by a space `s`

@@ -60,7 +60,7 @@
 ;; ---------------------------------------------------------------------------
 (p "\n== 4.3 residue chimeras (integers unboxed in sets)")
 (p "Not reproducible end to end: the readout that failed is gone.")
-(p "The mechanism: python3 scripts/paper_f3.py")
+(p "The mechanism, banded vs the product code now used: python3 scripts/paper_f3.py")
 (c/init! {:prelude? false})
 (p "fixed: (contains? #{11 12} 13102) =" (c/run '(contains? #{11 12} 13102))
    " (contains? #{11 12} 12) =" (c/run '(contains? #{11 12} 12)))
@@ -72,7 +72,8 @@
 (p "\n== 4.4 zero")
 (c/init!)
 (let [s (h/sim (c/space) (c/eval-form 0) (c/eval-form 5005))]
-  (p "sim(0, 5005) =" (format "%.3f" s) "-> a zero? thresholded at 0.5 says" (> s 0.5)
+  (p "sim(0, 5005) =" (format "%.3f" s) "in the product code (banded: 0.64, scripts/paper_f3.py)"
+     "-> a zero? thresholded at 0.5 says" (> s 0.5)
      "| fixed: (zero? 5005) =" (c/run '(zero? 5005)) " (zero? 0) =" (c/run '(zero? 0))))
 ;; dimension 0 dead: the old 0 was B^0, a delta at index 0
 (let [sp (c/space)

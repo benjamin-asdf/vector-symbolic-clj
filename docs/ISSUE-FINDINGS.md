@@ -146,6 +146,10 @@ section (`git show <rev>^:<path>`). "Current" line numbers are as of
   by identity, `(contains? #{11 12} 13102)` is still false, because the
   readout over integers that failed has been replaced.
 - The paper now says that its evidence is a reconstruction.
+- **Superseded (October 2026):** `hdc.Numbers` now uses the product code
+  (every bin mixes all moduli), which has no chimeras and no partial
+  similarity to zero. `scripts/paper_f3.py` rebuilds the banded encoding
+  as `Banded` to show the mechanism, and the product code beside it.
 
 ## 4.6 and 4.7: not in git
 

@@ -113,19 +113,20 @@ implementation.
    does this project: every composite is a random pointer that M maps to its
    trace. Equal traces are hash-consed onto one pointer, so structural
    equality is still just vector similarity.
-2. **Integers use a residue number system.** This follows the authors'
-   follow-up, [*…We Did (More of) It!*](https://arxiv.org/abs/2511.08767).
-   The Fourier bins are split into one band per prime (5, 7, 11, 13, 17, 19).
-   On p's band, B's coefficients are p-th roots of unity. Cleanup is
-   algorithmic: find each residue by matching its band against p candidates,
-   then apply the CRT. That is 72 candidate checks instead of a codebook scan.
-   It still works inside a superposition, where reading a single phase fails,
-   and it covers ±808,307.
-3. **Integers are boxed inside superpositions.** Under the residue encoding, n
-   and n+p agree on p's band, so explaining away over a set of integers
-   latched onto "chimera" numbers. Integer (and vector) map keys, map
-   values and set members are therefore boxed behind hash-consed pointers,
-   which are near-orthogonal.
+2. **Integers use a residue number system, in the product code.** This
+   follows the authors' follow-up, [*…We Did (More of) It!*](https://arxiv.org/abs/2511.08767),
+   and Kymn et al. (2025). B's phase at every Fourier bin is a random
+   multiple of 2π/P, P = 5·7·11·13·17·19, so every bin mixes all six clocks
+   and two integers are unrelated unless they are equal: a superposition of
+   integers matches no "chimera" numbers. Readout: the integers the machine
+   has made (literals, `inc`, `dec`, `+`, `-`) are kept in a small memory;
+   anything else is read exactly against all of ±808,307 by one FFT of
+   length P (about 60 ms). An earlier version split the bins into one band
+   per prime, which made the readout 72 cheap checks but let numbers that
+   share residues look alike (11 + 12 matched 62 chimeras).
+3. **Integers are boxed inside superpositions.** The banded encoding needed
+   this; it is kept. Integer (and vector) map keys, map values and set
+   members are boxed behind hash-consed pointers, which are near-orthogonal.
 4. **Map entries are directed.** Binding commutes, so the entry 1⊗2 = 2⊗1
    answers the probe 2 with 1 at full strength: `(get {1 2 2 3} 2)`
    returned 1. An entry is k⊗Π(v), with Π the fixed random permutation; a

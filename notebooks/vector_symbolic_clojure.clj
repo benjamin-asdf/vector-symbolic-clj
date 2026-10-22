@@ -45,9 +45,11 @@
 ;; 3. **Convolution commutes, so key–value pairs need direction.** Store an
 ;;    entry as k⊗Π(v), with Π a fixed random permutation, as one operation.
 ;;    A cyclic shift does not work, since it commutes with convolution too.
-;; 4. **Residue-number integers blend into fake ones.** A superposition of
-;;    11 and 12 matches 62 other integers exactly as well as its members.
-;;    Inside sets and maps, keep integers behind pointers.
+;; 4. **Residue-number integers can blend into fake ones.** If each clock
+;;    of a residue number gets its own share of the vector, a superposition
+;;    of 11 and 12 matches 62 other integers exactly as well as its members.
+;;    Mix all clocks in every coordinate (the product code) and the fakes
+;;    vanish; reading a number back then needs a memory of known numbers.
 ;; 5. **Stored data is robust, computation is fragile.** Lists still read
 ;;    back with 60–80% of the dimensions dead; `(fact 4)` breaks at about
 ;;    4%, because every bind passes the damage on until the next cleanup.
@@ -269,18 +271,28 @@
 ;; remainders, like reading six clocks at once: 11 is "1 on a 5-hour clock,
 ;; 4 on a 7-hour clock, 0 on an 11-hour clock", and so on up to a 19-hour
 ;; clock. Residue numbers come from Kymn et al. (2025) and Hanley et al.
-;; (2025). Giving each clock its own share of the vector is our variant.
-;; It makes numbers cheap to recognise: read each clock, then combine.
-;; Their product code mixes all clocks in every coordinate, and the
-;; chimeras below do not occur in it ([reproduction](holis/)).
+;; (2025).
 ;;
-;; Now put 11 and 12 into one set. The set shows both numbers' readings on
+;; Our first version gave each clock its own share of the vector. That
+;; makes numbers cheap to recognise: read each clock, then combine. Now
+;; put 11 and 12 into one set. The set shows both numbers' readings on
 ;; every clock. A number that shows 11's reading on some clocks and 12's on
-;; the others, 13102 for example, matches the set exactly as well as 11 or
-;; 12 do. It is a *chimera*: a fake member stitched together from pieces of
-;; real ones. With six clocks there are 2⁶ − 2 = 62 of them. Here is the
-;; sum of 11 and 12, built with the interpreter's own number encoding,
-;; against its members, a chimera and a few ordinary numbers:
+;; the others, 13102 for example, matched the set exactly as well as 11 or
+;; 12 did. It is a *chimera*: a fake member stitched together from pieces
+;; of real ones. With six clocks there are 2⁶ − 2 = 62 of them:
+
+^:kindly/hide-code
+(figure "paper-f3-chimeras.png"
+        "Left, banded: all 62 fakes score exactly like the real members 11 and 12, and random numbers that share some residues with them score up to 0.5. Bottom row: the same 62 fakes in the product code score 0. Right, banded: each clock of the fake 13102 matches either 11 or 12.")
+
+;; The readout, asked which number the sum was, answered with a chimera.
+;;
+;; The fix is Kymn et al.'s product code. Every coordinate gets a random
+;; reading of *all* clocks at once, multiplied together. Two numbers then
+;; agree only on average over the coordinates, which is zero unless they
+;; are the same number, so a sum matches nothing but its members. Here is
+;; the sum of 11 and 12, built with the interpreter's own number encoding,
+;; against its members, the old chimera and a few ordinary numbers:
 
 ^:kindly/hide-code
 (let [S (h/space 2048 1)
@@ -293,22 +305,23 @@
                   (for [n [11 12 13102 42 777 -5000]]
                     [(str n (when (= n 13102) " (chimera)"))
                      (format "%.3f" (h/sim S both (h/num-vec N n)))])
-                  [[(str "clock readout of 11 + 12: " read-back)
+                  [[(str "readout of 11 + 12: " read-back)
                     (format "%.3f" s)]])}))
 
-;; The readout, asked which number the sum is, answers with a chimera.
-
-^:kindly/hide-code
-(figure "paper-f3-chimeras.png"
-        "Left: all 62 fakes score exactly like the real members 11 and 12; random numbers score near 0. Right: each clock of the fake 13102 matches either 11 or 12.")
-
-;; So inside sets and maps, each number is stored behind its own random
-;; ID, and IDs cannot be stitched together.
+;; The price is the readout. No single clock can be read any more, so the
+;; interpreter keeps a memory of the numbers it has made (literals and
+;; arithmetic results) and recognises a number by its nearest entry. A
+;; vector that matches none of them is read against all 1.6 million
+;; numbers at once, by one Fourier transform of that length (about 60 ms).
 ;;
-;; **4. Partly equal is not equal.** The clocks set a second trap: 5005 =
-;; 5·7·11·13 reads 0 on four of the six clocks, so it is 4/6 similar to
-;; zero, and a test "similar enough to zero" would accept it. `zero?`
-;; asks for equality:
+;; Inside sets and maps each number is still stored behind its own random
+;; ID, as the banded version needed.
+;;
+;; **4. Partly equal is not equal.** The banded clocks set a second trap:
+;; 5005 = 5·7·11·13 reads 0 on four of the six clocks, so it was 4/6
+;; similar to zero, and a test "similar enough to zero" would accept it.
+;; The product code removes the overlap, and `zero?` asks for equality
+;; anyway:
 
 (examples vsc/run '[(zero? 5005) (zero? 0)])
 
@@ -686,7 +699,8 @@
 
 ;; There is no speedup: a superposed step still scans the memory. What
 ;; superposition buys is a programming model, within a capacity of about
-;; D/100 worlds, and only about 5 integer worlds.
+;; D/100 worlds, integers included. (With the banded integers, before the
+;; product code, integer worlds stopped at about 5 for every D.)
 
 ;; ## Limits
 ;;
@@ -704,8 +718,7 @@
 ;; - **Clojure's data types as single vectors.** Earlier vector-symbolic
 ;;   Lisps encode the cons cells of Lisp 1.5, and integers. Here maps
 ;;   (with directed entries k⊗Π(v)), sets, positional vectors, closures
-;;   and environments are each one vector too, and integers inside
-;;   collections are boxed against chimeras.
+;;   and environments are each one vector too.
 ;; - **A catalogue of what breaks.** Seven traps that the algebra hides,
 ;;   each measured and fixed. One rule covers several of them: decide by
 ;;   the best match or relative to chance, never by a fixed cutoff, and
@@ -744,7 +757,8 @@
 ;;    IJCNN 2025. [arXiv:2511.08767](https://arxiv.org/abs/2511.08767).
 ;;    [code](https://github.com/hanleyc01/residuelisp). Adds integers in
 ;;    a residue number system. Its product code has no chimeras; trap 3
-;;    comes from our banded variant.
+;;    comes from our first, banded variant, which now uses the product
+;;    code too.
 ;; 3. Kleyko, D., et al. (2022). Vector symbolic architectures as a
 ;;    computing framework for emerging hardware. *Proceedings of the IEEE*
 ;;    110(10). [doi:10.1109/JPROC.2022.3209104](https://doi.org/10.1109/JPROC.2022.3209104).

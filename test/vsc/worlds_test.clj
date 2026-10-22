@@ -145,9 +145,11 @@
                 1e-6))))
 
 (deftest worlds-throws-beyond-capacity
-  (testing "integers: the residue encoding's world capacity"
+  (testing "integers: D/100 worlds, 20 at D = 2048"
+    (is (= (set (range 1 13))
+           (set (keys (worlds '(amb 1 2 3 4 5 6 7 8 9 10 11 12))))))
     (is (thrown-with-msg? Exception #"capacity"
-                          (w/run '(worlds (amb 1 2 3 4 5 6 7 8 9 10 11 12))))))
+                          (worlds (cons 'amb (range 1 25))))))
   (testing "64 superposed lists at D = 2048"
     (let [lists (map (fn [i] (list 'quote (list (symbol (str "s" i)) i))) (range 64))]
       (is (thrown-with-msg? Exception #"capacity"

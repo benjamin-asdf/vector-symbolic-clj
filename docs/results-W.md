@@ -65,7 +65,7 @@ relative weights going in, per mille coming out.
 |---|---|
 | `(superpose {v w, …})` | Σ (w/Σw)·v. Integer relative weights. Equal worlds merge, and their weights add. |
 | `(amb a b …)` | uniform `superpose`. `(amb)` throws. |
-| `(worlds x)` | a map {world weight‰}. **Throws** "superposition capacity exceeded" beyond `capacity` (D/100 value worlds, D/400 integer worlds), and "unreadable superposition" when the worlds found leave more than half of x's energy unexplained. |
+| `(worlds x)` | a map {world weight‰}. **Throws** "superposition capacity exceeded" beyond `capacity` (D/100 value worlds, D/100 integer worlds), and "unreadable superposition" when the worlds found leave more than half of x's energy unexplained. |
 | `(weight x v)` | weight of world v in x, in ‰; 0 if absent |
 | `(collapse x)` | the heaviest world (a measurement; deterministic) |
 | `(collapse x β)` | partial collapse: weights ∝ exp(β·(wᵢ − w_max)/‖w‖₂). This distorts the weights (W0 §4), which is why it is called collapse and not a soft superposition. |
@@ -171,10 +171,11 @@ which every point passes:
 | readout | D=1024 | 2048 | 4096 | 8192 | enforced capacity |
 |---|---|---|---|---|---|
 | pointers, read directly: P(exact) ≥ 0.9 | ≥ 64 | ≥ 64 | ≥ 64 | ≥ 64 | D/100 = 10, 20, 40, 81 |
-| `(first x)`, one cell read: P(exact) ≥ 0.9 | 8 | 24 | 32 | ≥ 64 | |
+| `(first x)`, one cell read: P(exact) ≥ 0.9 | 8 | 16 (24 in an earlier run) | 32 | ≥ 64 | |
 | `(first x)`: mean TV < 0.1 | 12 | 24 | 48 | ≥ 64 | |
-| integers, direct: P(exact) ≥ 0.9 | 5 | 5 | 5 | 5 | D/400 = 2, 5, 10, 20 |
-| integers through a `let` cell | 5 | 5 | 5 | 5 | |
+| integers, direct: P(exact) ≥ 0.9 | ≥ 64 | ≥ 64 | ≥ 64 | ≥ 64 | D/100 = 10, 20, 40, 81 |
+| integers through a `let` cell | 16 | 32–48 (two runs) | ≥ 64 | ≥ 64 | |
+| *banded encoding (before Oct 2026): integers, direct* | 5 | 5 | 5 | 5 | D/400 |
 
 - Stored pointers read back perfectly well past capacity, with TV 0 up to
   k = 64 at every D: pursuit over near-orthogonal stored rows is easy. The
@@ -182,7 +183,13 @@ which every point passes:
   other field and scales linearly with D, at about D/85 to D/128 worlds. This
   is the regime the D/100 capacity is set for, and it holds at every D
   except the 12-world point at D=1024 (P = 0.75).
-- **Integer readout does not scale with D.** It is exact up to 5 worlds and
+- **Integers, product code (October 2026).** With the product code
+  integers are unrelated to each other, and integer readout scales with D
+  like the pointers: direct reads stay exact to k = 64 at every D, reads
+  through a `let` cell to 16, 32–48, ≥ 64, ≥ 64 (20 trials per point,
+  weights 3 : 1, integers in [−1000, 1000]). The enforced capacity is now
+  D/100 for integers too. The bullet below describes the banded encoding.
+- **Integer readout does not scale with D (banded encoding).** It is exact up to 5 worlds and
   degrades from 6 at every D from 1024 to 8192. Residue integers are
   correlated with each other, and the candidate range has 2049 of them
   (W0 §2). So D/400 is too strict at D=1024 (it allows 2, and 5 work) and

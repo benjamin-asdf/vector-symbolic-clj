@@ -37,7 +37,7 @@ FIG = os.path.join(ROOT, "figures")
 
 ATOMS, LISTS = 1000, 1500
 KS_PTR = [1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64]
-KS_INT = [1, 2, 3, 4, 5, 6, 8, 10, 12, 16, 20, 24]
+KS_INT = [1, 2, 3, 4, 5, 6, 8, 10, 12, 16, 20, 24, 32, 48, 64]
 DIMS = [1024, 2048, 4096, 8192]
 TRIALS = 20
 
@@ -185,7 +185,7 @@ def plot(summ, dims):
             tv = [summ[(ro, d, k)][1] for k in ks]
             axes[0, c].plot(ks, ex, "-o", color=col, label=f"D={d}")
             axes[1, c].plot(ks, tv, "-o", color=col)
-            cap = d // 100 if ro in ("pointer", "first") else d // 400
+            cap = d // 100
             axes[0, c].axvline(cap, color=col, lw=0.8, ls=":")
         axes[0, c].set_title(titles[ro], loc="left", fontsize=10)
         axes[1, c].set_xlabel("worlds k")
@@ -200,7 +200,7 @@ def plot(summ, dims):
     axes[1, 0].set_ylabel("mean TV of the weights")
     axes[0, 0].legend(frameon=False, fontsize=8)
     fig.suptitle("W3  world readout vs number of worlds and D  (dotted: the capacity `worlds` "
-                 "enforces, D/100 and D/400)", x=0.01, ha="left", fontsize=10)
+                 "enforces, D/100)", x=0.01, ha="left", fontsize=10)
     fig.tight_layout()
     os.makedirs(FIG, exist_ok=True)
     fig.savefig(os.path.join(FIG, "w-readout.png"), dpi=140)

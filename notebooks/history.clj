@@ -44,8 +44,18 @@
 ;; The clocks brought chimeras: a sum of 11 and 12 matches 62 fake numbers
 ;; exactly as well as its members. The readout over integers that showed
 ;; this was replaced before the first commit, so the end-to-end failure no
-;; longer reproduces. The fix stayed: integers inside maps and sets sit
+;; longer reproduces. The fix then: integers inside maps and sets sit
 ;; behind their own pointers.
+;;
+;; In October, running Hanley et al.'s own code showed that their product
+;; code has no chimeras: every coordinate mixes all six clocks, so two
+;; numbers agree only when they are equal. We had split the clocks into
+;; bands for a cheap readout, and the bands made the chimeras. The
+;; encoding moved to the product code. Its readout cannot read one clock at
+;; a time, so it keeps a memory of the numbers the interpreter has made,
+;; much like the very first table but holding only numbers in use, and
+;; reads anything else against all 1.6 million numbers by one Fourier
+;; transform. The pointers inside maps and sets stayed.
 
 ;; ## 3. Map entries
 ;;
@@ -63,7 +73,8 @@
 ;; B⁰ is the identity of convolution, a vector with all its weight in
 ;; dimension 0. Damaging that one dimension, at a lesion of 0.5%, destroyed
 ;; all arithmetic. In review we also saw that 5005 = 5·7·11·13 is 4/6
-;; similar to zero on the clocks, so a threshold `zero?` would accept it.
+;; similar to zero on the banded clocks, so a threshold `zero?` would
+;; accept it (the product code later removed that overlap too).
 ;;
 ;; The change: n = Bⁿ⊗Z with a random Z, so zero is spread over all
 ;; dimensions; `zero?` and `=` compare identities. `(+ 17 25)` then came

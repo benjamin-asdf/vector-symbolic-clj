@@ -192,38 +192,50 @@ integer elements of vectors.*
   extra row of M per value. Undirected pairs remain useful (a symmetric
   relation) and can be a separate structure on the plain bind.
 
-**4.3 Residue integers form chimeras** (`figures/paper-f3-chimeras.png`).
+**4.3 Banded residue integers form chimeras** (`figures/paper-f3-chimeras.png`).
 - **The encoding.** Scanning the whole integer range on every cleanup was
   the dominant cost of our first encoding. Following Kymn et al. (2025) and
-  Hanley et al. (2025), we split the Fourier bins into one band per prime p ∈ {5, 7, 11, 13, 17,
-  19}. On p's band B's coefficients are p-th roots of unity, so Bⁿ there
-  depends only on n mod p. Cleanup becomes algorithmic: match each band
-  against p candidates, combine by the CRT, confirm by similarity. That is
-  72 checks instead of a scan, over a range of ±808,307.
+  Hanley et al. (2025), we used residues, but split the Fourier bins into
+  one band per prime p ∈ {5, 7, 11, 13, 17, 19}. On p's band B's
+  coefficients are p-th roots of unity, so Bⁿ there depends only on n mod
+  p. Cleanup becomes algorithmic: match each band against p candidates,
+  combine by the CRT, confirm by similarity. That is 72 checks instead of
+  a scan, over a range of ±808,307.
 - **The failure.** In a superposition, every integer whose residues each
   match *some* member matches on every band. For ν(B¹¹ + B¹²) there are 62
-  such chimeras, and each has cosine 0.665 to the superposition, exactly
-  the value of the members 11 and 12. Random integers score 0.00 on average.
-- **Evidence.** The chimeras are a property of the current encoding: with
-  `Numbers` at D = 2048, ν(B¹¹ + B¹²) has cosine 0.673 to 11, 12 and 13102
-  alike (random integers 0.010 on average), and the residue readout of
-  the superposition returns the chimera −293919 at 0.673. The figure is
-  `scripts/paper_f3.py`. The end-to-end failure does not reproduce: the
-  readout over integers that failed was replaced before the first commit,
-  and with boxing switched off `(contains? #{11 12} 13102)` is still
-  false.
-- **Fix.** Integers inside maps and sets are boxed behind pointers.
+  such chimeras, and at D = 2048 each has cosine 0.668 to the
+  superposition, exactly the value of the members 11 and 12. Random
+  integers score −0.002 on average, but up to 0.53 when they share
+  residues with the members.
+- **Evidence.** `scripts/paper_f3.py` rebuilds the banded encoding next
+  to the current one. The end-to-end failure never reached git: the
+  readout over integers that failed was replaced before the first commit.
+- **First fix.** Integers inside maps and sets are boxed behind pointers.
+- **Fix.** Kymn et al.'s product code, which the residuelisp code of
+  Hanley et al. also uses and which our reproduction showed has no
+  chimeras: B's phase at every bin is 2π c_k/P with c_k uniform in Z_P,
+  which by the CRT is one random p-th root of unity per prime, multiplied.
+  sim(Bˣ, Bʸ) averages to 0 unless x ≡ y (mod P). The same 62 chimeras now
+  score 0.001 on average (at most 0.042, chance at D = 2048) against
+  members at 0.712. No single clock can be read any more, so the readout
+  keeps a memory of the integers the machine has made (literals and the
+  results of `inc`, `dec`, `+`, `-`, whose values follow from their clean
+  operands) and reads anything else exactly against all P integers by one
+  FFT of length P (about 60 ms). The memory makes that rare: `(fact 3)`
+  and `(map f [1 2 3])` need it zero times, and run as fast as with the
+  bands. The boxes stay.
 
 **4.4 Zero.**
-- sim(B⁰, Bⁿ) ≈ (number of moduli dividing n)/6: a band whose p divides n
-  contributes 1/6, any other −1/(6(p−1)). So sim(0, 5005) = 0.65 for
-  5005 = 5·7·11·13, and a threshold-based `zero?` would report it as zero.
-  We caught this in review.
+- In the banded code, sim(B⁰, Bⁿ) ≈ (number of moduli dividing n)/6: a
+  band whose p divides n contributes 1/6, any other −1/(6(p−1)). So
+  sim(0, 5005) = 0.64 for 5005 = 5·7·11·13, and a threshold-based `zero?`
+  would report it as zero. We caught this in review. In the product code
+  it is 0.045.
 - B⁰ is also a delta at index 0, so lesioning that one dimension destroyed
   all arithmetic, which we observed at f = 0.005.
 - **Fix.** n = Bⁿ⊗Z with a random unitary Z (commit `434b4f8`).
   `(+ 17 25)` is then correct in 300 of 300 runs up to 10% lesion, and
-  with dimension 0 dead it still gives 42.
+  with dimension 0 dead it still gives 42. `zero?` compares identities.
 
 **4.5 Fixed thresholds cap robustness.**
 - **Symptom.** Every stored structure failed at σ ≈ 1.5–1.7 for every D,
@@ -242,7 +254,7 @@ integer elements of vectors.*
   the residue readout's raw similarity with the table's, but a readout that
   maximises over each band reaches ≈ 4/√D on a random probe, so a noisy
   symbol came back as a number; both sides are now compared by their
-  excess over chance. One fixed cutoff
+  excess over chance (for the product code's readout, √(2 ln P)/√D). One fixed cutoff
   survived the fix unnoticed, in naming the primitive of a superposed call
   (§8), and is now a chance floor too; the CEK machine's own datapath (§7.2)
   still uses 0.5.
@@ -571,12 +583,13 @@ values, with destructors, lookup and function bodies lifted over all worlds.
 
 - **Failures throw** a capacity error instead of returning a wrong
   distribution. The measured exceptions: wide-range integers at D = 8192 (3
-  of 20 silently wrong), one BFS run (1 of 67 nodes misplaced), and the
+  of 20 silently wrong, in the banded integer encoding), one BFS run (1 of 67 nodes misplaced), and the
   smallest world under operation noise.
-- **Capacity.** One memory step reads back 8, 24 and 32 worlds, and at
-  least 64, at D = 1024, 2048, 4096 and 8192. Integer worlds stay at about
-  5 for every D, because residue integers are correlated
-  (`figures/w-readout.png`).
+- **Capacity.** One memory step reads back 8, 16 and 32 worlds, and at
+  least 64, at D = 1024, 2048, 4096 and 8192. Integer worlds, read through
+  a `let` cell, reach 16, 32–48 and at least 64 from D = 4096; in the banded
+  encoding (§4.3) they stayed at about 5 for every D, because banded
+  integers are correlated (`figures/w-readout.png`).
 - **Noise.** The weight error grows linearly with operation noise.
   Programs that clean up every few steps hold to σ = 0.3 at D ≥ 2048; a chain of 20
   binds with no cleanup fails from σ = 0.2 (`figures/w-lift.png`).
@@ -622,8 +635,7 @@ values, with destructors, lookup and function bodies lifted over all worlds.
 
 - **Speed:** seconds per small program, against microseconds natively.
 - **Scale:** records hold about D/64 entries, vectors about D/48,
-  superpositions about D/100 worlds, integer superpositions about 5
-  (measured at every D; the code enforces D/400).
+  superpositions about D/100 worlds, integers included.
 - **Language coverage:** no macros, `loop`/`recur`, floats, ordering
   comparisons or string operations. The CEK machine does not detect arity errors.
 - **No garbage collection** for M.

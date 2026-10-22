@@ -184,16 +184,20 @@
 
 (defn kons [a b] (h/mem-get M (h/intern! M (random-vec) (cell-trace a b) CELL)))
 
-;; Integers come from the substrate's residue encoding: n = Bⁿ⊗Z, cleaned up
-;; by reading off each residue. General cleanup takes whichever is closer,
-;; a stored row or an integer.
+;; Integers come from the substrate's residue encoding: n = Bⁿ⊗Z, with
+;; every Fourier coefficient of B a random multiple of 2π/P (the product
+;; code), so distinct integers are unrelated. No single residue can be read
+;; off any more, so cleanup compares a vector with the integers made so far
+;; (`read-known-num`); `read-num` can also search all P integers by one FFT,
+;; at tens of milliseconds a call. General cleanup takes whichever is
+;; closer, a stored row or an integer.
 
 (def N (h/numbers S))
 
 (defn num [n] (h/num-vec N n))
 
 (defn cleanup [v]
-  (let [[n s-num] (h/read-num N v)
+  (let [[n s-num] (h/read-known-num N v)
         [i s-row] (h/nearest M v)]
     (if (> s-num s-row) (num n) (h/mem-get M i))))
 
@@ -215,7 +219,7 @@
 (def FALSE (sym 'false))
 
 (defn kind [v]
-  (let [[_ s-num] (h/read-num N v)
+  (let [[_ s-num] (h/read-known-num N v)
         [i label s] (h/recall M v)]
     (cond
       (> s-num (max s 0.5)) :num
@@ -280,7 +284,9 @@
 ;; ## 8. The evaluator
 ;;
 ;; Arithmetic is binding. Since n = Bⁿ⊗Z, the sum a + b is a⊗b⊘Z, and
-;; `inc` binds one more B.
+;; `inc` binds one more B. Each result is handed to the integer memory
+;; (`num-made`), which works out its value from the clean operands, so that
+;; cleanup can recognise it later.
 
 (def Z (h/num-offset N))
 (def B (h/num-step N))
@@ -288,10 +294,10 @@
 (defn truthy [x] (if x TRUE FALSE))
 
 (def primitives
-  {'+ (fn [a b] (h/unbind S Z (h/bind S a b)))
-   '- (fn [a b] (h/bind S Z (h/unbind S b a)))
-   'inc (fn [a] (h/bind S B a))
-   'dec (fn [a] (h/unbind S B a))
+  {'+ (fn [a b] (h/num-made N (h/unbind S Z (h/bind S a b)) :add a b))
+   '- (fn [a b] (h/num-made N (h/bind S Z (h/unbind S b a)) :sub a b))
+   'inc (fn [a] (h/num-made N (h/bind S B a) :inc a))
+   'dec (fn [a] (h/num-made N (h/unbind S B a) :dec a))
    'zero? (fn [a] (truthy (same? a (num 0))))
    '= (fn [a b] (truthy (same? a b)))
    'cons kons

@@ -21,9 +21,11 @@
     #{x, ...}    = p  with  M: p ↦ ν(ν(Σ x) + C⊗n)
     (fn ...)     = p  with  M: p ↦ ν(L⊗form + R⊗env)   ;; a closure
     n            = B^n⊗Z, B and Z unitary; inc is B⊗n, + is (m⊗n)⊘Z, zero?
-                   is n = Z; B has one frequency band per prime modulus
-                   (residue number system), so integers clean up by readout,
-                   not lookup
+                   is n = Z; B's phase at every frequency is a random
+                   multiple of 2π/P, P the product of the moduli (product
+                   code of a residue number system), so distinct integers
+                   are unrelated; they clean up against the integers the
+                   machine has made, or by one exact readout over all P
     ()  []  {}  #{}  = dedicated atoms
 
   Every value is one unit vector. Symbols, keywords and strings are random
@@ -139,8 +141,7 @@
 (defn eq?
   "Are `a` and `b` the same value? Exact copies (similarity > θ_eq) and
   unrelated vectors (similarity at chance level) are told apart by one
-  similarity. Everything in between, noisy or blended vectors and integers
-  that share residue bands (sim(0, 5005) ≈ 2/3), is decided by cleaning up
+  similarity. Everything in between, noisy or blended vectors, is decided by cleaning up
   both sides and comparing what they are: an argmax on each side, no
   threshold on the similarity itself."
   [a b]
@@ -235,10 +236,11 @@
 
 (declare num-vec)
 
-;; Superpositions need near-orthogonal constituents. Integers are not (in the
-;; residue encoding, n and n+p agree on p's band), and neither are vectors
-;; (they are similar by design), so both are boxed behind a hash-consed
-;; pointer wherever they enter a map or set.
+;; Superpositions need near-orthogonal constituents. Vectors are not (they
+;; are similar by design), so they are boxed behind a hash-consed pointer
+;; wherever they enter a map or set. Integers are boxed too: in the earlier
+;; banded residue encoding n and n+p agreed on p's band. The product code
+;; has no such overlap; the boxes stay until that is measured.
 
 (defn- slot [x]
   (case (kind-of x)
@@ -274,9 +276,11 @@
   (/ 4.5 (Math/sqrt (m :dim))))
 
 (defn- peel-n
-  "The n constituents of superposition `v`, by explaining away."
+  "The n constituents of superposition `v`, by explaining away, in memory
+  row order: equal shares come out of the peel in an order that noise can
+  flip, so that order would leak noise into (keys m)."
   [v n]
-  (mapv (fn [[_ i]] (h/mem-get (m :M) i)) (h/peel [(m :M)] v -1.0 n)))
+  (mapv #(h/mem-get (m :M) %) (sort (map second (h/peel [(m :M)] v -1.0 n)))))
 
 (defn- member?
   "Is slot `x` one of the n constituents superposed in `probe`? A clear hit
@@ -389,8 +393,8 @@
 ;; 48 of them at D = 2048 and start failing at 56 (5 seeds). A vector counts
 ;; as 1.5 parts: about D/48, 43 at D = 2048.
 ;;
-;; Integer elements are boxed, as in maps and sets: the residue readout
-;; failed from 16 elements at D = 2048, where the codebook is still exact.
+;; Integer elements are boxed, as in maps and sets: the banded residue
+;; readout failed from 16 elements at D = 2048, where the codebook is still exact.
 ;; A box is hash-consed per value, so vectors sharing integers at the same
 ;; positions stay similar. Nested vectors are not boxed, so similarity
 ;; reaches into them.
@@ -451,13 +455,15 @@
       (throw (ex-info (str "integer out of range ±" half ": " n) {:n n})))))
 
 (defn- zero-vec [] (m :zero))
-(defn- v-inc [x] (bind (m :base) x))
-(defn- v-dec [x] (unbind (m :base) x))
+;; each result is handed to the integer memory (hdc.py, Numbers.made), so
+;; the cleanup can read it without searching all integers
+(defn- made [v op & args] (apply h/num-made (m :nums) v op args))
+(defn- v-inc [x] (made (bind (m :base) x) :inc x))
+(defn- v-dec [x] (made (unbind (m :base) x) :dec x))
 ;; the order matters: y ⊘ x first would pass through B^(x−y), and B^0 is a
 ;; delta at index 0 again; every intermediate here carries Z²
-(defn- v-add [x y] (unbind (m :zero) (bind x y)))    ;; (B^x Z ⊗ B^y Z) ⊘ Z
-(defn- v-sub [x y] (unbind y (bind (m :zero) x)))    ;; (Z ⊗ B^x Z) ⊘ B^y Z
-;; eq?, not a similarity: n shares a band with 0 for every modulus dividing it
+(defn- v-add [x y] (made (unbind (m :zero) (bind x y)) :add x y))    ;; (B^x Z ⊗ B^y Z) ⊘ Z
+(defn- v-sub [x y] (made (unbind y (bind (m :zero) x)) :sub x y))    ;; (Z ⊗ B^x Z) ⊘ B^y Z
 (defn- v-zero? [x] (eq? x (zero-vec)))
 
 ;; ---------------------------------------------------------------------------
@@ -489,9 +495,10 @@
   (if-let [h (hook :decode)] (h v) (decode-plain v)))
 
 (def int-print-range
-  "Superposed integers are read back only against [-r, r]: beyond it the
-  residue encoding has chimeras that match a superposition as well as its
-  true worlds do (646657 for (+ (bundle 1 2) 10); docs/W0 section 2)."
+  "Superposed integers are read back only against [-r, r]: the more
+  candidates, the higher the best chance match, so the range sets the
+  detection floor. (It was also a guard against chimeras of the earlier
+  banded encoding, docs/W0 section 2; the product code has none.)"
   1024)
 
 (defn- num-value

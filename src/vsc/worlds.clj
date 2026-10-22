@@ -64,12 +64,15 @@
 (defn capacity
   "How many worlds `worlds` reads back reliably at the machine's dimension:
   {:worlds n :ints n}. Pointers and atoms: about D/100 (weights within TV
-  0.1 after a memory step, W0 section 1; docs/results-W.md). Integers:
-  about D/400, because residue integers are correlated with each other
-  (W0 section 2)."
+  0.1 after a memory step, W0 section 1; docs/results-W.md). Integers: the
+  same D/100. In the product code integers are unrelated to each other;
+  a superposition read through a `let` cell stays exact up to 16 worlds at
+  D = 1024, 32–48 at 2048 and at least 64 from 4096 (scripts/w_readout.py,
+  20 trials per point). The banded encoding before it managed 5 at every
+  D, and this was D/400."
   []
   (let [d (m :dim)]
-    {:worlds (max 2 (quot d 100)) :ints (max 2 (quot d 400))}))
+    {:worlds (max 2 (quot d 100)) :ints (max 2 (quot d 100))}))
 
 (defn- over-capacity [what n cap]
   (throw (ex-info (str "superposition capacity exceeded: " n " " what
@@ -503,8 +506,7 @@
   capacity limit): a heteroassociative relation held in the item memory,
   one row per key, R⊗k ↦ the uniform superposition of its v (so `follow`
   is one step of a random walk). Returns R, a fresh atom (it prints as a
-  symbol relation-N). Keys should be atoms (keywords, symbols): integer keys
-  are correlated in the residue encoding."
+  symbol relation-N). Keys should be atoms (keywords, symbols)."
   [[spec]]
   (let [entries (if (= :map (first (core/kind spec)))
                   (#'core/map-entries spec)
