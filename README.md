@@ -13,7 +13,7 @@ Fittingly, the paper opens with Carin Meier's Clojure/conj 2023 talk
 introducing VSAs to Clojure programmers.
 
 **Read the notebook:**
-[A Vector-Symbolic Clojure](https://faster-than-light-memes.xyz/vector-symbolic-clojure/),
+[A Vector-Symbolic Clojure](https://benjamin-schwerdtner.de/vector-symbolic-clojure/),
 a Clay notebook whose results are computed live by this code. The paper
 draft is in [`paper/draft.md`](paper/draft.md).
 
